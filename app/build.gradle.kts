@@ -7,12 +7,12 @@ plugins {
 android {
     namespace = "net.spora.android"
     compileSdk {
-        version = release(35)
+        version = release(36)
     }
 
     defaultConfig {
         applicationId = "net.spora.android"
-        minSdk = 35
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
