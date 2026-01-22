@@ -640,6 +640,10 @@ internal object IntegrityCheckingUniffiLib {
         uniffiCheckContractApiVersion(this)
         uniffiCheckApiChecksums(this)
     }
+    external fun uniffi_spora_ffi_checksum_func_connect(
+    ): Short
+    external fun uniffi_spora_ffi_checksum_func_init_android_logging(
+    ): Short
     external fun uniffi_spora_ffi_checksum_func_share(
     ): Short
     external fun ffi_spora_ffi_uniffi_contract_version(
@@ -655,6 +659,10 @@ internal object UniffiLib {
         Native.register(UniffiLib::class.java, findLibraryName(componentName = "spora_ffi"))
         
     }
+    external fun uniffi_spora_ffi_fn_func_connect(`url`: RustBuffer.ByValue,`tunFd`: Int,
+    ): Long
+    external fun uniffi_spora_ffi_fn_func_init_android_logging(uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
     external fun uniffi_spora_ffi_fn_func_share(
     ): Long
     external fun ffi_spora_ffi_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
@@ -776,6 +784,12 @@ private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
 }
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
+    if (lib.uniffi_spora_ffi_checksum_func_connect() != 41857.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_spora_ffi_checksum_func_init_android_logging() != 27785.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_spora_ffi_checksum_func_share() != 34798.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -915,6 +929,29 @@ object NoHandle
 /**
  * @suppress
  */
+public object FfiConverterInt: FfiConverter<Int, Int> {
+    override fun lift(value: Int): Int {
+        return value
+    }
+
+    override fun read(buf: ByteBuffer): Int {
+        return buf.getInt()
+    }
+
+    override fun lower(value: Int): Int {
+        return value
+    }
+
+    override fun allocationSize(value: Int) = 4UL
+
+    override fun write(value: Int, buf: ByteBuffer) {
+        buf.putInt(value)
+    }
+}
+
+/**
+ * @suppress
+ */
 public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
     // Note: we don't inherit from FfiConverterRustBuffer, because we use a
     // special encoding when lowering/lifting.  We can use `RustBuffer.len` to
@@ -967,6 +1004,80 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
         buf.putInt(byteBuf.limit())
         buf.put(byteBuf)
     }
+}
+
+
+
+
+
+sealed class ConnectException: kotlin.Exception() {
+    
+    class InvalidUrl(
+        ) : ConnectException() {
+        override val message
+            get() = ""
+    }
+    
+    class Generic(
+        
+        val v1: kotlin.String
+        ) : ConnectException() {
+        override val message
+            get() = "v1=${ v1 }"
+    }
+    
+
+    companion object ErrorHandler : UniffiRustCallStatusErrorHandler<ConnectException> {
+        override fun lift(error_buf: RustBuffer.ByValue): ConnectException = FfiConverterTypeConnectError.lift(error_buf)
+    }
+
+    
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeConnectError : FfiConverterRustBuffer<ConnectException> {
+    override fun read(buf: ByteBuffer): ConnectException {
+        
+
+        return when(buf.getInt()) {
+            1 -> ConnectException.InvalidUrl()
+            2 -> ConnectException.Generic(
+                FfiConverterString.read(buf),
+                )
+            else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: ConnectException): ULong {
+        return when(value) {
+            is ConnectException.InvalidUrl -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+            )
+            is ConnectException.Generic -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+                + FfiConverterString.allocationSize(value.v1)
+            )
+        }
+    }
+
+    override fun write(value: ConnectException, buf: ByteBuffer) {
+        when(value) {
+            is ConnectException.InvalidUrl -> {
+                buf.putInt(1)
+                Unit
+            }
+            is ConnectException.Generic -> {
+                buf.putInt(2)
+                FfiConverterString.write(value.v1, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+
 }
 
 
@@ -1034,6 +1145,31 @@ public object FfiConverterTypeShareError : FfiConverterRustBuffer<ShareException
 
 
 
+
+    @Throws(ConnectException::class)
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+     suspend fun `connect`(`url`: kotlin.String, `tunFd`: kotlin.Int) {
+        return uniffiRustCallAsync(
+        UniffiLib.uniffi_spora_ffi_fn_func_connect(FfiConverterString.lower(`url`),FfiConverterInt.lower(`tunFd`),),
+        { future, callback, continuation -> UniffiLib.ffi_spora_ffi_rust_future_poll_void(future, callback, continuation) },
+        { future, continuation -> UniffiLib.ffi_spora_ffi_rust_future_complete_void(future, continuation) },
+        { future -> UniffiLib.ffi_spora_ffi_rust_future_free_void(future) },
+        // lift function
+        { Unit },
+        
+        // Error FFI converter
+        ConnectException.ErrorHandler,
+    )
+    }
+ fun `initAndroidLogging`()
+        = 
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_init_android_logging(
+    
+        _status)
+}
+    
+    
 
     @Throws(ShareException::class)
     @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
