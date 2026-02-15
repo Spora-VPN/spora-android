@@ -30,13 +30,6 @@ import java.nio.CharBuffer
 import java.nio.charset.CodingErrorAction
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.coroutines.resume
-import kotlinx.coroutines.CancellableContinuation
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 
 // This is a helper for safely working with byte buffers returned from the Rust code.
 // A rust-owned buffer is represented by its capacity, its current length, and a
@@ -650,6 +643,8 @@ internal object IntegrityCheckingUniffiLib {
     ): Short
     external fun uniffi_spora_ffi_checksum_func_share(
     ): Short
+    external fun uniffi_spora_ffi_checksum_func_stop_share(
+    ): Short
     external fun ffi_spora_ffi_uniffi_contract_version(
     ): Int
     
@@ -671,8 +666,10 @@ internal object UniffiLib {
     ): Int
     external fun uniffi_spora_ffi_fn_func_init_android_logging(uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    external fun uniffi_spora_ffi_fn_func_share(
-    ): Long
+    external fun uniffi_spora_ffi_fn_func_share(uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_spora_ffi_fn_func_stop_share(`handle`: Int,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
     external fun ffi_spora_ffi_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun ffi_spora_ffi_rustbuffer_from_bytes(`bytes`: ForeignBytes.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -804,7 +801,10 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_spora_ffi_checksum_func_init_android_logging() != 27785.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_spora_ffi_checksum_func_share() != 34798.toShort()) {
+    if (lib.uniffi_spora_ffi_checksum_func_share() != 59765.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_spora_ffi_checksum_func_stop_share() != 57557.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
 }
@@ -820,46 +820,6 @@ public fun uniffiEnsureInitialized() {
 }
 
 // Async support
-// Async return type handlers
-
-internal const val UNIFFI_RUST_FUTURE_POLL_READY = 0.toByte()
-internal const val UNIFFI_RUST_FUTURE_POLL_WAKE = 1.toByte()
-
-internal val uniffiContinuationHandleMap = UniffiHandleMap<CancellableContinuation<Byte>>()
-
-// FFI type for Rust future continuations
-internal object uniffiRustFutureContinuationCallbackImpl: UniffiRustFutureContinuationCallback {
-    override fun callback(data: Long, pollResult: Byte) {
-        uniffiContinuationHandleMap.remove(data).resume(pollResult)
-    }
-}
-
-internal suspend fun<T, F, E: kotlin.Exception> uniffiRustCallAsync(
-    rustFuture: Long,
-    pollFunc: (Long, UniffiRustFutureContinuationCallback, Long) -> Unit,
-    completeFunc: (Long, UniffiRustCallStatus) -> F,
-    freeFunc: (Long) -> Unit,
-    liftFunc: (F) -> T,
-    errorHandler: UniffiRustCallStatusErrorHandler<E>
-): T {
-    try {
-        do {
-            val pollResult = suspendCancellableCoroutine<Byte> { continuation ->
-                pollFunc(
-                    rustFuture,
-                    uniffiRustFutureContinuationCallbackImpl,
-                    uniffiContinuationHandleMap.insert(continuation)
-                )
-            }
-        } while (pollResult != UNIFFI_RUST_FUTURE_POLL_READY);
-
-        return liftFunc(
-            uniffiRustCallWithError(errorHandler, { status -> completeFunc(rustFuture, status) })
-        )
-    } finally {
-        freeFunc(rustFuture)
-    }
-}
 
 // Public interface members begin here.
 
@@ -1017,6 +977,42 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
         val byteBuf = toUtf8(value)
         buf.putInt(byteBuf.limit())
         buf.put(byteBuf)
+    }
+}
+
+
+
+data class ShareResult (
+    var `handle`: kotlin.Int
+    , 
+    var `url`: kotlin.String
+    
+){
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeShareResult: FfiConverterRustBuffer<ShareResult> {
+    override fun read(buf: ByteBuffer): ShareResult {
+        return ShareResult(
+            FfiConverterInt.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: ShareResult) = (
+            FfiConverterInt.allocationSize(value.`handle`) +
+            FfiConverterString.allocationSize(value.`url`)
+    )
+
+    override fun write(value: ShareResult, buf: ByteBuffer) {
+            FfiConverterInt.write(value.`handle`, buf)
+            FfiConverterString.write(value.`url`, buf)
     }
 }
 
@@ -1205,14 +1201,6 @@ public object FfiConverterTypeTunnelError : FfiConverterRustBuffer<TunnelExcepti
     }
 
 }
-
-
-
-
-
-
-
-
         /**
          * Establishes a tunnel connection and returns a handle for managing it.
          *
@@ -1271,19 +1259,28 @@ public object FfiConverterTypeTunnelError : FfiConverterRustBuffer<TunnelExcepti
     
     
 
-    @Throws(ShareException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-     suspend fun `share`() : kotlin.String {
-        return uniffiRustCallAsync(
-        UniffiLib.uniffi_spora_ffi_fn_func_share(),
-        { future, callback, continuation -> UniffiLib.ffi_spora_ffi_rust_future_poll_rust_buffer(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_spora_ffi_rust_future_complete_rust_buffer(future, continuation) },
-        { future -> UniffiLib.ffi_spora_ffi_rust_future_free_rust_buffer(future) },
-        // lift function
-        { FfiConverterString.lift(it) },
-        // Error FFI converter
-        ShareException.ErrorHandler,
+    @Throws(ShareException::class) fun `share`(): ShareResult {
+            return FfiConverterTypeShareResult.lift(
+    uniffiRustCallWithError(ShareException) { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_share(
+    
+        _status)
+}
     )
     }
+    
+
+        /**
+         * Stops the share session associated with the given handle.
+         */
+    @Throws(TunnelException::class) fun `stopShare`(`handle`: kotlin.Int)
+        = 
+    uniffiRustCallWithError(TunnelException) { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_stop_share(
+    
+        FfiConverterInt.lower(`handle`),_status)
+}
+    
+    
 
 

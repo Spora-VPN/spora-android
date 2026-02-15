@@ -61,9 +61,9 @@ class ShareForegroundService : Service() {
 
         serviceScope.launch {
             try {
-                val url = uniffi.spora_ffi.share()
-                ShareState.started(url)
-                notify(buildNotification(contentText = url, isOngoing = true, includeStopAction = true))
+                val result = uniffi.spora_ffi.share()
+                ShareState.started(result.handle, result.url)
+                notify(buildNotification(contentText = result.url, isOngoing = true, includeStopAction = true))
             } catch (t: Throwable) {
                 ShareState.failed(t)
                 notify(
@@ -79,6 +79,13 @@ class ShareForegroundService : Service() {
     }
 
     private fun stopSharing() {
+        ShareState.uiState.value.handle?.let { handle ->
+            try {
+                uniffi.spora_ffi.stopShare(handle)
+            } catch (_: Throwable) {
+                // Best-effort cleanup; handle may already be invalid.
+            }
+        }
         ShareState.stopped()
         stopForegroundCompat()
         stopSelf()
