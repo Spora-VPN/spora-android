@@ -9,6 +9,7 @@ import android.content.Intent
 import android.net.VpnService
 import android.os.Build
 import android.os.ParcelFileDescriptor
+import android.system.Os
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CoroutineScope
@@ -20,12 +21,15 @@ import kotlinx.coroutines.launch
 /**
  * VPN service for the client/connect mode.
  *
- * Creates a TUN interface with limited routes (only two hardcoded IPs) and passes
- * the file descriptor to the Rust `connect()` function.
+ * Uses a two-phase TUN establishment:
+ * 1. Create TUN with no routes so STUN negotiation uses normal network
+ * 2. After connect + socket protection, re-establish TUN with 0.0.0.0/0 route
+ *    and use dup2 to swap the fd Rust is using
  */
 class ConnectVpnService : VpnService() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var vpnInterface: ParcelFileDescriptor? = null
+    private var tunnelHandle: Int? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -64,22 +68,37 @@ class ConnectVpnService : VpnService() {
 
         serviceScope.launch {
             try {
-                // Create VPN interface with limited routes
-                val builder = Builder()
+                // Phase 1: Create TUN with no routes so STUN packets use normal network
+                val initialBuilder = Builder()
                     .setSession("Spora VPN")
                     .addAddress(TUN_ADDRESS, TUN_PREFIX_LENGTH)
-                    // Only route these two specific IPs through the tunnel
-                    .addRoute(ROUTE_IP_1, 32)
-                    .addRoute(ROUTE_IP_2, 32)
                     .setMtu(MTU)
 
-                vpnInterface = builder.establish()
+                vpnInterface = initialBuilder.establish()
                     ?: throw IllegalStateException("Failed to establish VPN interface")
 
                 val tunFd = vpnInterface!!.fd
 
-                // Call Rust connect function
-                uniffi.spora_ffi.connect(url, tunFd)
+                // Phase 2: Connect (blocks during STUN), then protect the tunnel socket
+                val handle = uniffi.spora_ffi.connect(url, tunFd)
+                tunnelHandle = handle
+
+                val socketFd = uniffi.spora_ffi.getTunnelSocketFd(handle)
+                protect(socketFd)
+
+                // Phase 3: Re-establish TUN with full route and swap fd
+                val fullRouteBuilder = Builder()
+                    .setSession("Spora VPN")
+                    .addAddress(TUN_ADDRESS, TUN_PREFIX_LENGTH)
+                    .addRoute("0.0.0.0", 0)
+                    .addDnsServer(DNS_SERVER)
+                    .setMtu(MTU)
+
+                val newInterface = fullRouteBuilder.establish()
+                    ?: throw IllegalStateException("Failed to re-establish VPN interface with routes")
+
+                Os.dup2(newInterface.fileDescriptor, tunFd)
+                newInterface.close()
 
                 ConnectState.connected()
                 notify(
@@ -98,7 +117,7 @@ class ConnectVpnService : VpnService() {
                         includeDisconnectAction = false,
                     )
                 )
-                closeVpnInterface()
+                closeTunnel()
                 stopSelf()
             }
         }
@@ -106,12 +125,19 @@ class ConnectVpnService : VpnService() {
 
     private fun disconnect() {
         ConnectState.disconnected()
-        closeVpnInterface()
+        closeTunnel()
         stopForegroundCompat()
         stopSelf()
     }
 
-    private fun closeVpnInterface() {
+    private fun closeTunnel() {
+        tunnelHandle?.let { handle ->
+            try {
+                uniffi.spora_ffi.disconnect(handle)
+            } catch (_: Exception) {
+            }
+            tunnelHandle = null
+        }
         try {
             vpnInterface?.close()
         } catch (_: Exception) {
@@ -191,7 +217,7 @@ class ConnectVpnService : VpnService() {
 
     override fun onDestroy() {
         serviceScope.cancel()
-        closeVpnInterface()
+        closeTunnel()
         super.onDestroy()
     }
 
@@ -207,10 +233,7 @@ class ConnectVpnService : VpnService() {
         private const val TUN_ADDRESS = "10.11.0.2"
         private const val TUN_PREFIX_LENGTH = 24
         private const val MTU = 1500
-
-        // Limited routes - only these IPs will go through the tunnel
-        private const val ROUTE_IP_1 = "172.67.163.127"
-        private const val ROUTE_IP_2 = "104.21.49.135"
+        private const val DNS_SERVER = "8.8.8.8"
 
         fun connect(context: Context, url: String) {
             val intent = Intent(context, ConnectVpnService::class.java)

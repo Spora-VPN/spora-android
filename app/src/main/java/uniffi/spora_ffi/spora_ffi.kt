@@ -642,6 +642,10 @@ internal object IntegrityCheckingUniffiLib {
     }
     external fun uniffi_spora_ffi_checksum_func_connect(
     ): Short
+    external fun uniffi_spora_ffi_checksum_func_disconnect(
+    ): Short
+    external fun uniffi_spora_ffi_checksum_func_get_tunnel_socket_fd(
+    ): Short
     external fun uniffi_spora_ffi_checksum_func_init_android_logging(
     ): Short
     external fun uniffi_spora_ffi_checksum_func_share(
@@ -659,8 +663,12 @@ internal object UniffiLib {
         Native.register(UniffiLib::class.java, findLibraryName(componentName = "spora_ffi"))
         
     }
-    external fun uniffi_spora_ffi_fn_func_connect(`url`: RustBuffer.ByValue,`tunFd`: Int,
-    ): Long
+    external fun uniffi_spora_ffi_fn_func_connect(`url`: RustBuffer.ByValue,`tunFd`: Int,uniffi_out_err: UniffiRustCallStatus, 
+    ): Int
+    external fun uniffi_spora_ffi_fn_func_disconnect(`handle`: Int,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    external fun uniffi_spora_ffi_fn_func_get_tunnel_socket_fd(`handle`: Int,uniffi_out_err: UniffiRustCallStatus, 
+    ): Int
     external fun uniffi_spora_ffi_fn_func_init_android_logging(uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     external fun uniffi_spora_ffi_fn_func_share(
@@ -784,7 +792,13 @@ private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
 }
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
-    if (lib.uniffi_spora_ffi_checksum_func_connect() != 41857.toShort()) {
+    if (lib.uniffi_spora_ffi_checksum_func_connect() != 2371.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_spora_ffi_checksum_func_disconnect() != 23751.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_spora_ffi_checksum_func_get_tunnel_socket_fd() != 12289.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_spora_ffi_checksum_func_init_android_logging() != 27785.toShort()) {
@@ -1143,24 +1157,110 @@ public object FfiConverterTypeShareError : FfiConverterRustBuffer<ShareException
 
 
 
+sealed class TunnelException: kotlin.Exception() {
+    
+    class InvalidHandle(
+        ) : TunnelException() {
+        override val message
+            get() = ""
+    }
+    
 
+    companion object ErrorHandler : UniffiRustCallStatusErrorHandler<TunnelException> {
+        override fun lift(error_buf: RustBuffer.ByValue): TunnelException = FfiConverterTypeTunnelError.lift(error_buf)
+    }
 
+    
+}
 
-    @Throws(ConnectException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-     suspend fun `connect`(`url`: kotlin.String, `tunFd`: kotlin.Int) {
-        return uniffiRustCallAsync(
-        UniffiLib.uniffi_spora_ffi_fn_func_connect(FfiConverterString.lower(`url`),FfiConverterInt.lower(`tunFd`),),
-        { future, callback, continuation -> UniffiLib.ffi_spora_ffi_rust_future_poll_void(future, callback, continuation) },
-        { future, continuation -> UniffiLib.ffi_spora_ffi_rust_future_complete_void(future, continuation) },
-        { future -> UniffiLib.ffi_spora_ffi_rust_future_free_void(future) },
-        // lift function
-        { Unit },
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTunnelError : FfiConverterRustBuffer<TunnelException> {
+    override fun read(buf: ByteBuffer): TunnelException {
         
-        // Error FFI converter
-        ConnectException.ErrorHandler,
+
+        return when(buf.getInt()) {
+            1 -> TunnelException.InvalidHandle()
+            else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: TunnelException): ULong {
+        return when(value) {
+            is TunnelException.InvalidHandle -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+            )
+        }
+    }
+
+    override fun write(value: TunnelException, buf: ByteBuffer) {
+        when(value) {
+            is TunnelException.InvalidHandle -> {
+                buf.putInt(1)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+
+}
+
+
+
+
+
+
+
+
+        /**
+         * Establishes a tunnel connection and returns a handle for managing it.
+         *
+         * Blocks until the connection is established (STUN + pubsub negotiation),
+         * then spawns the tunnel loop in the background and returns immediately.
+         * Use `get_tunnel_socket_fd` to obtain the UDP socket for VPN protection,
+         * and `disconnect` to tear down the tunnel.
+         */
+    @Throws(ConnectException::class) fun `connect`(`url`: kotlin.String, `tunFd`: kotlin.Int): kotlin.Int {
+            return FfiConverterInt.lift(
+    uniffiRustCallWithError(ConnectException) { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_connect(
+    
+        FfiConverterString.lower(`url`),FfiConverterInt.lower(`tunFd`),_status)
+}
     )
     }
+    
+
+        /**
+         * Tears down the tunnel associated with the given handle.
+         */
+    @Throws(TunnelException::class) fun `disconnect`(`handle`: kotlin.Int)
+        = 
+    uniffiRustCallWithError(TunnelException) { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_disconnect(
+    
+        FfiConverterInt.lower(`handle`),_status)
+}
+    
+    
+
+        /**
+         * Returns the raw file descriptor of the tunnel's UDP socket.
+         *
+         * On Android, pass this to `VpnService.protect()` to prevent the tunnel
+         * traffic from being routed back through the VPN.
+         */
+    @Throws(TunnelException::class) fun `getTunnelSocketFd`(`handle`: kotlin.Int): kotlin.Int {
+            return FfiConverterInt.lift(
+    uniffiRustCallWithError(TunnelException) { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_get_tunnel_socket_fd(
+    
+        FfiConverterInt.lower(`handle`),_status)
+}
+    )
+    }
+    
  fun `initAndroidLogging`()
         = 
     uniffiRustCall() { _status ->
