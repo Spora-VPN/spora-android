@@ -4,33 +4,56 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+data class ActiveShareInfo(
+    val handle: Int,
+    val url: String,
+)
+
 data class ShareUiState(
-    val isRunning: Boolean = false,
-    val isStarting: Boolean = false,
-    val handle: Int? = null,
-    val url: String? = null,
-    val errorMessage: String? = null,
+    val connections: List<SharedConnection> = emptyList(),
+    val activeShares: Map<String, ActiveShareInfo> = emptyMap(),
+    val startingIds: Set<String> = emptySet(),
+    val errors: Map<String, String> = emptyMap(),
 )
 
 object ShareState {
     private val _uiState = MutableStateFlow(ShareUiState())
     val uiState: StateFlow<ShareUiState> = _uiState.asStateFlow()
 
-    fun starting() {
-        _uiState.value = ShareUiState(isStarting = true)
+    fun loadConnections(connections: List<SharedConnection>) {
+        _uiState.value = _uiState.value.copy(connections = connections)
     }
 
-    fun started(handle: Int, url: String) {
-        _uiState.value = ShareUiState(isRunning = true, handle = handle, url = url)
-    }
-
-    fun failed(t: Throwable) {
-        _uiState.value = ShareUiState(
-            errorMessage = t.message ?: t.toString(),
+    fun addConnection(connection: SharedConnection) {
+        _uiState.value = _uiState.value.copy(
+            connections = _uiState.value.connections + connection,
         )
     }
 
-    fun stopped() {
-        _uiState.value = ShareUiState()
+    fun starting(connectionId: String) {
+        _uiState.value = _uiState.value.copy(
+            startingIds = _uiState.value.startingIds + connectionId,
+            errors = _uiState.value.errors - connectionId,
+        )
+    }
+
+    fun started(connectionId: String, handle: Int, url: String) {
+        _uiState.value = _uiState.value.copy(
+            startingIds = _uiState.value.startingIds - connectionId,
+            activeShares = _uiState.value.activeShares + (connectionId to ActiveShareInfo(handle, url)),
+        )
+    }
+
+    fun failed(connectionId: String, t: Throwable) {
+        _uiState.value = _uiState.value.copy(
+            startingIds = _uiState.value.startingIds - connectionId,
+            errors = _uiState.value.errors + (connectionId to (t.message ?: t.toString())),
+        )
+    }
+
+    fun stopped(connectionId: String) {
+        _uiState.value = _uiState.value.copy(
+            activeShares = _uiState.value.activeShares - connectionId,
+        )
     }
 }

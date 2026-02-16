@@ -11,15 +11,23 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -28,6 +36,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -38,6 +47,8 @@ import uniffi.spora_ffi.initAndroidLogging
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        SharedConnectionStore.init(this)
+        ShareState.loadConnections(SharedConnectionStore.getAll())
         initAndroidLogging();
         enableEdgeToEdge()
         setContent {
@@ -89,45 +100,135 @@ fun MainScreen(modifier: Modifier = Modifier) {
 fun ShareScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val uiState by ShareState.uiState.collectAsState()
+    var showLabelDialog by remember { mutableStateOf(false) }
 
     Column(
-        modifier = modifier,
+        modifier = modifier.verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(text = "Share your connection")
 
-        when {
-            uiState.isStarting -> Text(text = "Status: starting…")
-            uiState.isRunning -> Text(text = "Status: running")
-            uiState.errorMessage != null -> Text(text = "Status: error: ${uiState.errorMessage}")
-            else -> Text(text = "Status: idle")
-        }
+        uiState.connections.forEach { connection ->
+            val isActive = connection.id in uiState.activeShares
+            val isStarting = connection.id in uiState.startingIds
+            val error = uiState.errors[connection.id]
+            val url = uiState.activeShares[connection.id]?.url
 
-        if (uiState.url != null) {
-            Text(text = "URL:\n${uiState.url}")
-        }
+            HorizontalDivider()
 
-        Button(
-            onClick = { ShareForegroundService.start(context) },
-            enabled = !uiState.isStarting && !uiState.isRunning,
-        ) {
-            Text("Start")
-        }
-
-        if (uiState.isRunning || uiState.isStarting) {
-            Button(onClick = { ShareForegroundService.stop(context) }) {
-                Text("Stop")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                    Text(
+                        text = connection.label,
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                    when {
+                        isStarting -> Text(
+                            text = "Starting\u2026",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        isActive && url != null -> Text(
+                            text = url,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        error != null -> Text(
+                            text = "Error: $error",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                }
+                Switch(
+                    checked = isActive || isStarting,
+                    onCheckedChange = { enabled ->
+                        if (enabled) {
+                            ShareForegroundService.startConnection(
+                                context,
+                                connection.id,
+                                connection.secretKey,
+                            )
+                        } else {
+                            ShareForegroundService.stopConnection(context, connection.id)
+                        }
+                    },
+                    enabled = !isStarting,
+                )
             }
         }
+
+        if (uiState.connections.isNotEmpty()) {
+            HorizontalDivider()
+        }
+
+        Button(onClick = { showLabelDialog = true }) {
+            Text("Share")
+        }
     }
+
+    if (showLabelDialog) {
+        NewShareDialog(
+            onDismiss = { showLabelDialog = false },
+            onConfirm = { label ->
+                showLabelDialog = false
+                val key = uniffi.spora_ffi.makeSecretKey()
+                val connection = SharedConnection(
+                    id = java.util.UUID.randomUUID().toString(),
+                    label = label,
+                    secretKey = key,
+                )
+                SharedConnectionStore.save(connection)
+                ShareState.addConnection(connection)
+                ShareForegroundService.startConnection(context, connection.id, connection.secretKey)
+            },
+        )
+    }
+}
+
+@Composable
+fun NewShareDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (label: String) -> Unit,
+) {
+    var label by rememberSaveable { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("New shared connection") },
+        text = {
+            OutlinedTextField(
+                value = label,
+                onValueChange = { label = it },
+                label = { Text("Label") },
+                placeholder = { Text("e.g., name of who you're sharing with") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(label) },
+                enabled = label.isNotBlank(),
+            ) {
+                Text("Share")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+    )
 }
 
 @Composable
 fun ConnectScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val uiState by ConnectState.uiState.collectAsState()
-    var url by rememberSaveable { mutableStateOf("spora://188.166.74.116:2335/abcdef") }
-
+    var url by rememberSaveable { mutableStateOf("spora://188.166.74.116:2334/abcdef") }
     // Pending URL to connect after VPN permission is granted
     var pendingUrl by remember { mutableStateOf<String?>(null) }
 
@@ -157,7 +258,7 @@ fun ConnectScreen(modifier: Modifier = Modifier) {
         Text(text = "Connect to a peer")
 
         when {
-            uiState.isConnecting -> Text(text = "Status: connecting…")
+            uiState.isConnecting -> Text(text = "Status: connecting\u2026")
             uiState.isConnected -> Text(text = "Status: connected")
             uiState.errorMessage != null -> Text(text = "Status: error: ${uiState.errorMessage}")
             else -> Text(text = "Status: disconnected")

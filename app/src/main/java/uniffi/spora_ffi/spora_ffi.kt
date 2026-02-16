@@ -641,6 +641,8 @@ internal object IntegrityCheckingUniffiLib {
     ): Short
     external fun uniffi_spora_ffi_checksum_func_init_android_logging(
     ): Short
+    external fun uniffi_spora_ffi_checksum_func_make_secret_key(
+    ): Short
     external fun uniffi_spora_ffi_checksum_func_share(
     ): Short
     external fun uniffi_spora_ffi_checksum_func_stop_share(
@@ -666,7 +668,9 @@ internal object UniffiLib {
     ): Int
     external fun uniffi_spora_ffi_fn_func_init_android_logging(uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    external fun uniffi_spora_ffi_fn_func_share(uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_spora_ffi_fn_func_make_secret_key(uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_spora_ffi_fn_func_share(`key`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_spora_ffi_fn_func_stop_share(`handle`: Int,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
@@ -801,7 +805,10 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_spora_ffi_checksum_func_init_android_logging() != 27785.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_spora_ffi_checksum_func_share() != 59765.toShort()) {
+    if (lib.uniffi_spora_ffi_checksum_func_make_secret_key() != 11105.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_spora_ffi_checksum_func_share() != 51727.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_spora_ffi_checksum_func_stop_share() != 57557.toShort()) {
@@ -1258,13 +1265,23 @@ public object FfiConverterTypeTunnelError : FfiConverterRustBuffer<TunnelExcepti
 }
     
     
+ fun `makeSecretKey`(): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_make_secret_key(
+    
+        _status)
+}
+    )
+    }
+    
 
-    @Throws(ShareException::class) fun `share`(): ShareResult {
+    @Throws(ShareException::class) fun `share`(`key`: kotlin.String): ShareResult {
             return FfiConverterTypeShareResult.lift(
     uniffiRustCallWithError(ShareException) { _status ->
     UniffiLib.uniffi_spora_ffi_fn_func_share(
     
-        _status)
+        FfiConverterString.lower(`key`),_status)
 }
     )
     }

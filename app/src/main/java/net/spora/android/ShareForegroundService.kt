@@ -13,22 +13,14 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
-/**
- * Foreground service wrapper for running `uniffi.spora_ffi.share()` even when the app is backgrounded.
- *
- * Design:
- * - Activity starts this service via `ContextCompat.startForegroundService(...)`.
- * - Service calls `startForeground(...)` immediately (required by Android), then runs the Rust
- *   sharing routine on a background dispatcher.
- * - The generated URL is stored in [ShareState] for UI display and also shown in the ongoing
- *   notification.
- */
 class ShareForegroundService : Service() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val activeJobs = mutableMapOf<String, Job>()
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -39,56 +31,83 @@ class ShareForegroundService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_START -> startSharingIfNeeded()
-            ACTION_STOP -> stopSharing()
+            ACTION_START_CONNECTION -> {
+                val connectionId = intent.getStringExtra(EXTRA_CONNECTION_ID)
+                    ?: return START_NOT_STICKY
+                val key = intent.getStringExtra(EXTRA_KEY)
+                    ?: return START_NOT_STICKY
+                startConnection(connectionId, key)
+            }
+            ACTION_STOP_CONNECTION -> {
+                val connectionId = intent.getStringExtra(EXTRA_CONNECTION_ID)
+                    ?: return START_NOT_STICKY
+                stopConnection(connectionId)
+            }
+            ACTION_STOP_ALL -> stopAll()
         }
         return START_NOT_STICKY
     }
 
-    private fun startSharingIfNeeded() {
-        val currentState = ShareState.uiState.value
-        if (currentState.isStarting || currentState.isRunning) return
+    private fun startConnection(connectionId: String, key: String) {
+        if (activeJobs.containsKey(connectionId)) return
 
-        ShareState.starting()
-        startForeground(
-            NOTIFICATION_ID,
-            buildNotification(
-                contentText = "Starting…",
-                isOngoing = true,
-                includeStopAction = true,
-            ),
-        )
+        ShareState.starting(connectionId)
 
-        serviceScope.launch {
+        if (activeJobs.isEmpty()) {
+            startForeground(
+                NOTIFICATION_ID,
+                buildNotification("Starting\u2026"),
+            )
+        }
+
+        val job = serviceScope.launch {
             try {
-                val result = uniffi.spora_ffi.share()
-                ShareState.started(result.handle, result.url)
-                notify(buildNotification(contentText = result.url, isOngoing = true, includeStopAction = true))
+                val result = uniffi.spora_ffi.share(key)
+                ShareState.started(connectionId, result.handle, result.url)
+                updateNotification()
             } catch (t: Throwable) {
-                ShareState.failed(t)
-                notify(
-                    buildNotification(
-                        contentText = "Error: ${t.message ?: t::class.java.simpleName}",
-                        isOngoing = false,
-                        includeStopAction = false,
-                    ),
-                )
-                stopSelf()
+                ShareState.failed(connectionId, t)
+                activeJobs.remove(connectionId)
+                if (activeJobs.isEmpty()) {
+                    stopForegroundCompat()
+                    stopSelf()
+                } else {
+                    updateNotification()
+                }
             }
         }
+        activeJobs[connectionId] = job
     }
 
-    private fun stopSharing() {
-        ShareState.uiState.value.handle?.let { handle ->
+    private fun stopConnection(connectionId: String) {
+        activeJobs.remove(connectionId)?.cancel()
+
+        val shareInfo = ShareState.uiState.value.activeShares[connectionId]
+        shareInfo?.let {
             try {
-                uniffi.spora_ffi.stopShare(handle)
+                uniffi.spora_ffi.stopShare(it.handle)
             } catch (_: Throwable) {
                 // Best-effort cleanup; handle may already be invalid.
             }
         }
-        ShareState.stopped()
-        stopForegroundCompat()
-        stopSelf()
+        ShareState.stopped(connectionId)
+
+        if (activeJobs.isEmpty()) {
+            stopForegroundCompat()
+            stopSelf()
+        } else {
+            updateNotification()
+        }
+    }
+
+    private fun stopAll() {
+        activeJobs.keys.toList().forEach { stopConnection(it) }
+    }
+
+    private fun updateNotification() {
+        val count = activeJobs.size
+        val text = if (count == 1) "Sharing 1 connection" else "Sharing $count connections"
+        notify(buildNotification(text))
     }
 
     private fun notify(notification: Notification) {
@@ -96,11 +115,7 @@ class ShareForegroundService : Service() {
         nm.notify(NOTIFICATION_ID, notification)
     }
 
-    private fun buildNotification(
-        contentText: String,
-        isOngoing: Boolean,
-        includeStopAction: Boolean,
-    ): Notification {
+    private fun buildNotification(contentText: String): Notification {
         val openIntent = Intent(this, MainActivity::class.java)
         val openPendingIntent = PendingIntent.getActivity(
             this,
@@ -109,28 +124,26 @@ class ShareForegroundService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
 
-        val builder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+        val stopAllIntent = Intent(this, ShareForegroundService::class.java)
+            .setAction(ACTION_STOP_ALL)
+        val stopAllPendingIntent = PendingIntent.getService(
+            this,
+            1,
+            stopAllIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+
+        return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle("Spora sharing")
             .setContentText(contentText)
             .setStyle(NotificationCompat.BigTextStyle().bigText(contentText))
             .setContentIntent(openPendingIntent)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
-            .setOngoing(isOngoing)
+            .setOngoing(true)
             .setOnlyAlertOnce(true)
-
-        if (includeStopAction) {
-            val stopIntent = Intent(this, ShareForegroundService::class.java).setAction(ACTION_STOP)
-            val stopPendingIntent = PendingIntent.getService(
-                this,
-                1,
-                stopIntent,
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-            )
-            builder.addAction(0, "Stop", stopPendingIntent)
-        }
-
-        return builder.build()
+            .addAction(0, "Stop all", stopAllPendingIntent)
+            .build()
     }
 
     private fun ensureNotificationChannel() {
@@ -169,17 +182,34 @@ class ShareForegroundService : Service() {
         private const val NOTIFICATION_CHANNEL_ID = "spora_share"
         private const val NOTIFICATION_ID = 1
 
-        private const val ACTION_START = "net.spora.android.action.START_SHARE"
-        private const val ACTION_STOP = "net.spora.android.action.STOP_SHARE"
+        private const val ACTION_START_CONNECTION =
+            "net.spora.android.action.START_SHARE_CONNECTION"
+        private const val ACTION_STOP_CONNECTION =
+            "net.spora.android.action.STOP_SHARE_CONNECTION"
+        private const val ACTION_STOP_ALL =
+            "net.spora.android.action.STOP_ALL_SHARES"
 
-        fun start(context: Context) {
-            val intent = Intent(context, ShareForegroundService::class.java).setAction(ACTION_START)
+        private const val EXTRA_CONNECTION_ID = "connection_id"
+        private const val EXTRA_KEY = "key"
+
+        fun startConnection(context: Context, connectionId: String, key: String) {
+            val intent = Intent(context, ShareForegroundService::class.java)
+                .setAction(ACTION_START_CONNECTION)
+                .putExtra(EXTRA_CONNECTION_ID, connectionId)
+                .putExtra(EXTRA_KEY, key)
             ContextCompat.startForegroundService(context, intent)
         }
 
-        fun stop(context: Context) {
-            val intent = Intent(context, ShareForegroundService::class.java).setAction(ACTION_STOP)
-            // We can use startService here because the service should already be running in FG mode.
+        fun stopConnection(context: Context, connectionId: String) {
+            val intent = Intent(context, ShareForegroundService::class.java)
+                .setAction(ACTION_STOP_CONNECTION)
+                .putExtra(EXTRA_CONNECTION_ID, connectionId)
+            context.startService(intent)
+        }
+
+        fun stopAll(context: Context) {
+            val intent = Intent(context, ShareForegroundService::class.java)
+                .setAction(ACTION_STOP_ALL)
             context.startService(intent)
         }
     }
