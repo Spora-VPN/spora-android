@@ -1,6 +1,7 @@
 package net.spora.android
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.net.VpnService
 import android.os.Bundle
@@ -17,9 +18,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -29,6 +34,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -101,6 +107,15 @@ fun ShareScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val uiState by ShareState.uiState.collectAsState()
     var showLabelDialog by remember { mutableStateOf(false) }
+    var pendingShareConnectionId by remember { mutableStateOf<String?>(null) }
+
+    // Auto-trigger share intent when a newly created connection gets its URL
+    LaunchedEffect(pendingShareConnectionId, uiState.activeShares) {
+        val pendingId = pendingShareConnectionId ?: return@LaunchedEffect
+        val url = uiState.activeShares[pendingId]?.url ?: return@LaunchedEffect
+        pendingShareConnectionId = null
+        shareUrl(context, url)
+    }
 
     Column(
         modifier = modifier.verticalScroll(rememberScrollState()),
@@ -140,6 +155,11 @@ fun ShareScreen(modifier: Modifier = Modifier) {
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error,
                         )
+                    }
+                }
+                if (isActive && url != null) {
+                    IconButton(onClick = { shareUrl(context, url) }) {
+                        Icon(Icons.Default.Share, contentDescription = "Share link")
                     }
                 }
                 Switch(
@@ -182,6 +202,7 @@ fun ShareScreen(modifier: Modifier = Modifier) {
                 )
                 SharedConnectionStore.save(connection)
                 ShareState.addConnection(connection)
+                pendingShareConnectionId = connection.id
                 ShareForegroundService.startConnection(context, connection.id, connection.secretKey)
             },
         )
@@ -222,6 +243,14 @@ fun NewShareDialog(
             }
         },
     )
+}
+
+private fun shareUrl(context: Context, url: String) {
+    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, url)
+    }
+    context.startActivity(Intent.createChooser(sendIntent, null))
 }
 
 @Composable
