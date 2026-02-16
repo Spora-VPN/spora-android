@@ -40,8 +40,9 @@ class ConnectVpnService : VpnService() {
         when (intent?.action) {
             ACTION_CONNECT -> {
                 val url = intent.getStringExtra(EXTRA_URL)
+                val connectionId = intent.getStringExtra(EXTRA_CONNECTION_ID)
                 if (url != null) {
-                    startConnecting(url)
+                    startConnecting(url, connectionId)
                 } else {
                     ConnectState.failed(IllegalArgumentException("URL is required"))
                     stopSelf()
@@ -52,11 +53,11 @@ class ConnectVpnService : VpnService() {
         return START_NOT_STICKY
     }
 
-    private fun startConnecting(url: String) {
+    private fun startConnecting(url: String, connectionId: String?) {
         val currentState = ConnectState.uiState.value
         if (currentState.isConnecting || currentState.isConnected) return
 
-        ConnectState.connecting()
+        ConnectState.connecting(connectionId)
         startForeground(
             NOTIFICATION_ID,
             buildNotification(
@@ -228,6 +229,7 @@ class ConnectVpnService : VpnService() {
         private const val ACTION_CONNECT = "net.spora.android.action.CONNECT"
         private const val ACTION_DISCONNECT = "net.spora.android.action.DISCONNECT"
         private const val EXTRA_URL = "url"
+        private const val EXTRA_CONNECTION_ID = "connection_id"
 
         // VPN configuration
         private const val TUN_ADDRESS = "10.11.0.2"
@@ -235,10 +237,13 @@ class ConnectVpnService : VpnService() {
         private const val MTU = 1500
         private const val DNS_SERVER = "8.8.8.8"
 
-        fun connect(context: Context, url: String) {
+        fun connect(context: Context, url: String, connectionId: String? = null) {
             val intent = Intent(context, ConnectVpnService::class.java)
                 .setAction(ACTION_CONNECT)
                 .putExtra(EXTRA_URL, url)
+            if (connectionId != null) {
+                intent.putExtra(EXTRA_CONNECTION_ID, connectionId)
+            }
             ContextCompat.startForegroundService(context, intent)
         }
 
