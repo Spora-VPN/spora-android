@@ -4,19 +4,18 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -30,13 +29,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import net.spora.android.ui.ShareScreen
 import net.spora.android.ui.SporaIcons
@@ -107,28 +102,10 @@ private fun AppHeader() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            // Avatar
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(Slate)
-                    .drawBehind {
-                        // Simple person icon shape
-                        val cx = size.width / 2
-                        val cy = size.height * 0.35f
-                        val headR = size.width * 0.15f
-                        drawCircle(
-                            color = Color(0xFFD2D6CC),
-                            radius = headR,
-                            center = Offset(cx, cy),
-                        )
-                        drawOval(
-                            color = Color(0xFFD2D6CC),
-                            topLeft = Offset(cx - size.width * 0.25f, cy + headR * 0.8f),
-                            size = Size(size.width * 0.5f, size.height * 0.35f),
-                        )
-                    },
+            Image(
+                painter = painterResource(R.drawable.ic_logo),
+                contentDescription = "Spora logo",
+                modifier = Modifier.height(36.dp),
             )
 
             Text(
