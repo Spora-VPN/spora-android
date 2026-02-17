@@ -182,6 +182,7 @@ fun UseScreen(modifier: Modifier = Modifier) {
                     )
                     UseConnectionStore.save(connection)
                     ConnectState.addConnection(connection)
+                    startVpnConnection(connection.url, connection.id)
                 },
                 onCancel = { showModal = false },
             )
