@@ -123,7 +123,6 @@ fun UseScreen(modifier: Modifier = Modifier) {
                                     if (uiState.isConnected || uiState.isConnecting) {
                                         ConnectVpnService.disconnect(context)
                                     }
-                                    ConnectState.connecting(connection.id)
                                     startVpnConnection(connection.url, connection.id)
                                 } else {
                                     ConnectVpnService.disconnect(context)
