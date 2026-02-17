@@ -80,12 +80,14 @@ class ConnectVpnService : VpnService() {
 
                 val tunFd = vpnInterface!!.fd
 
-                // Phase 2: Connect (blocks during STUN), then protect the tunnel socket
-                val handle = uniffi.spora_ffi.connect(url, tunFd)
+                // Phase 2: Connect (blocks during STUN). Rust calls back to protect sockets.
+                val protector = object : uniffi.spora_ffi.SocketProtectorCallback {
+                    override fun protect(fd: Int) {
+                        this@ConnectVpnService.protect(fd)
+                    }
+                }
+                val handle = uniffi.spora_ffi.connect(url, tunFd, protector)
                 tunnelHandle = handle
-
-                val socketFd = uniffi.spora_ffi.getTunnelSocketFd(handle)
-                protect(socketFd)
 
                 // Phase 3: Re-establish TUN with full route and swap fd
                 val fullRouteBuilder = Builder()

@@ -62,7 +62,7 @@ class ShareForegroundService : Service() {
 
         val job = serviceScope.launch {
             try {
-                val result = uniffi.spora_ffi.share(key)
+                val result = uniffi.spora_ffi.share(key, null)
                 ShareState.started(connectionId, result.handle, result.url)
                 updateNotification()
             } catch (t: Throwable) {
