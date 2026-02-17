@@ -102,8 +102,24 @@ class ConnectVpnService : VpnService() {
 
                 Os.dup2(newInterface.fileDescriptor, tunFd)
                 newInterface.close()
+            } catch (t: Throwable) {
+                ConnectState.failed(t)
+                try {
+                    notify(
+                        buildNotification(
+                            contentText = "Error: ${t.message ?: t::class.java.simpleName}",
+                            isOngoing = false,
+                            includeDisconnectAction = false,
+                        )
+                    )
+                } catch (_: Exception) {}
+                closeTunnel()
+                stopSelf()
+                return@launch
+            }
 
-                ConnectState.connected()
+            ConnectState.connected()
+            try {
                 notify(
                     buildNotification(
                         contentText = "Connected",
@@ -111,18 +127,7 @@ class ConnectVpnService : VpnService() {
                         includeDisconnectAction = true,
                     )
                 )
-            } catch (t: Throwable) {
-                ConnectState.failed(t)
-                notify(
-                    buildNotification(
-                        contentText = "Error: ${t.message ?: t::class.java.simpleName}",
-                        isOngoing = false,
-                        includeDisconnectAction = false,
-                    )
-                )
-                closeTunnel()
-                stopSelf()
-            }
+            } catch (_: Exception) {}
         }
     }
 
