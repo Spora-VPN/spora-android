@@ -54,6 +54,7 @@ fun ShareScreen(modifier: Modifier = Modifier) {
     val uiState by ShareState.uiState.collectAsState()
     var showModal by remember { mutableStateOf(false) }
     var pendingShareConnectionId by remember { mutableStateOf<String?>(null) }
+    var deleteConnectionId by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(pendingShareConnectionId, uiState.activeShares) {
         val pendingId = pendingShareConnectionId ?: return@LaunchedEffect
@@ -86,6 +87,7 @@ fun ShareScreen(modifier: Modifier = Modifier) {
                 ConnectionList(
                     uiState = uiState,
                     context = context,
+                    onDelete = { deleteConnectionId = it },
                 )
             }
 
@@ -112,6 +114,23 @@ fun ShareScreen(modifier: Modifier = Modifier) {
                     ShareForegroundService.startConnection(context, connection.id, connection.secretKey)
                 },
                 onCancel = { showModal = false },
+            )
+        }
+
+        // Delete confirmation
+        ModalOverlay(
+            visible = deleteConnectionId != null,
+            onDismiss = { deleteConnectionId = null },
+        ) {
+            DeleteConfirmContent(
+                onConfirm = {
+                    deleteConnectionId?.let { id ->
+                        SharedConnectionStore.delete(id)
+                        ShareState.removeConnection(id)
+                    }
+                    deleteConnectionId = null
+                },
+                onCancel = { deleteConnectionId = null },
             )
         }
     }
@@ -180,6 +199,7 @@ private fun ActionCard(onClick: () -> Unit) {
 private fun ConnectionList(
     uiState: net.spora.android.ShareUiState,
     context: Context,
+    onDelete: (String) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
@@ -213,6 +233,9 @@ private fun ConnectionList(
                 onShareClick = if (isActive && url != null) {
                     { shareUrl(context, url) }
                 } else null,
+                onDelete = if (!isActive && !isStarting) {
+                    { onDelete(connection.id) }
+                } else null,
             )
         }
     }
@@ -226,6 +249,7 @@ private fun ConnectionItem(
     error: String?,
     onToggle: (Boolean) -> Unit,
     onShareClick: (() -> Unit)?,
+    onDelete: (() -> Unit)?,
 ) {
     Column(
         modifier = Modifier
@@ -283,6 +307,17 @@ private fun ConnectionItem(
                         )
                     }
                 }
+            }
+            if (onDelete != null) {
+                Icon(
+                    imageVector = SporaIcons.Delete,
+                    contentDescription = "Delete connection",
+                    tint = TextMuted,
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .size(20.dp)
+                        .clickable(onClick = onDelete),
+                )
             }
             if (onShareClick != null) {
                 Icon(
@@ -359,6 +394,41 @@ private fun ShareModalContent(
                     modifier = Modifier.size(20.dp),
                 )
             },
+        )
+
+        CancelButton(onClick = onCancel)
+    }
+}
+
+@Composable
+private fun DeleteConfirmContent(
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
+        Column {
+            Text(
+                text = "DELETE CONNECTION",
+                style = MaterialTheme.typography.labelSmall,
+                color = TextMuted,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Are you sure?",
+                style = MaterialTheme.typography.headlineLarge,
+                color = TextMain,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "This connection will be permanently removed.",
+                style = MaterialTheme.typography.labelSmall,
+                color = TextMuted,
+            )
+        }
+
+        PrimaryButton(
+            text = "DELETE",
+            onClick = onConfirm,
         )
 
         CancelButton(onClick = onCancel)

@@ -56,4 +56,13 @@ object ShareState {
             activeShares = _uiState.value.activeShares - connectionId,
         )
     }
+
+    fun removeConnection(id: String) {
+        _uiState.value = _uiState.value.copy(
+            connections = _uiState.value.connections.filter { it.id != id },
+            activeShares = _uiState.value.activeShares - id,
+            startingIds = _uiState.value.startingIds - id,
+            errors = _uiState.value.errors - id,
+        )
+    }
 }

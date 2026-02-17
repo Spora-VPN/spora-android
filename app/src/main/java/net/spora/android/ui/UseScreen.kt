@@ -53,6 +53,7 @@ fun UseScreen(modifier: Modifier = Modifier) {
     var showModal by remember { mutableStateOf(false) }
     var pendingUrl by remember { mutableStateOf<String?>(null) }
     var pendingConnectionId by remember { mutableStateOf<String?>(null) }
+    var deleteConnectionId by remember { mutableStateOf<String?>(null) }
 
     val vpnPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult(),
@@ -128,6 +129,9 @@ fun UseScreen(modifier: Modifier = Modifier) {
                                     ConnectVpnService.disconnect(context)
                                 }
                             },
+                            onDelete = if (!isThisActive) {
+                                { deleteConnectionId = connection.id }
+                            } else null,
                         )
                     }
                 }
@@ -180,6 +184,23 @@ fun UseScreen(modifier: Modifier = Modifier) {
                 onCancel = { showModal = false },
             )
         }
+
+        // Delete confirmation
+        ModalOverlay(
+            visible = deleteConnectionId != null,
+            onDismiss = { deleteConnectionId = null },
+        ) {
+            UseDeleteConfirmContent(
+                onConfirm = {
+                    deleteConnectionId?.let { id ->
+                        UseConnectionStore.delete(id)
+                        ConnectState.removeConnection(id)
+                    }
+                    deleteConnectionId = null
+                },
+                onCancel = { deleteConnectionId = null },
+            )
+        }
     }
 }
 
@@ -189,6 +210,7 @@ private fun UseConnectionItem(
     isActive: Boolean,
     isConnecting: Boolean,
     onToggle: (Boolean) -> Unit,
+    onDelete: (() -> Unit)?,
 ) {
     Column(
         modifier = Modifier
@@ -223,6 +245,17 @@ private fun UseConnectionItem(
                         color = TextMuted,
                     )
                 }
+            }
+            if (onDelete != null) {
+                Icon(
+                    imageVector = SporaIcons.Delete,
+                    contentDescription = "Delete connection",
+                    tint = TextMuted,
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .size(20.dp)
+                        .clickable(onClick = onDelete),
+                )
             }
             SporaToggle(
                 checked = isActive,
@@ -274,6 +307,41 @@ private fun UseModalContent(
                     modifier = Modifier.size(20.dp),
                 )
             },
+        )
+
+        CancelButton(onClick = onCancel)
+    }
+}
+
+@Composable
+private fun UseDeleteConfirmContent(
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
+        Column {
+            Text(
+                text = "DELETE CONNECTION",
+                style = MaterialTheme.typography.labelSmall,
+                color = TextMuted,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Are you sure?",
+                style = MaterialTheme.typography.headlineLarge,
+                color = TextMain,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "This connection will be permanently removed.",
+                style = MaterialTheme.typography.labelSmall,
+                color = TextMuted,
+            )
+        }
+
+        PrimaryButton(
+            text = "DELETE",
+            onClick = onConfirm,
         )
 
         CancelButton(onClick = onCancel)
