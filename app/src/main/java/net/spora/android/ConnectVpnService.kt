@@ -133,12 +133,20 @@ class ConnectVpnService : VpnService() {
 
     private fun closeTunnel() {
         tunnelHandle?.let { handle ->
+            // Release ParcelFileDescriptor ownership of the TUN fd
+            // so Rust's disconnect() can close it without fdsan aborting
+            try {
+                vpnInterface?.detachFd()
+            } catch (_: Exception) {
+            }
+            vpnInterface = null
             try {
                 uniffi.spora_ffi.disconnect(handle)
             } catch (_: Exception) {
             }
             tunnelHandle = null
         }
+        // No tunnel handle means Rust never got the fd — close normally
         try {
             vpnInterface?.close()
         } catch (_: Exception) {
