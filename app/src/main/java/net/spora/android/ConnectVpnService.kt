@@ -249,7 +249,7 @@ class ConnectVpnService : VpnService() {
         // VPN configuration
         private const val TUN_ADDRESS = "10.11.0.2"
         private const val TUN_PREFIX_LENGTH = 24
-        private const val MTU = 1500
+        private const val MTU = 1280
         private const val DNS_SERVER = "8.8.8.8"
 
         fun connect(context: Context, url: String, connectionId: String? = null) {
