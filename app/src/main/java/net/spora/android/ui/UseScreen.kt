@@ -49,13 +49,26 @@ import net.spora.android.ui.theme.TextMuted
 import net.spora.android.ui.theme.Yellow
 
 @Composable
-fun UseScreen(modifier: Modifier = Modifier) {
+fun UseScreen(
+    modifier: Modifier = Modifier,
+    initialUrl: String? = null,
+    onInitialUrlConsumed: () -> Unit = {},
+) {
     val context = LocalContext.current
     val uiState by ConnectState.uiState.collectAsState()
     var showModal by remember { mutableStateOf(false) }
     var pendingUrl by remember { mutableStateOf<String?>(null) }
     var pendingConnectionId by remember { mutableStateOf<String?>(null) }
     var deleteConnectionId by remember { mutableStateOf<String?>(null) }
+    var prefillUrl by remember { mutableStateOf("") }
+
+    LaunchedEffect(initialUrl) {
+        if (initialUrl != null) {
+            prefillUrl = initialUrl
+            showModal = true
+            onInitialUrlConsumed()
+        }
+    }
 
     val vpnPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult(),
@@ -156,7 +169,10 @@ fun UseScreen(modifier: Modifier = Modifier) {
                     color = Yellow,
                     shape = RoundedCornerShape(16.dp),
                 )
-                .clickable { showModal = true },
+                .clickable {
+                    prefillUrl = ""
+                    showModal = true
+                },
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -173,6 +189,7 @@ fun UseScreen(modifier: Modifier = Modifier) {
             onDismiss = { showModal = false },
         ) {
             UseModalContent(
+                initialUrl = prefillUrl,
                 onConfirm = { url, label ->
                     showModal = false
                     val connection = SavedUseConnection(
@@ -287,10 +304,11 @@ private fun UseConnectionItem(
 
 @Composable
 private fun UseModalContent(
+    initialUrl: String = "",
     onConfirm: (url: String, label: String) -> Unit,
     onCancel: () -> Unit,
 ) {
-    var url by remember { mutableStateOf("") }
+    var url by remember { mutableStateOf(initialUrl) }
     var label by remember { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
 

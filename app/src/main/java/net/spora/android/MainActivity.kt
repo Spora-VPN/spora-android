@@ -1,5 +1,6 @@
 package net.spora.android
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -22,8 +23,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -44,6 +47,8 @@ import net.spora.android.ui.theme.TextMain
 import uniffi.spora_ffi.initAndroidLogging
 
 class MainActivity : ComponentActivity() {
+    private var deepLinkUrl = mutableStateOf<String?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         SharedConnectionStore.init(this)
@@ -51,18 +56,44 @@ class MainActivity : ComponentActivity() {
         ShareState.loadConnections(SharedConnectionStore.getAll())
         ConnectState.loadConnections(UseConnectionStore.getAll())
         initAndroidLogging()
+        handleDeepLink(intent)
         enableEdgeToEdge()
         setContent {
             SporaTheme {
-                MainScreen()
+                MainScreen(
+                    deepLinkUrl = deepLinkUrl.value,
+                    onDeepLinkConsumed = { deepLinkUrl.value = null },
+                )
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleDeepLink(intent)
+    }
+
+    private fun handleDeepLink(intent: Intent?) {
+        if (intent?.action == Intent.ACTION_VIEW) {
+            intent.data?.toString()?.let { url ->
+                deepLinkUrl.value = url
             }
         }
     }
 }
 
 @Composable
-fun MainScreen() {
+fun MainScreen(
+    deepLinkUrl: String? = null,
+    onDeepLinkConsumed: () -> Unit = {},
+) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+
+    LaunchedEffect(deepLinkUrl) {
+        if (deepLinkUrl != null) {
+            selectedTab = 1
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -78,7 +109,10 @@ fun MainScreen() {
         ) {
             when (selectedTab) {
                 0 -> ShareScreen()
-                1 -> UseScreen()
+                1 -> UseScreen(
+                    initialUrl = deepLinkUrl,
+                    onInitialUrlConsumed = onDeepLinkConsumed,
+                )
             }
         }
 
