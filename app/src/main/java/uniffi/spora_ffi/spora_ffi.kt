@@ -663,6 +663,8 @@ internal object IntegrityCheckingUniffiLib {
     ): Short
     external fun uniffi_spora_ffi_checksum_func_make_secret_key(
     ): Short
+    external fun uniffi_spora_ffi_checksum_func_set_keepalive(
+    ): Short
     external fun uniffi_spora_ffi_checksum_func_share(
     ): Short
     external fun uniffi_spora_ffi_checksum_func_stop_share(
@@ -693,6 +695,8 @@ internal object UniffiLib {
     ): Unit
     external fun uniffi_spora_ffi_fn_func_make_secret_key(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    external fun uniffi_spora_ffi_fn_func_set_keepalive(`handle`: Int,`intervalSecs`: Int,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
     external fun uniffi_spora_ffi_fn_func_share(`key`: RustBuffer.ByValue,`protector`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_spora_ffi_fn_func_stop_share(`handle`: Int,uniffi_out_err: UniffiRustCallStatus, 
@@ -828,6 +832,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_spora_ffi_checksum_func_make_secret_key() != 11105.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_spora_ffi_checksum_func_set_keepalive() != 5568.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_spora_ffi_checksum_func_share() != 56740.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -958,6 +965,29 @@ public abstract class FfiConverterCallbackInterface<CallbackInterface: Any>: Ffi
 
     override fun write(value: CallbackInterface, buf: ByteBuffer) {
         buf.putLong(lower(value))
+    }
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterUInt: FfiConverter<UInt, Int> {
+    override fun lift(value: Int): UInt {
+        return value.toUInt()
+    }
+
+    override fun read(buf: ByteBuffer): UInt {
+        return lift(buf.getInt())
+    }
+
+    override fun lower(value: UInt): Int {
+        return value.toInt()
+    }
+
+    override fun allocationSize(value: UInt) = 4UL
+
+    override fun write(value: UInt, buf: ByteBuffer) {
+        buf.putInt(value.toInt())
     }
 }
 
@@ -1407,6 +1437,24 @@ public object FfiConverterOptionalTypeSocketProtectorCallback: FfiConverterRustB
 }
     )
     }
+    
+
+        /**
+         * Controls the keepalive behavior for a client tunnel.
+         *
+         * - `interval_secs = 0`: on-demand mode (dormant when idle, probes on traffic after gap).
+         * - `interval_secs > 0`: always probe at that interval (e.g. 20 when screen is on).
+         *
+         * Transition from 0→N sends an immediate ping to detect dead connections.
+         */
+    @Throws(TunnelException::class) fun `setKeepalive`(`handle`: kotlin.Int, `intervalSecs`: kotlin.UInt)
+        = 
+    uniffiRustCallWithError(TunnelException) { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_set_keepalive(
+    
+        FfiConverterInt.lower(`handle`),FfiConverterUInt.lower(`intervalSecs`),_status)
+}
+    
     
 
     @Throws(ShareException::class) fun `share`(`key`: kotlin.String, `protector`: SocketProtectorCallback?): ShareResult {

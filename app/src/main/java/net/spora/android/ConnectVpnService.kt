@@ -4,10 +4,13 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.net.VpnService
 import android.os.Build
+import android.util.Log
 import android.os.ParcelFileDescriptor
 import android.system.Os
 import androidx.core.app.NotificationCompat
@@ -30,6 +33,24 @@ class ConnectVpnService : VpnService() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var vpnInterface: ParcelFileDescriptor? = null
     private var tunnelHandle: Int? = null
+
+    private val screenReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val handle = tunnelHandle ?: return
+            try {
+                when (intent.action) {
+                    Intent.ACTION_SCREEN_ON -> {
+                        Log.d(TAG, "Screen ON — setting keepalive to 20s")
+                        uniffi.spora_ffi.setKeepalive(handle, 20u)
+                    }
+                    Intent.ACTION_SCREEN_OFF -> {
+                        Log.d(TAG, "Screen OFF — disabling keepalive")
+                        uniffi.spora_ffi.setKeepalive(handle, 0u)
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -96,6 +117,7 @@ class ConnectVpnService : VpnService() {
                     .addRoute("0.0.0.0", 0)
                     .addDnsServer(DNS_SERVER)
                     .setMtu(MTU)
+                    .addDisallowedApplication("com.google.android.gms")
 
                 val newInterface = fullRouteBuilder.establish()
                     ?: throw IllegalStateException("Failed to re-establish VPN interface with routes")
@@ -119,6 +141,19 @@ class ConnectVpnService : VpnService() {
             }
 
             ConnectState.connected()
+
+            // Start with keepalive enabled (user's screen is on when they connect)
+            try {
+                uniffi.spora_ffi.setKeepalive(tunnelHandle!!, 20u)
+            } catch (_: Exception) {}
+
+            // Toggle keepalive based on screen state
+            val filter = IntentFilter().apply {
+                addAction(Intent.ACTION_SCREEN_ON)
+                addAction(Intent.ACTION_SCREEN_OFF)
+            }
+            registerReceiver(screenReceiver, filter)
+
             try {
                 notify(
                     buildNotification(
@@ -132,6 +167,7 @@ class ConnectVpnService : VpnService() {
     }
 
     private fun disconnect() {
+        try { unregisterReceiver(screenReceiver) } catch (_: Exception) {}
         ConnectState.disconnected()
         closeTunnel()
         stopForegroundCompat()
@@ -232,12 +268,14 @@ class ConnectVpnService : VpnService() {
     }
 
     override fun onDestroy() {
+        try { unregisterReceiver(screenReceiver) } catch (_: Exception) {}
         serviceScope.cancel()
         closeTunnel()
         super.onDestroy()
     }
 
     companion object {
+        private const val TAG = "ConnectVpnService"
         private const val NOTIFICATION_CHANNEL_ID = "spora_vpn"
         private const val NOTIFICATION_ID = 2
 
