@@ -57,6 +57,14 @@ object ShareState {
         )
     }
 
+    fun renameConnection(id: String, newLabel: String) {
+        _uiState.value = _uiState.value.copy(
+            connections = _uiState.value.connections.map {
+                if (it.id == id) it.copy(label = newLabel) else it
+            },
+        )
+    }
+
     fun removeConnection(id: String) {
         _uiState.value = _uiState.value.copy(
             connections = _uiState.value.connections.filter { it.id != id },

@@ -50,8 +50,8 @@ import net.spora.android.ui.theme.TextMuted
 fun ShareScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val uiState by ShareState.uiState.collectAsState()
-    var showModal by remember { mutableStateOf(false) }
     var pendingShareConnectionId by remember { mutableStateOf<String?>(null) }
+    var renameConnectionId by remember { mutableStateOf<String?>(null) }
     var deleteConnectionId by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(pendingShareConnectionId, uiState.activeShares) {
@@ -59,6 +59,22 @@ fun ShareScreen(modifier: Modifier = Modifier) {
         val url = uiState.activeShares[pendingId]?.url ?: return@LaunchedEffect
         pendingShareConnectionId = null
         shareUrl(context, url)
+        renameConnectionId = pendingId
+    }
+
+    fun createAndShare() {
+        val key = uniffi.spora_ffi.makeSecretKey()
+        val existingCount = uiState.connections.size
+        val label = "Connection ${existingCount + 1}"
+        val connection = SharedConnection(
+            id = java.util.UUID.randomUUID().toString(),
+            label = label,
+            secretKey = key,
+        )
+        SharedConnectionStore.save(connection)
+        ShareState.addConnection(connection)
+        pendingShareConnectionId = connection.id
+        ShareForegroundService.startConnection(context, connection.id, connection.secretKey)
     }
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -69,11 +85,9 @@ fun ShareScreen(modifier: Modifier = Modifier) {
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(32.dp),
         ) {
-            if (uiState.connections.isEmpty()) {
-                ActionCard(onClick = { showModal = true })
-            } else {
-                ActionCard(onClick = { showModal = true })
+            ActionCard(onClick = { createAndShare() })
 
+            if (uiState.connections.isNotEmpty()) {
                 ConnectionList(
                     uiState = uiState,
                     context = context,
@@ -84,26 +98,30 @@ fun ShareScreen(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // Modal overlay
+        // Rename modal (shown after share intent)
         ModalOverlay(
-            visible = showModal,
-            onDismiss = { showModal = false },
+            visible = renameConnectionId != null,
+            onDismiss = { renameConnectionId = null },
         ) {
-            ShareModalContent(
-                onConfirm = { label ->
-                    showModal = false
-                    val key = uniffi.spora_ffi.makeSecretKey()
-                    val connection = SharedConnection(
-                        id = java.util.UUID.randomUUID().toString(),
-                        label = label,
-                        secretKey = key,
-                    )
-                    SharedConnectionStore.save(connection)
-                    ShareState.addConnection(connection)
-                    pendingShareConnectionId = connection.id
-                    ShareForegroundService.startConnection(context, connection.id, connection.secretKey)
+            val connectionId = renameConnectionId
+            val currentLabel = connectionId?.let { id ->
+                uiState.connections.find { it.id == id }?.label
+            } ?: ""
+
+            RenameModalContent(
+                currentLabel = currentLabel,
+                onConfirm = { newLabel ->
+                    connectionId?.let { id ->
+                        val connection = uiState.connections.find { it.id == id }
+                        if (connection != null) {
+                            val updated = connection.copy(label = newLabel)
+                            SharedConnectionStore.update(updated)
+                            ShareState.renameConnection(id, newLabel)
+                        }
+                    }
+                    renameConnectionId = null
                 },
-                onCancel = { showModal = false },
+                onDismiss = { renameConnectionId = null },
             )
         }
 
@@ -325,11 +343,12 @@ private fun ConnectionItem(
 }
 
 @Composable
-private fun ShareModalContent(
+private fun RenameModalContent(
+    currentLabel: String,
     onConfirm: (label: String) -> Unit,
-    onCancel: () -> Unit,
+    onDismiss: () -> Unit,
 ) {
-    var label by remember { mutableStateOf("") }
+    var label by remember { mutableStateOf(currentLabel) }
     val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
@@ -341,7 +360,7 @@ private fun ShareModalContent(
             InputField(
                 value = label,
                 onValueChange = { label = it },
-                label = "Label Connection",
+                label = "Name This Connection",
                 placeholder = "e.g. Mom's Phone",
                 focusRequester = focusRequester,
             )
@@ -354,20 +373,12 @@ private fun ShareModalContent(
         }
 
         PrimaryButton(
-            text = "GENERATE LINK",
+            text = "SAVE",
             onClick = { if (label.isNotBlank()) onConfirm(label) },
             enabled = label.isNotBlank(),
-            trailingIcon = {
-                Icon(
-                    imageVector = SporaIcons.ArrowRight,
-                    contentDescription = null,
-                    tint = TextLight,
-                    modifier = Modifier.size(20.dp),
-                )
-            },
         )
 
-        CancelButton(onClick = onCancel)
+        CancelButton(onClick = onDismiss)
     }
 }
 
