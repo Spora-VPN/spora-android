@@ -32,9 +32,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -46,7 +47,7 @@ import net.spora.android.ui.theme.CardBackground
 import net.spora.android.ui.theme.TextLight
 import net.spora.android.ui.theme.TextMain
 import net.spora.android.ui.theme.TextMuted
-import net.spora.android.ui.theme.Yellow
+import net.spora.android.ui.theme.Orange
 
 @Composable
 fun UseScreen(
@@ -101,21 +102,19 @@ fun UseScreen(
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(32.dp),
         ) {
-            if (uiState.savedConnections.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 40.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "NO SAVED CONNECTIONS",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextMuted.copy(alpha = 0.5f),
-                    )
-                }
-            } else {
+            UseActionCard(onClick = {
+                prefillUrl = ""
+                showModal = true
+            })
+
+            if (uiState.savedConnections.isNotEmpty()) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        text = "SAVED CONNECTIONS",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextMuted,
+                    )
+
                     uiState.savedConnections.forEach { connection ->
                         val isThisActive = uiState.activeConnectionId == connection.id
                         val isThisConnecting = isThisActive && uiState.isConnecting
@@ -127,7 +126,6 @@ fun UseScreen(
                             isConnecting = isThisConnecting,
                             onToggle = { enabled ->
                                 if (enabled) {
-                                    // Disconnect current first if different
                                     if (uiState.isConnected || uiState.isConnecting) {
                                         ConnectVpnService.disconnect(context)
                                     }
@@ -144,35 +142,7 @@ fun UseScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(72.dp))
-        }
-
-        // Floating add button
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = 20.dp)
-                .shadow(
-                    elevation = 8.dp,
-                    shape = RoundedCornerShape(16.dp),
-                )
-                .size(56.dp)
-                .background(
-                    color = Yellow,
-                    shape = RoundedCornerShape(16.dp),
-                )
-                .clickable {
-                    prefillUrl = ""
-                    showModal = true
-                },
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = SporaIcons.Plus,
-                contentDescription = "Add connection",
-                tint = TextMain,
-                modifier = Modifier.size(24.dp),
-            )
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
         // Modal overlay
@@ -211,6 +181,58 @@ fun UseScreen(
                     deleteConnectionId = null
                 },
                 onCancel = { deleteConnectionId = null },
+            )
+        }
+    }
+}
+
+@Composable
+private fun UseActionCard(onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation = 16.dp,
+                shape = RoundedCornerShape(24.dp),
+                ambientColor = Orange.copy(alpha = 0.4f),
+                spotColor = Orange.copy(alpha = 0.4f),
+            )
+            .clip(RoundedCornerShape(24.dp))
+            .background(Orange)
+            .clickable(onClick = onClick)
+            .padding(32.dp),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = "Connect via Friend",
+                style = MaterialTheme.typography.headlineLarge,
+                color = TextLight,
+            )
+            Text(
+                text = "Use a connection a friend has shared with you",
+                style = MaterialTheme.typography.labelSmall,
+                color = TextLight.copy(alpha = 0.7f),
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .size(40.dp)
+                .background(
+                    color = Color.White.copy(alpha = 0.2f),
+                    shape = CircleShape,
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = SporaIcons.ArrowRight,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(18.dp),
             )
         }
     }
