@@ -82,7 +82,7 @@ class ConnectVpnService : VpnService() {
         startForeground(
             NOTIFICATION_ID,
             buildNotification(
-                contentText = "Connecting…",
+                contentText = getString(R.string.notif_vpn_connecting),
                 isOngoing = true,
                 includeDisconnectAction = true,
             ),
@@ -129,7 +129,7 @@ class ConnectVpnService : VpnService() {
                 try {
                     notify(
                         buildNotification(
-                            contentText = "Error: ${t.message ?: t::class.java.simpleName}",
+                            contentText = getString(R.string.notif_vpn_error, t.message ?: t::class.java.simpleName),
                             isOngoing = false,
                             includeDisconnectAction = false,
                         )
@@ -157,7 +157,7 @@ class ConnectVpnService : VpnService() {
             try {
                 notify(
                     buildNotification(
-                        contentText = "Connected",
+                        contentText = getString(R.string.notif_vpn_connected),
                         isOngoing = true,
                         includeDisconnectAction = true,
                     )
@@ -217,7 +217,7 @@ class ConnectVpnService : VpnService() {
 
         val builder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("Spora VPN")
+            .setContentTitle(getString(R.string.notif_vpn_title))
             .setContentText(contentText)
             .setStyle(NotificationCompat.BigTextStyle().bigText(contentText))
             .setContentIntent(openPendingIntent)
@@ -234,7 +234,7 @@ class ConnectVpnService : VpnService() {
                 disconnectIntent,
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
-            builder.addAction(0, "Disconnect", disconnectPendingIntent)
+            builder.addAction(0, getString(R.string.notif_vpn_disconnect), disconnectPendingIntent)
         }
 
         return builder.build()
@@ -249,10 +249,10 @@ class ConnectVpnService : VpnService() {
 
         val channel = NotificationChannel(
             NOTIFICATION_CHANNEL_ID,
-            "Spora VPN",
+            getString(R.string.notif_vpn_channel_name),
             NotificationManager.IMPORTANCE_LOW,
         ).apply {
-            description = "Required notification while VPN is connected"
+            description = getString(R.string.notif_vpn_channel_desc)
         }
 
         nm.createNotificationChannel(channel)

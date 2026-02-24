@@ -56,7 +56,7 @@ class ShareForegroundService : Service() {
         if (activeJobs.isEmpty()) {
             startForeground(
                 NOTIFICATION_ID,
-                buildNotification("Starting\u2026"),
+                buildNotification(getString(R.string.notif_share_starting)),
             )
         }
 
@@ -106,7 +106,7 @@ class ShareForegroundService : Service() {
 
     private fun updateNotification() {
         val count = activeJobs.size
-        val text = if (count == 1) "Sharing 1 connection" else "Sharing $count connections"
+        val text = resources.getQuantityString(R.plurals.notif_share_count, count, count)
         notify(buildNotification(text))
     }
 
@@ -135,14 +135,14 @@ class ShareForegroundService : Service() {
 
         return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("Spora sharing")
+            .setContentTitle(getString(R.string.notif_share_title))
             .setContentText(contentText)
             .setStyle(NotificationCompat.BigTextStyle().bigText(contentText))
             .setContentIntent(openPendingIntent)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
-            .addAction(0, "Stop all", stopAllPendingIntent)
+            .addAction(0, getString(R.string.notif_share_stop_all), stopAllPendingIntent)
             .build()
     }
 
@@ -155,10 +155,10 @@ class ShareForegroundService : Service() {
 
         val channel = NotificationChannel(
             NOTIFICATION_CHANNEL_ID,
-            "Spora sharing",
+            getString(R.string.notif_share_channel_name),
             NotificationManager.IMPORTANCE_LOW,
         ).apply {
-            description = "Required notification while sharing is active"
+            description = getString(R.string.notif_share_channel_desc)
         }
 
         nm.createNotificationChannel(channel)

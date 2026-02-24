@@ -1,0 +1,76 @@
+<resources>
+    <!-- Common -->
+    <string name="action_cancel">АДМЕНА</string>
+    <string name="action_delete">ВЫДАЛІЦЬ</string>
+    <string name="action_save">ЗАХАВАЦЬ</string>
+    <string name="saved_connections_header">ЗАХАВАНЫЯ ПАДКЛЮЧЭННІ</string>
+    <string name="delete_connection_content_desc">Выдаліць падключэнне</string>
+
+    <!-- Delete confirmation modal -->
+    <string name="delete_modal_header">ВЫДАЛЕННЕ ПАДКЛЮЧЭННЯ</string>
+    <string name="delete_modal_title">Вы ўпэўнены?</string>
+    <string name="delete_modal_message">Гэта падключэнне будзе выдалена назаўсёды.</string>
+
+    <!-- Header / Status -->
+    <string name="header_status_connected_via">Падключана праз %1$s</string>
+    <string name="header_status_connecting_to">Падключэнне да %1$s\u2026</string>
+    <string name="header_status_sharing_with">Раздаецца: %1$s</string>
+    <string name="header_status_starting">Запуск\u2026</string>
+    <string name="header_status_offline">Не ў сетцы</string>
+    <string name="header_logo_content_desc">Лагатып Spora</string>
+
+    <!-- Tabs -->
+    <string name="tab_share">РАЗДАЦЬ</string>
+    <string name="tab_use">ВЫКАРЫСТАЦЬ</string>
+
+    <!-- Share screen -->
+    <string name="share_action_title">Раздаць інтэрнэт</string>
+    <string name="share_action_subtitle">Стварыце спасылку для раздачы падключэння</string>
+    <string name="share_status_sharing">Раздаецца</string>
+    <string name="share_status_starting">Запуск\u2026</string>
+    <string name="share_status_error">Памылка: %1$s</string>
+    <string name="share_status_inactive">Неактыўна</string>
+    <string name="share_link_content_desc">Падзяліцца спасылкай</string>
+    <string name="share_default_label">Падключэнне %1$d</string>
+
+    <!-- Share rename modal -->
+    <string name="share_rename_label">Назавіце падключэнне</string>
+    <string name="share_rename_placeholder">напр. Мамін тэлефон</string>
+    <string name="share_rename_hint">Назва дапаможа вызначыць, хто карыстаецца вашым інтэрнэтам.</string>
+
+    <!-- Use screen -->
+    <string name="use_action_title">Падключыцца праз сябра</string>
+    <string name="use_action_subtitle">Выкарыстайце падключэнне, якім падзяліўся сябар</string>
+    <string name="use_status_connected">Падключана</string>
+    <string name="use_status_connecting">Падключэнне\u2026</string>
+    <string name="use_default_label">Невядомае падключэнне</string>
+
+    <!-- Use modal -->
+    <string name="use_modal_url_label">URL падключэння</string>
+    <string name="use_modal_url_placeholder">spora://...</string>
+    <string name="use_modal_label_label">Назва (неабавязкова)</string>
+    <string name="use_modal_label_placeholder">напр. Хатняя база</string>
+    <string name="use_modal_save">ЗАХАВАЦЬ ПАДКЛЮЧЭННЕ</string>
+
+    <!-- Share notifications -->
+    <string name="notif_share_title">Spora — раздача</string>
+    <string name="notif_share_starting">Запуск\u2026</string>
+    <string name="notif_share_stop_all">Спыніць усё</string>
+    <string name="notif_share_channel_name">Раздача Spora</string>
+    <string name="notif_share_channel_desc">Абавязковае апавяшчэнне падчас раздачы</string>
+    <plurals name="notif_share_count">
+        <item quantity="one">Раздаецца %1$d падключэнне</item>
+        <item quantity="few">Раздаецца %1$d падключэнні</item>
+        <item quantity="many">Раздаецца %1$d падключэнняў</item>
+        <item quantity="other">Раздаецца %1$d падключэнняў</item>
+    </plurals>
+
+    <!-- VPN notifications -->
+    <string name="notif_vpn_title">Spora VPN</string>
+    <string name="notif_vpn_connecting">Падключэнне\u2026</string>
+    <string name="notif_vpn_connected">Падключана</string>
+    <string name="notif_vpn_error">Памылка: %1$s</string>
+    <string name="notif_vpn_disconnect">Адключыцца</string>
+    <string name="notif_vpn_channel_name">Spora VPN</string>
+    <string name="notif_vpn_channel_desc">Абавязковае апавяшчэнне пры актыўным VPN</string>
+</resources>

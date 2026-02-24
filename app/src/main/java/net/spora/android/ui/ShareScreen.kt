@@ -35,7 +35,9 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import net.spora.android.R
 import net.spora.android.SharedConnection
 import net.spora.android.SharedConnectionStore
 import net.spora.android.ShareForegroundService
@@ -65,7 +67,7 @@ fun ShareScreen(modifier: Modifier = Modifier) {
     fun createAndShare() {
         val key = uniffi.spora_ffi.makeSecretKey()
         val existingCount = uiState.connections.size
-        val label = "Connection ${existingCount + 1}"
+        val label = context.getString(R.string.share_default_label, existingCount + 1)
         val connection = SharedConnection(
             id = java.util.UUID.randomUUID().toString(),
             label = label,
@@ -165,12 +167,12 @@ private fun ActionCard(onClick: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                text = "Share Your Internet",
+                text = stringResource(R.string.share_action_title),
                 style = MaterialTheme.typography.headlineLarge,
                 color = TextLight,
             )
             Text(
-                text = "Create a link to share your connection",
+                text = stringResource(R.string.share_action_subtitle),
                 style = MaterialTheme.typography.labelSmall,
                 color = TextLight.copy(alpha = 0.7f),
             )
@@ -205,7 +207,7 @@ private fun ConnectionList(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            text = "SAVED CONNECTIONS",
+            text = stringResource(R.string.saved_connections_header),
             style = MaterialTheme.typography.labelSmall,
             color = TextMuted,
         )
@@ -285,25 +287,25 @@ private fun ConnectionItem(
                                 .background(Color(0xFF4CAF50), CircleShape),
                         )
                         Text(
-                            text = "Sharing",
+                            text = stringResource(R.string.share_status_sharing),
                             style = MaterialTheme.typography.labelSmall,
                             color = TextMuted,
                         )
                     } else if (isStarting) {
                         Text(
-                            text = "Starting\u2026",
+                            text = stringResource(R.string.share_status_starting),
                             style = MaterialTheme.typography.labelSmall,
                             color = TextMuted,
                         )
                     } else if (error != null) {
                         Text(
-                            text = "Error: $error",
+                            text = stringResource(R.string.share_status_error, error),
                             style = MaterialTheme.typography.labelSmall,
                             color = Orange,
                         )
                     } else {
                         Text(
-                            text = "Inactive",
+                            text = stringResource(R.string.share_status_inactive),
                             style = MaterialTheme.typography.labelSmall,
                             color = TextMuted,
                         )
@@ -313,7 +315,7 @@ private fun ConnectionItem(
             if (onDelete != null) {
                 Icon(
                     imageVector = SporaIcons.Delete,
-                    contentDescription = "Delete connection",
+                    contentDescription = stringResource(R.string.delete_connection_content_desc),
                     tint = TextMuted,
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
@@ -324,7 +326,7 @@ private fun ConnectionItem(
             if (onShareClick != null) {
                 Icon(
                     imageVector = SporaIcons.Share,
-                    contentDescription = "Share link",
+                    contentDescription = stringResource(R.string.share_link_content_desc),
                     tint = TextMain,
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
@@ -360,20 +362,20 @@ private fun RenameModalContent(
             InputField(
                 value = label,
                 onValueChange = { label = it },
-                label = "Name This Connection",
-                placeholder = "e.g. Mom's Phone",
+                label = stringResource(R.string.share_rename_label),
+                placeholder = stringResource(R.string.share_rename_placeholder),
                 focusRequester = focusRequester,
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Naming helps identify who is using your net.",
+                text = stringResource(R.string.share_rename_hint),
                 style = MaterialTheme.typography.labelSmall,
                 color = TextMuted,
             )
         }
 
         PrimaryButton(
-            text = "SAVE",
+            text = stringResource(R.string.action_save),
             onClick = { if (label.isNotBlank()) onConfirm(label) },
             enabled = label.isNotBlank(),
         )
@@ -390,26 +392,26 @@ private fun DeleteConfirmContent(
     Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
         Column {
             Text(
-                text = "DELETE CONNECTION",
+                text = stringResource(R.string.delete_modal_header),
                 style = MaterialTheme.typography.labelSmall,
                 color = TextMuted,
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Are you sure?",
+                text = stringResource(R.string.delete_modal_title),
                 style = MaterialTheme.typography.headlineLarge,
                 color = TextMain,
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "This connection will be permanently removed.",
+                text = stringResource(R.string.delete_modal_message),
                 style = MaterialTheme.typography.labelSmall,
                 color = TextMuted,
             )
         }
 
         PrimaryButton(
-            text = "DELETE",
+            text = stringResource(R.string.action_delete),
             onClick = onConfirm,
         )
 

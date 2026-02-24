@@ -38,7 +38,9 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import net.spora.android.R
 import net.spora.android.ConnectState
 import net.spora.android.ConnectVpnService
 import net.spora.android.SavedUseConnection
@@ -110,7 +112,7 @@ fun UseScreen(
             if (uiState.savedConnections.isNotEmpty()) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
-                        text = "SAVED CONNECTIONS",
+                        text = stringResource(R.string.saved_connections_header),
                         style = MaterialTheme.typography.labelSmall,
                         color = TextMuted,
                     )
@@ -156,7 +158,7 @@ fun UseScreen(
                     showModal = false
                     val connection = SavedUseConnection(
                         id = java.util.UUID.randomUUID().toString(),
-                        label = label.ifBlank { "Unknown Connection" },
+                        label = label.ifBlank { context.getString(R.string.use_default_label) },
                         url = url,
                     )
                     UseConnectionStore.save(connection)
@@ -207,12 +209,12 @@ private fun UseActionCard(onClick: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                text = "Connect via Friend",
+                text = stringResource(R.string.use_action_title),
                 style = MaterialTheme.typography.headlineLarge,
                 color = TextLight,
             )
             Text(
-                text = "Use a connection a friend has shared with you",
+                text = stringResource(R.string.use_action_subtitle),
                 style = MaterialTheme.typography.labelSmall,
                 color = TextLight.copy(alpha = 0.7f),
             )
@@ -283,14 +285,14 @@ private fun UseConnectionItem(
                                 .background(Color(0xFF4CAF50), CircleShape),
                         )
                         Text(
-                            text = "Connected",
+                            text = stringResource(R.string.use_status_connected),
                             style = MaterialTheme.typography.labelSmall,
                             color = TextMuted,
                         )
                     }
                 } else if (isConnecting) {
                     Text(
-                        text = "Connecting\u2026",
+                        text = stringResource(R.string.use_status_connecting),
                         style = MaterialTheme.typography.labelSmall,
                         color = TextMuted,
                     )
@@ -299,7 +301,7 @@ private fun UseConnectionItem(
             if (onDelete != null) {
                 Icon(
                     imageVector = SporaIcons.Delete,
-                    contentDescription = "Delete connection",
+                    contentDescription = stringResource(R.string.delete_connection_content_desc),
                     tint = TextMuted,
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
@@ -334,20 +336,20 @@ private fun UseModalContent(
         InputField(
             value = url,
             onValueChange = { url = it },
-            label = "Connection URL",
-            placeholder = "spora://...",
+            label = stringResource(R.string.use_modal_url_label),
+            placeholder = stringResource(R.string.use_modal_url_placeholder),
             focusRequester = focusRequester,
         )
 
         InputField(
             value = label,
             onValueChange = { label = it },
-            label = "Label (Optional)",
-            placeholder = "e.g. Home Base",
+            label = stringResource(R.string.use_modal_label_label),
+            placeholder = stringResource(R.string.use_modal_label_placeholder),
         )
 
         PrimaryButton(
-            text = "SAVE CONNECTION",
+            text = stringResource(R.string.use_modal_save),
             onClick = { if (url.isNotBlank()) onConfirm(url, label) },
             enabled = url.isNotBlank(),
             trailingIcon = {
@@ -372,26 +374,26 @@ private fun UseDeleteConfirmContent(
     Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
         Column {
             Text(
-                text = "DELETE CONNECTION",
+                text = stringResource(R.string.delete_modal_header),
                 style = MaterialTheme.typography.labelSmall,
                 color = TextMuted,
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Are you sure?",
+                text = stringResource(R.string.delete_modal_title),
                 style = MaterialTheme.typography.headlineLarge,
                 color = TextMain,
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "This connection will be permanently removed.",
+                text = stringResource(R.string.delete_modal_message),
                 style = MaterialTheme.typography.labelSmall,
                 color = TextMuted,
             )
         }
 
         PrimaryButton(
-            text = "DELETE",
+            text = stringResource(R.string.action_delete),
             onClick = onConfirm,
         )
 

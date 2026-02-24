@@ -29,8 +29,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import net.spora.android.R
 import net.spora.android.ui.theme.Sage
 import net.spora.android.ui.theme.SageDark
 import net.spora.android.ui.theme.Slate
@@ -209,7 +211,7 @@ fun CancelButton(
     modifier: Modifier = Modifier,
 ) {
     Text(
-        text = "CANCEL",
+        text = stringResource(R.string.action_cancel),
         style = MaterialTheme.typography.labelSmall,
         color = TextMuted,
         textAlign = TextAlign.Center,

@@ -40,6 +40,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import net.spora.android.ui.ShareScreen
@@ -149,23 +150,23 @@ private fun AppHeader() {
     when {
         connectState.isConnected && activeUseConnection != null -> {
             statusDotColor = Color(0xFF4CAF50)
-            statusText = "Connected via ${activeUseConnection.label}"
+            statusText = stringResource(R.string.header_status_connected_via, activeUseConnection.label)
         }
         connectState.isConnecting && activeUseConnection != null -> {
             statusDotColor = Color(0xFFFFC107)
-            statusText = "Connecting to ${activeUseConnection.label}\u2026"
+            statusText = stringResource(R.string.header_status_connecting_to, activeUseConnection.label)
         }
         activeShareNames.isNotEmpty() -> {
             statusDotColor = Color(0xFF4CAF50)
-            statusText = "Sharing with ${activeShareNames.joinToString(", ")}"
+            statusText = stringResource(R.string.header_status_sharing_with, activeShareNames.joinToString(", "))
         }
         shareState.startingIds.isNotEmpty() -> {
             statusDotColor = Color(0xFFFFC107)
-            statusText = "Starting\u2026"
+            statusText = stringResource(R.string.header_status_starting)
         }
         else -> {
             statusDotColor = TextMuted
-            statusText = "Offline"
+            statusText = stringResource(R.string.header_status_offline)
         }
     }
 
@@ -182,7 +183,7 @@ private fun AppHeader() {
         ) {
             Image(
                 painter = painterResource(R.drawable.ic_logo),
-                contentDescription = "Spora logo",
+                contentDescription = stringResource(R.string.header_logo_content_desc),
                 modifier = Modifier.height(36.dp),
             )
 
@@ -233,13 +234,13 @@ private fun BottomNav(
     ) {
         NavItem(
             icon = SporaIcons.Share,
-            label = "SHARE",
+            label = stringResource(R.string.tab_share),
             selected = selectedTab == 0,
             onClick = { onTabSelected(0) },
         )
         NavItem(
             icon = SporaIcons.CloudDownload,
-            label = "USE",
+            label = stringResource(R.string.tab_use),
             selected = selectedTab == 1,
             onClick = { onTabSelected(1) },
         )

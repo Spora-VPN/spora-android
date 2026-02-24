@@ -1,0 +1,76 @@
+<resources>
+    <!-- Common -->
+    <string name="action_cancel">ОТМЕНА</string>
+    <string name="action_delete">УДАЛИТЬ</string>
+    <string name="action_save">СОХРАНИТЬ</string>
+    <string name="saved_connections_header">СОХРАНЁННЫЕ ПОДКЛЮЧЕНИЯ</string>
+    <string name="delete_connection_content_desc">Удалить подключение</string>
+
+    <!-- Delete confirmation modal -->
+    <string name="delete_modal_header">УДАЛЕНИЕ ПОДКЛЮЧЕНИЯ</string>
+    <string name="delete_modal_title">Вы уверены?</string>
+    <string name="delete_modal_message">Это подключение будет удалено навсегда.</string>
+
+    <!-- Header / Status -->
+    <string name="header_status_connected_via">Подключено через %1$s</string>
+    <string name="header_status_connecting_to">Подключение к %1$s\u2026</string>
+    <string name="header_status_sharing_with">Раздаётся: %1$s</string>
+    <string name="header_status_starting">Запуск\u2026</string>
+    <string name="header_status_offline">Не в сети</string>
+    <string name="header_logo_content_desc">Логотип Spora</string>
+
+    <!-- Tabs -->
+    <string name="tab_share">РАЗДАТЬ</string>
+    <string name="tab_use">ИСПОЛЬЗОВАТЬ</string>
+
+    <!-- Share screen -->
+    <string name="share_action_title">Раздать интернет</string>
+    <string name="share_action_subtitle">Создайте ссылку для раздачи подключения</string>
+    <string name="share_status_sharing">Раздаётся</string>
+    <string name="share_status_starting">Запуск\u2026</string>
+    <string name="share_status_error">Ошибка: %1$s</string>
+    <string name="share_status_inactive">Неактивно</string>
+    <string name="share_link_content_desc">Поделиться ссылкой</string>
+    <string name="share_default_label">Подключение %1$d</string>
+
+    <!-- Share rename modal -->
+    <string name="share_rename_label">Назовите подключение</string>
+    <string name="share_rename_placeholder">напр. Мамин телефон</string>
+    <string name="share_rename_hint">Название поможет определить, кто использует ваш интернет.</string>
+
+    <!-- Use screen -->
+    <string name="use_action_title">Подключиться через друга</string>
+    <string name="use_action_subtitle">Используйте подключение, которым поделился друг</string>
+    <string name="use_status_connected">Подключено</string>
+    <string name="use_status_connecting">Подключение\u2026</string>
+    <string name="use_default_label">Неизвестное подключение</string>
+
+    <!-- Use modal -->
+    <string name="use_modal_url_label">URL подключения</string>
+    <string name="use_modal_url_placeholder">spora://...</string>
+    <string name="use_modal_label_label">Название (необязательно)</string>
+    <string name="use_modal_label_placeholder">напр. Домашняя база</string>
+    <string name="use_modal_save">СОХРАНИТЬ ПОДКЛЮЧЕНИЕ</string>
+
+    <!-- Share notifications -->
+    <string name="notif_share_title">Spora — раздача</string>
+    <string name="notif_share_starting">Запуск\u2026</string>
+    <string name="notif_share_stop_all">Остановить все</string>
+    <string name="notif_share_channel_name">Раздача Spora</string>
+    <string name="notif_share_channel_desc">Обязательное уведомление во время раздачи</string>
+    <plurals name="notif_share_count">
+        <item quantity="one">Раздаётся %1$d подключение</item>
+        <item quantity="few">Раздаётся %1$d подключения</item>
+        <item quantity="many">Раздаётся %1$d подключений</item>
+        <item quantity="other">Раздаётся %1$d подключений</item>
+    </plurals>
+
+    <!-- VPN notifications -->
+    <string name="notif_vpn_title">Spora VPN</string>
+    <string name="notif_vpn_connecting">Подключение\u2026</string>
+    <string name="notif_vpn_connected">Подключено</string>
+    <string name="notif_vpn_error">Ошибка: %1$s</string>
+    <string name="notif_vpn_disconnect">Отключиться</string>
+    <string name="notif_vpn_channel_name">Spora VPN</string>
+    <string name="notif_vpn_channel_desc">Обязательное уведомление при активном VPN</string>
+</resources>

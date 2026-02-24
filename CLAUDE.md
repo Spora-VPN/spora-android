@@ -72,6 +72,24 @@ The VPN uses a two-phase TUN establishment: first without routes (so STUN works)
 - `app/src/main/java/uniffi/spora_ffi/spora_ffi.kt` - Auto-generated FFI bindings (do not edit)
 - `gradle/libs.versions.toml` - Centralized dependency versions
 
+## Internationalization (i18n)
+
+All user-facing strings must be defined in Android string resources — never hardcoded in Kotlin. The app supports three locales:
+
+- `app/src/main/res/values/strings.xml` — English (default)
+- `app/src/main/res/values-ru/strings.xml` — Russian
+- `app/src/main/res/values-be/strings.xml` — Belarusian
+
+When adding or changing any UI label, you **must** update all three files. The brand name "SPORA" stays hardcoded.
+
+**Conventions:**
+- Naming: `<scope>_<descriptor>` (e.g. `share_action_title`, `notif_vpn_connected`)
+- Compose: use `stringResource(R.string.…)`
+- Services / non-composable lambdas: use `getString(R.string.…)` or `context.getString(R.string.…)`
+- Parameterized strings: `%1$s` / `%1$d` placeholders
+- Plurals: use `<plurals>` with `one`/`other` for English, `one`/`few`/`many`/`other` for Russian and Belarusian
+- Escape apostrophes in XML: `Mom\'s Phone`
+
 ## Required Permissions
 
 - `INTERNET` - Network access
