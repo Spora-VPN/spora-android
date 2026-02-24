@@ -13,17 +13,21 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -33,10 +37,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.statusBars
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import net.spora.android.ui.ShareScreen
 import net.spora.android.ui.SporaIcons
@@ -46,6 +50,7 @@ import net.spora.android.ui.theme.SporaTheme
 import net.spora.android.ui.theme.TextLight
 import net.spora.android.ui.theme.TextLightMuted
 import net.spora.android.ui.theme.TextMain
+import net.spora.android.ui.theme.TextMuted
 import uniffi.spora_ffi.initAndroidLogging
 
 class MainActivity : ComponentActivity() {
@@ -128,6 +133,42 @@ fun MainScreen(
 @Composable
 private fun AppHeader() {
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val shareState by ShareState.uiState.collectAsState()
+    val connectState by ConnectState.uiState.collectAsState()
+
+    val activeShareNames = shareState.activeShares.keys.mapNotNull { id ->
+        shareState.connections.find { it.id == id }?.label
+    }
+    val activeUseConnection = connectState.activeConnectionId?.let { id ->
+        connectState.savedConnections.find { it.id == id }
+    }
+
+    val statusDotColor: Color
+    val statusText: String
+
+    when {
+        connectState.isConnected && activeUseConnection != null -> {
+            statusDotColor = Color(0xFF4CAF50)
+            statusText = "Connected via ${activeUseConnection.label}"
+        }
+        connectState.isConnecting && activeUseConnection != null -> {
+            statusDotColor = Color(0xFFFFC107)
+            statusText = "Connecting to ${activeUseConnection.label}\u2026"
+        }
+        activeShareNames.isNotEmpty() -> {
+            statusDotColor = Color(0xFF4CAF50)
+            statusText = "Sharing with ${activeShareNames.joinToString(", ")}"
+        }
+        shareState.startingIds.isNotEmpty() -> {
+            statusDotColor = Color(0xFFFFC107)
+            statusText = "Starting\u2026"
+        }
+        else -> {
+            statusDotColor = TextMuted
+            statusText = "Offline"
+        }
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -152,6 +193,23 @@ private fun AppHeader() {
             )
         }
 
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .background(statusDotColor, CircleShape),
+            )
+            Text(
+                text = statusText,
+                style = MaterialTheme.typography.labelSmall,
+                color = TextMuted,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 
