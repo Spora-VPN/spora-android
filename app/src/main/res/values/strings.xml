@@ -49,7 +49,7 @@
 
     <!-- Use modal -->
     <string name="use_modal_url_label">Connection URL</string>
-    <string name="use_modal_url_placeholder">spora://...</string>
+    <string name="use_modal_url_placeholder">https://spora.to/...</string>
     <string name="use_modal_label_label">Label (Optional)</string>
     <string name="use_modal_label_placeholder">e.g. Home Base</string>
     <string name="use_modal_save">SAVE CONNECTION</string>

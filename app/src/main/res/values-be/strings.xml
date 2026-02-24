@@ -47,7 +47,7 @@
 
     <!-- Use modal -->
     <string name="use_modal_url_label">URL падключэння</string>
-    <string name="use_modal_url_placeholder">spora://...</string>
+    <string name="use_modal_url_placeholder">https://spora.to/...</string>
     <string name="use_modal_label_label">Назва (неабавязкова)</string>
     <string name="use_modal_label_placeholder">напр. Хатняя база</string>
     <string name="use_modal_save">ЗАХАВАЦЬ ПАДКЛЮЧЭННЕ</string>

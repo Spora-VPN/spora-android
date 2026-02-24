@@ -47,7 +47,7 @@
 
     <!-- Use modal -->
     <string name="use_modal_url_label">URL подключения</string>
-    <string name="use_modal_url_placeholder">spora://...</string>
+    <string name="use_modal_url_placeholder">https://spora.to/...</string>
     <string name="use_modal_label_label">Название (необязательно)</string>
     <string name="use_modal_label_placeholder">напр. Домашняя база</string>
     <string name="use_modal_save">СОХРАНИТЬ ПОДКЛЮЧЕНИЕ</string>
