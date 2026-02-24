@@ -101,14 +101,6 @@ fun UseScreen(
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(32.dp),
         ) {
-            StatusHeader(
-                label = "Data Consumed",
-                value = "8.2",
-                unit = "GB",
-                periodLabel = "Today",
-                showBarcode = false,
-            )
-
             if (uiState.savedConnections.isEmpty()) {
                 Box(
                     modifier = Modifier

@@ -3,7 +3,6 @@ package net.spora.android.ui
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -18,121 +17,26 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
 import net.spora.android.ui.theme.Sage
 import net.spora.android.ui.theme.SageDark
 import net.spora.android.ui.theme.Slate
 import net.spora.android.ui.theme.TextLight
 import net.spora.android.ui.theme.TextMain
 import net.spora.android.ui.theme.TextMuted
-import kotlin.random.Random
-
-@Composable
-fun BarcodeStrip(
-    modifier: Modifier = Modifier,
-    lineCount: Int = 50,
-    lineColor: Color = TextMain,
-    alpha: Float = 0.3f,
-    animate: Boolean = true,
-) {
-    var seed by remember { mutableStateOf(Random.nextInt()) }
-
-    if (animate) {
-        LaunchedEffect(Unit) {
-            while (true) {
-                delay(500)
-                seed = Random.nextInt()
-            }
-        }
-    }
-
-    Canvas(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(40.dp),
-    ) {
-        val random = Random(seed)
-        val lineWidth = 1.dp.toPx()
-        val gap = 2.dp.toPx()
-        val totalWidth = lineCount * (lineWidth + gap)
-        val startX = (size.width - totalWidth) / 2f
-
-        for (i in 0 until lineCount) {
-            val heightFraction = when {
-                random.nextFloat() > 0.8f -> 1f
-                random.nextFloat() > 0.5f -> 0.6f
-                else -> 0.3f
-            }
-            val lineHeight = size.height * heightFraction
-            val x = startX + i * (lineWidth + gap)
-
-            drawRect(
-                color = lineColor.copy(alpha = alpha),
-                topLeft = Offset(x, size.height - lineHeight),
-                size = Size(lineWidth, lineHeight),
-            )
-        }
-    }
-}
-
-@Composable
-fun MiniBarcodeStrip(
-    modifier: Modifier = Modifier,
-    lineCount: Int = 20,
-    lineColor: Color = TextMuted,
-) {
-    var seed by remember { mutableStateOf(Random.nextInt()) }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(500)
-            seed = Random.nextInt()
-        }
-    }
-
-    Canvas(
-        modifier = modifier
-            .width((lineCount * 3).dp)
-            .height(20.dp),
-    ) {
-        val random = Random(seed)
-        val lineWidth = 1.dp.toPx()
-        val gap = 2.dp.toPx()
-
-        for (i in 0 until lineCount) {
-            val heightFraction = random.nextFloat()
-            val lineHeight = size.height * heightFraction
-            val x = i * (lineWidth + gap)
-
-            drawRect(
-                color = lineColor.copy(alpha = 0.5f),
-                topLeft = Offset(x, size.height - lineHeight),
-                size = Size(lineWidth, lineHeight),
-            )
-        }
-    }
-}
 
 @Composable
 fun SporaToggle(
@@ -241,68 +145,6 @@ fun PrimaryButton(
             if (trailingIcon != null) {
                 trailingIcon()
             }
-        }
-    }
-}
-
-@Composable
-fun StatusHeader(
-    label: String,
-    value: String,
-    unit: String,
-    periodLabel: String,
-    modifier: Modifier = Modifier,
-    showBarcode: Boolean = true,
-) {
-    val borderColor = TextMain
-
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .drawBehind {
-                drawLine(
-                    color = borderColor,
-                    start = Offset(0f, size.height),
-                    end = Offset(size.width, size.height),
-                    strokeWidth = 1.dp.toPx(),
-                )
-            }
-            .padding(bottom = 20.dp),
-    ) {
-        Text(
-            text = label.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            color = TextMuted,
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Bottom,
-        ) {
-            Row(verticalAlignment = Alignment.Bottom) {
-                Text(
-                    text = value,
-                    style = MaterialTheme.typography.displayLarge,
-                    color = TextMain,
-                )
-                Text(
-                    text = " $unit",
-                    style = MaterialTheme.typography.displayLarge.copy(
-                        fontSize = MaterialTheme.typography.bodyLarge.fontSize,
-                    ),
-                    color = TextMain.copy(alpha = 0.6f),
-                )
-            }
-            Text(
-                text = periodLabel.uppercase(),
-                style = MaterialTheme.typography.labelSmall,
-                color = TextMuted,
-            )
-        }
-        if (showBarcode) {
-            Spacer(modifier = Modifier.height(4.dp))
-            BarcodeStrip()
         }
     }
 }

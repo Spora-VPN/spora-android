@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -149,28 +148,6 @@ private fun AppHeader() {
             )
         }
 
-        // 3x3 dot grid menu
-        MenuGrid()
-    }
-}
-
-@Composable
-private fun MenuGrid() {
-    val dotColor = TextMain
-    Column(
-        verticalArrangement = Arrangement.spacedBy(3.dp),
-    ) {
-        repeat(3) {
-            Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                repeat(3) {
-                    Box(
-                        modifier = Modifier
-                            .size(4.dp)
-                            .background(dotColor, CircleShape),
-                    )
-                }
-            }
-        }
     }
 }
 

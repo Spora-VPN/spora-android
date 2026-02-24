@@ -36,12 +36,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import net.spora.android.SharedConnection
 import net.spora.android.SharedConnectionStore
 import net.spora.android.ShareForegroundService
 import net.spora.android.ShareState
-import net.spora.android.ui.theme.Border
 import net.spora.android.ui.theme.CardBackground
 import net.spora.android.ui.theme.Orange
 import net.spora.android.ui.theme.TextLight
@@ -71,14 +69,6 @@ fun ShareScreen(modifier: Modifier = Modifier) {
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(32.dp),
         ) {
-            StatusHeader(
-                label = "Total Traffic Shared",
-                value = "142.5",
-                unit = "GB",
-                periodLabel = "June",
-            )
-
-            // Action card or connection list
             if (uiState.connections.isEmpty()) {
                 ActionCard(onClick = { showModal = true })
             } else {
@@ -157,20 +147,14 @@ private fun ActionCard(onClick: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                text = "! INACTIVE",
-                style = MaterialTheme.typography.labelSmall,
-                color = TextLight.copy(alpha = 0.7f),
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "START SHARING",
-                style = MaterialTheme.typography.labelSmall,
-                color = TextLight.copy(alpha = 0.9f),
-            )
-            Text(
-                text = "New Connection",
+                text = "Share Your Internet",
                 style = MaterialTheme.typography.headlineLarge,
                 color = TextLight,
+            )
+            Text(
+                text = "Create a link to share your connection",
+                style = MaterialTheme.typography.labelSmall,
+                color = TextLight.copy(alpha = 0.7f),
             )
         }
 
@@ -203,7 +187,7 @@ private fun ConnectionList(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            text = "ACTIVE CONNECTIONS",
+            text = "SAVED CONNECTIONS",
             style = MaterialTheme.typography.labelSmall,
             color = TextMuted,
         )
@@ -283,7 +267,7 @@ private fun ConnectionItem(
                                 .background(Color(0xFF4CAF50), CircleShape),
                         )
                         Text(
-                            text = "Connected",
+                            text = "Sharing",
                             style = MaterialTheme.typography.labelSmall,
                             color = TextMuted,
                         )
@@ -337,19 +321,6 @@ private fun ConnectionItem(
             )
         }
 
-        if (isActive) {
-            Row(
-                verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                MiniBarcodeStrip()
-                Text(
-                    text = "12.4 MB/s",
-                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-                    color = TextMain,
-                )
-            }
-        }
     }
 }
 
