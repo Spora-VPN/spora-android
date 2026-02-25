@@ -35,6 +35,11 @@ object UseConnectionStore {
         persist(all)
     }
 
+    fun update(connection: SavedUseConnection) {
+        val all = getAll().map { if (it.id == connection.id) connection else it }
+        persist(all)
+    }
+
     fun delete(id: String) {
         val all = getAll().filter { it.id != id }
         persist(all)

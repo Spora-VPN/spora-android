@@ -26,6 +26,14 @@ object ConnectState {
         )
     }
 
+    fun updateConnection(connection: SavedUseConnection) {
+        _uiState.value = _uiState.value.copy(
+            savedConnections = _uiState.value.savedConnections.map {
+                if (it.id == connection.id) connection else it
+            },
+        )
+    }
+
     fun removeConnection(id: String) {
         _uiState.value = _uiState.value.copy(
             savedConnections = _uiState.value.savedConnections.filter { it.id != id },

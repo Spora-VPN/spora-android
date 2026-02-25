@@ -65,14 +65,6 @@ fun UseScreen(
     var deleteConnectionId by remember { mutableStateOf<String?>(null) }
     var prefillUrl by remember { mutableStateOf("") }
 
-    LaunchedEffect(initialUrl) {
-        if (initialUrl != null) {
-            prefillUrl = initialUrl
-            showModal = true
-            onInitialUrlConsumed()
-        }
-    }
-
     val vpnPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult(),
     ) { result ->
@@ -93,6 +85,22 @@ fun UseScreen(
             vpnPermissionLauncher.launch(prepareIntent)
         } else {
             ConnectVpnService.connect(context, url, connectionId)
+        }
+    }
+
+    LaunchedEffect(initialUrl) {
+        if (initialUrl != null) {
+            val existing = uiState.savedConnections.find { it.url == initialUrl }
+            if (existing != null) {
+                if (uiState.isConnected || uiState.isConnecting) {
+                    ConnectVpnService.disconnect(context)
+                }
+                startVpnConnection(existing.url, existing.id)
+            } else {
+                prefillUrl = initialUrl
+                showModal = true
+            }
+            onInitialUrlConsumed()
         }
     }
 
@@ -154,16 +162,28 @@ fun UseScreen(
         ) {
             UseModalContent(
                 initialUrl = prefillUrl,
-                onConfirm = { url, label ->
+                savedConnections = uiState.savedConnections,
+                onConfirm = { url, label, existingId ->
                     showModal = false
-                    val connection = SavedUseConnection(
-                        id = java.util.UUID.randomUUID().toString(),
-                        label = label.ifBlank { context.getString(R.string.use_default_label) },
-                        url = url,
-                    )
-                    UseConnectionStore.save(connection)
-                    ConnectState.addConnection(connection)
-                    startVpnConnection(connection.url, connection.id)
+                    if (existingId != null) {
+                        val updated = SavedUseConnection(
+                            id = existingId,
+                            label = label.ifBlank { context.getString(R.string.use_default_label) },
+                            url = url,
+                        )
+                        UseConnectionStore.update(updated)
+                        ConnectState.updateConnection(updated)
+                        startVpnConnection(updated.url, updated.id)
+                    } else {
+                        val connection = SavedUseConnection(
+                            id = java.util.UUID.randomUUID().toString(),
+                            label = label.ifBlank { context.getString(R.string.use_default_label) },
+                            url = url,
+                        )
+                        UseConnectionStore.save(connection)
+                        ConnectState.addConnection(connection)
+                        startVpnConnection(connection.url, connection.id)
+                    }
                 },
                 onCancel = { showModal = false },
             )
@@ -321,16 +341,26 @@ private fun UseConnectionItem(
 @Composable
 private fun UseModalContent(
     initialUrl: String = "",
-    onConfirm: (url: String, label: String) -> Unit,
+    savedConnections: List<SavedUseConnection> = emptyList(),
+    onConfirm: (url: String, label: String, existingConnectionId: String?) -> Unit,
     onCancel: () -> Unit,
 ) {
     var url by remember { mutableStateOf(initialUrl) }
     var label by remember { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
+    val matchedConnection = remember(url, savedConnections) {
+        savedConnections.find { it.url == url.trim() }
+    }
 
     LaunchedEffect(initialUrl) {
         if (initialUrl.isNotEmpty()) {
             url = initialUrl
+        }
+    }
+
+    LaunchedEffect(matchedConnection) {
+        if (matchedConnection != null) {
+            label = matchedConnection.label
         }
     }
 
@@ -356,7 +386,7 @@ private fun UseModalContent(
 
         PrimaryButton(
             text = stringResource(R.string.use_modal_save),
-            onClick = { if (url.isNotBlank()) onConfirm(url, label) },
+            onClick = { if (url.isNotBlank()) onConfirm(url.trim(), label, matchedConnection?.id) },
             enabled = url.isNotBlank(),
             trailingIcon = {
                 Icon(
