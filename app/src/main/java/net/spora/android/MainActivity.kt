@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,11 +30,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,6 +46,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlin.math.max
+import kotlinx.coroutines.launch
 import net.spora.android.ui.ShareScreen
 import net.spora.android.ui.SporaIcons
 import net.spora.android.ui.UseScreen
@@ -97,11 +99,12 @@ fun MainScreen(
     deepLinkUrl: String? = null,
     onDeepLinkConsumed: () -> Unit = {},
 ) {
-    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+    val pagerState = rememberPagerState(pageCount = { 2 })
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(deepLinkUrl) {
         if (deepLinkUrl != null) {
-            selectedTab = 1
+            pagerState.animateScrollToPage(1)
         }
     }
 
@@ -112,12 +115,13 @@ fun MainScreen(
     ) {
         AppHeader()
 
-        Box(
+        HorizontalPager(
+            state = pagerState,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth(),
-        ) {
-            when (selectedTab) {
+        ) { page ->
+            when (page) {
                 0 -> ShareScreen()
                 1 -> UseScreen(
                     initialUrl = deepLinkUrl,
@@ -127,8 +131,8 @@ fun MainScreen(
         }
 
         BottomNav(
-            selectedTab = selectedTab,
-            onTabSelected = { selectedTab = it },
+            selectedTab = pagerState.currentPage,
+            onTabSelected = { coroutineScope.launch { pagerState.animateScrollToPage(it) } },
         )
     }
 }
