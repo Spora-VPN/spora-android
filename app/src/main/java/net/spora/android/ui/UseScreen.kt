@@ -328,6 +328,12 @@ private fun UseModalContent(
     var label by remember { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
 
+    LaunchedEffect(initialUrl) {
+        if (initialUrl.isNotEmpty()) {
+            url = initialUrl
+        }
+    }
+
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
     }
