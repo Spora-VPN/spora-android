@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -43,6 +44,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlin.math.max
 import net.spora.android.ui.ShareScreen
 import net.spora.android.ui.SporaIcons
 import net.spora.android.ui.UseScreen
@@ -219,6 +221,9 @@ private fun BottomNav(
     selectedTab: Int,
     onTabSelected: (Int) -> Unit,
 ) {
+    val navBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val bottomPadding = max(navBarBottom.value + 8, 32f).dp
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -228,7 +233,7 @@ private fun BottomNav(
             )
             .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
             .background(Slate)
-            .padding(top = 20.dp, bottom = 32.dp),
+            .padding(top = 20.dp, bottom = bottomPadding),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
     ) {
