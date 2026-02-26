@@ -610,8 +610,30 @@ internal open class UniffiForeignFutureResultVoid(
 internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
     fun callback(`callbackData`: Long,`result`: UniffiForeignFutureResultVoid.UniffiByValue,)
 }
+internal interface UniffiCallbackInterfaceMtuCallbackMethod0 : com.sun.jna.Callback {
+    fun callback(`uniffiHandle`: Long,`mtu`: Int,`uniffiOutReturn`: Pointer,uniffiCallStatus: UniffiRustCallStatus,)
+}
 internal interface UniffiCallbackInterfaceSocketProtectorCallbackMethod0 : com.sun.jna.Callback {
     fun callback(`uniffiHandle`: Long,`fd`: Int,`uniffiOutReturn`: Pointer,uniffiCallStatus: UniffiRustCallStatus,)
+}
+@Structure.FieldOrder("uniffiFree", "uniffiClone", "onMtu")
+internal open class UniffiVTableCallbackInterfaceMtuCallback(
+    @JvmField internal var `uniffiFree`: UniffiCallbackInterfaceFree? = null,
+    @JvmField internal var `uniffiClone`: UniffiCallbackInterfaceClone? = null,
+    @JvmField internal var `onMtu`: UniffiCallbackInterfaceMtuCallbackMethod0? = null,
+) : Structure() {
+    class UniffiByValue(
+        `uniffiFree`: UniffiCallbackInterfaceFree? = null,
+        `uniffiClone`: UniffiCallbackInterfaceClone? = null,
+        `onMtu`: UniffiCallbackInterfaceMtuCallbackMethod0? = null,
+    ): UniffiVTableCallbackInterfaceMtuCallback(`uniffiFree`,`uniffiClone`,`onMtu`,), Structure.ByValue
+
+   internal fun uniffiSetValue(other: UniffiVTableCallbackInterfaceMtuCallback) {
+        `uniffiFree` = other.`uniffiFree`
+        `uniffiClone` = other.`uniffiClone`
+        `onMtu` = other.`onMtu`
+    }
+
 }
 @Structure.FieldOrder("uniffiFree", "uniffiClone", "protect")
 internal open class UniffiVTableCallbackInterfaceSocketProtectorCallback(
@@ -669,6 +691,8 @@ internal object IntegrityCheckingUniffiLib {
     ): Short
     external fun uniffi_spora_ffi_checksum_func_stop_share(
     ): Short
+    external fun uniffi_spora_ffi_checksum_method_mtucallback_on_mtu(
+    ): Short
     external fun uniffi_spora_ffi_checksum_method_socketprotectorcallback_protect(
     ): Short
     external fun ffi_spora_ffi_uniffi_contract_version(
@@ -682,12 +706,15 @@ internal object UniffiLib {
 
     init {
         Native.register(UniffiLib::class.java, findLibraryName(componentName = "spora_ffi"))
+        uniffiCallbackInterfaceMtuCallback.register(this)
         uniffiCallbackInterfaceSocketProtectorCallback.register(this)
         
     }
+    external fun uniffi_spora_ffi_fn_init_callback_vtable_mtucallback(`vtable`: UniffiVTableCallbackInterfaceMtuCallback,
+    ): Unit
     external fun uniffi_spora_ffi_fn_init_callback_vtable_socketprotectorcallback(`vtable`: UniffiVTableCallbackInterfaceSocketProtectorCallback,
     ): Unit
-    external fun uniffi_spora_ffi_fn_func_connect(`url`: RustBuffer.ByValue,`tunFd`: Int,`protector`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_spora_ffi_fn_func_connect(`url`: RustBuffer.ByValue,`tunFd`: Int,`protector`: Long,`mtuCallback`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Int
     external fun uniffi_spora_ffi_fn_func_disconnect(`handle`: Int,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
@@ -820,7 +847,7 @@ private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
 }
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
-    if (lib.uniffi_spora_ffi_checksum_func_connect() != 37902.toShort()) {
+    if (lib.uniffi_spora_ffi_checksum_func_connect() != 21855.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_spora_ffi_checksum_func_disconnect() != 23751.toShort()) {
@@ -839,6 +866,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_spora_ffi_checksum_func_stop_share() != 57557.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_spora_ffi_checksum_method_mtucallback_on_mtu() != 17990.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_spora_ffi_checksum_method_socketprotectorcallback_protect() != 26113.toShort()) {
@@ -1298,6 +1328,73 @@ public object FfiConverterTypeTunnelError : FfiConverterRustBuffer<TunnelExcepti
 
 
 /**
+ * Callback interface for MTU notifications.
+ *
+ * Called when the effective tunnel MTU is discovered (via PMTUD).
+ * May be called multiple times: once after relay connection, and again after
+ * direct P2P upgrade. The Android app can use the value to configure the TUN device MTU.
+ */
+public interface MtuCallback {
+    
+    fun `onMtu`(`mtu`: kotlin.Int)
+    
+    companion object
+}
+
+
+
+// Put the implementation in an object so we don't pollute the top-level namespace
+internal object uniffiCallbackInterfaceMtuCallback {
+    internal object `onMtu`: UniffiCallbackInterfaceMtuCallbackMethod0 {
+        override fun callback(`uniffiHandle`: Long,`mtu`: Int,`uniffiOutReturn`: Pointer,uniffiCallStatus: UniffiRustCallStatus,) {
+            val uniffiObj = FfiConverterTypeMtuCallback.handleMap.get(uniffiHandle)
+            val makeCall = { ->
+                uniffiObj.`onMtu`(
+                    FfiConverterInt.lift(`mtu`),
+                )
+            }
+            val writeReturn = { _: Unit -> Unit }
+            uniffiTraitInterfaceCall(uniffiCallStatus, makeCall, writeReturn)
+        }
+    }
+
+    internal object uniffiFree: UniffiCallbackInterfaceFree {
+        override fun callback(handle: Long) {
+            FfiConverterTypeMtuCallback.handleMap.remove(handle)
+        }
+    }
+
+    internal object uniffiClone: UniffiCallbackInterfaceClone {
+        override fun callback(handle: Long): Long {
+            return FfiConverterTypeMtuCallback.handleMap.clone(handle)
+        }
+    }
+
+    internal var vtable = UniffiVTableCallbackInterfaceMtuCallback.UniffiByValue(
+        uniffiFree,
+        uniffiClone,
+        `onMtu`,
+    )
+
+    // Registers the foreign callback with the Rust side.
+    // This method is generated for each callback interface.
+    internal fun register(lib: UniffiLib) {
+        lib.uniffi_spora_ffi_fn_init_callback_vtable_mtucallback(vtable)
+    }
+}
+
+/**
+ * The ffiConverter which transforms the Callbacks in to handles to pass to Rust.
+ *
+ * @suppress
+ */
+public object FfiConverterTypeMtuCallback: FfiConverterCallbackInterface<MtuCallback>()
+
+
+
+
+
+/**
  * Callback interface that Kotlin implements to protect sockets from VPN routing.
  */
 public interface SocketProtectorCallback {
@@ -1362,6 +1459,38 @@ public object FfiConverterTypeSocketProtectorCallback: FfiConverterCallbackInter
 /**
  * @suppress
  */
+public object FfiConverterOptionalTypeMtuCallback: FfiConverterRustBuffer<MtuCallback?> {
+    override fun read(buf: ByteBuffer): MtuCallback? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeMtuCallback.read(buf)
+    }
+
+    override fun allocationSize(value: MtuCallback?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeMtuCallback.allocationSize(value)
+        }
+    }
+
+    override fun write(value: MtuCallback?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeMtuCallback.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterOptionalTypeSocketProtectorCallback: FfiConverterRustBuffer<SocketProtectorCallback?> {
     override fun read(buf: ByteBuffer): SocketProtectorCallback? {
         if (buf.get().toInt() == 0) {
@@ -1390,18 +1519,18 @@ public object FfiConverterOptionalTypeSocketProtectorCallback: FfiConverterRustB
         /**
          * Establishes a tunnel connection and returns a handle for managing it.
          *
-         * Blocks until the connection is established (relay + pubsub negotiation),
+         * Blocks until the connection is established (relay negotiation),
          * then spawns the tunnel loop in the background and returns immediately.
          * The `protector` callback is invoked on every new socket fd so that
          * Android can call `VpnService.protect()` to bypass VPN routing.
          * Use `disconnect` to tear down the tunnel.
          */
-    @Throws(ConnectException::class) fun `connect`(`url`: kotlin.String, `tunFd`: kotlin.Int, `protector`: SocketProtectorCallback): kotlin.Int {
+    @Throws(ConnectException::class) fun `connect`(`url`: kotlin.String, `tunFd`: kotlin.Int, `protector`: SocketProtectorCallback, `mtuCallback`: MtuCallback?): kotlin.Int {
             return FfiConverterInt.lift(
     uniffiRustCallWithError(ConnectException) { _status ->
     UniffiLib.uniffi_spora_ffi_fn_func_connect(
     
-        FfiConverterString.lower(`url`),FfiConverterInt.lower(`tunFd`),FfiConverterTypeSocketProtectorCallback.lower(`protector`),_status)
+        FfiConverterString.lower(`url`),FfiConverterInt.lower(`tunFd`),FfiConverterTypeSocketProtectorCallback.lower(`protector`),FfiConverterOptionalTypeMtuCallback.lower(`mtuCallback`),_status)
 }
     )
     }

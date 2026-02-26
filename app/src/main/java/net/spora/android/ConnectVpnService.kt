@@ -33,6 +33,9 @@ class ConnectVpnService : VpnService() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var vpnInterface: ParcelFileDescriptor? = null
     private var tunnelHandle: Int? = null
+    private var tunFd: Int = -1
+    @Volatile private var currentMtu: Int = DEFAULT_MTU
+    @Volatile private var fullRoutesEstablished: Boolean = false
 
     private val screenReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -94,12 +97,12 @@ class ConnectVpnService : VpnService() {
                 val initialBuilder = Builder()
                     .setSession("Spora VPN")
                     .addAddress(TUN_ADDRESS, TUN_PREFIX_LENGTH)
-                    .setMtu(MTU)
+                    .setMtu(DEFAULT_MTU)
 
                 vpnInterface = initialBuilder.establish()
                     ?: throw IllegalStateException("Failed to establish VPN interface")
 
-                val tunFd = vpnInterface!!.fd
+                tunFd = vpnInterface!!.fd
 
                 // Phase 2: Connect (blocks during STUN). Rust calls back to protect sockets.
                 val protector = object : uniffi.spora_ffi.SocketProtectorCallback {
@@ -107,23 +110,23 @@ class ConnectVpnService : VpnService() {
                         this@ConnectVpnService.protect(fd)
                     }
                 }
-                val handle = uniffi.spora_ffi.connect(url, tunFd, protector)
+                val mtuCallback = object : uniffi.spora_ffi.MtuCallback {
+                    override fun onMtu(mtu: Int) {
+                        Log.d(TAG, "MTU callback: mtu=$mtu")
+                        currentMtu = mtu
+                        if (fullRoutesEstablished) {
+                            rebuildTun(mtu)
+                        }
+                    }
+                }
+                val handle = uniffi.spora_ffi.connect(url, tunFd, protector, mtuCallback)
                 tunnelHandle = handle
 
-                // Phase 3: Re-establish TUN with full route and swap fd
-                val fullRouteBuilder = Builder()
-                    .setSession("Spora VPN")
-                    .addAddress(TUN_ADDRESS, TUN_PREFIX_LENGTH)
-                    .addRoute("0.0.0.0", 0)
-                    .addDnsServer(DNS_SERVER)
-                    .setMtu(MTU)
-                    .addDisallowedApplication("com.google.android.gms")
-
-                val newInterface = fullRouteBuilder.establish()
-                    ?: throw IllegalStateException("Failed to re-establish VPN interface with routes")
-
-                Os.dup2(newInterface.fileDescriptor, tunFd)
-                newInterface.close()
+                // Phase 3: Re-establish TUN with full route and swap fd.
+                // Use currentMtu which may have been updated by the MTU callback
+                // during connect().
+                rebuildTun(currentMtu)
+                fullRoutesEstablished = true
             } catch (t: Throwable) {
                 ConnectState.failed(t)
                 try {
@@ -166,6 +169,22 @@ class ConnectVpnService : VpnService() {
         }
     }
 
+    private fun rebuildTun(mtu: Int) {
+        val newInterface = Builder()
+            .setSession("Spora VPN")
+            .addAddress(TUN_ADDRESS, TUN_PREFIX_LENGTH)
+            .addRoute("0.0.0.0", 0)
+            .addDnsServer(DNS_SERVER)
+            .setMtu(mtu)
+            .addDisallowedApplication("com.google.android.gms")
+            .establish()
+            ?: throw IllegalStateException("Failed to re-establish VPN interface")
+
+        Os.dup2(newInterface.fileDescriptor, tunFd)
+        newInterface.close()
+        Log.d(TAG, "TUN re-established with MTU=$mtu")
+    }
+
     private fun disconnect() {
         try { unregisterReceiver(screenReceiver) } catch (_: Exception) {}
         ConnectState.disconnected()
@@ -175,6 +194,9 @@ class ConnectVpnService : VpnService() {
     }
 
     private fun closeTunnel() {
+        fullRoutesEstablished = false
+        currentMtu = DEFAULT_MTU
+        tunFd = -1
         tunnelHandle?.let { handle ->
             // Release ParcelFileDescriptor ownership of the TUN fd
             // so Rust's disconnect() can close it without fdsan aborting
@@ -287,7 +309,7 @@ class ConnectVpnService : VpnService() {
         // VPN configuration
         private const val TUN_ADDRESS = "10.11.0.2"
         private const val TUN_PREFIX_LENGTH = 24
-        private const val MTU = 1280
+        private const val DEFAULT_MTU = 1280
         private const val DNS_SERVER = "8.8.8.8"
 
         fun connect(context: Context, url: String, connectionId: String? = null) {
