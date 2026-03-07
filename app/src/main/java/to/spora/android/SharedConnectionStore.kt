@@ -1,4 +1,4 @@
-package net.spora.android
+package to.spora.android
 
 import android.content.Context
 import android.content.SharedPreferences

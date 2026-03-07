@@ -1,4 +1,4 @@
-package net.spora.android
+package to.spora.android
 
 data class SharedConnection(
     val id: String,

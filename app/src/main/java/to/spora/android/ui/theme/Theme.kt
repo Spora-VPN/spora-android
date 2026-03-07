@@ -1,4 +1,4 @@
-package net.spora.android.ui.theme
+package to.spora.android.ui.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme

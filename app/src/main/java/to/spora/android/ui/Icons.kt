@@ -1,4 +1,4 @@
-package net.spora.android.ui
+package to.spora.android.ui
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathFillType

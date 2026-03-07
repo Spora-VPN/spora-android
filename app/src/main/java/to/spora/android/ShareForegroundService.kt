@@ -1,4 +1,4 @@
-package net.spora.android
+package to.spora.android
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -183,11 +183,11 @@ class ShareForegroundService : Service() {
         private const val NOTIFICATION_ID = 1
 
         private const val ACTION_START_CONNECTION =
-            "net.spora.android.action.START_SHARE_CONNECTION"
+            "to.spora.android.action.START_SHARE_CONNECTION"
         private const val ACTION_STOP_CONNECTION =
-            "net.spora.android.action.STOP_SHARE_CONNECTION"
+            "to.spora.android.action.STOP_SHARE_CONNECTION"
         private const val ACTION_STOP_ALL =
-            "net.spora.android.action.STOP_ALL_SHARES"
+            "to.spora.android.action.STOP_ALL_SHARES"
 
         private const val EXTRA_CONNECTION_ID = "connection_id"
         private const val EXTRA_KEY = "key"

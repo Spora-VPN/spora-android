@@ -1,4 +1,4 @@
-package net.spora.android.ui
+package to.spora.android.ui
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -32,13 +32,13 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import net.spora.android.R
-import net.spora.android.ui.theme.Sage
-import net.spora.android.ui.theme.SageDark
-import net.spora.android.ui.theme.Slate
-import net.spora.android.ui.theme.TextLight
-import net.spora.android.ui.theme.TextMain
-import net.spora.android.ui.theme.TextMuted
+import to.spora.android.R
+import to.spora.android.ui.theme.Sage
+import to.spora.android.ui.theme.SageDark
+import to.spora.android.ui.theme.Slate
+import to.spora.android.ui.theme.TextLight
+import to.spora.android.ui.theme.TextMain
+import to.spora.android.ui.theme.TextMuted
 
 @Composable
 fun SporaToggle(

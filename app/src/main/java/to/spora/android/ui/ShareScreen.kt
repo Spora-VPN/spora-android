@@ -1,4 +1,4 @@
-package net.spora.android.ui
+package to.spora.android.ui
 
 import android.content.Context
 import android.content.Intent
@@ -37,16 +37,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import net.spora.android.R
-import net.spora.android.SharedConnection
-import net.spora.android.SharedConnectionStore
-import net.spora.android.ShareForegroundService
-import net.spora.android.ShareState
-import net.spora.android.ui.theme.CardBackground
-import net.spora.android.ui.theme.Orange
-import net.spora.android.ui.theme.TextLight
-import net.spora.android.ui.theme.TextMain
-import net.spora.android.ui.theme.TextMuted
+import to.spora.android.R
+import to.spora.android.SharedConnection
+import to.spora.android.SharedConnectionStore
+import to.spora.android.ShareForegroundService
+import to.spora.android.ShareState
+import to.spora.android.ui.theme.CardBackground
+import to.spora.android.ui.theme.Orange
+import to.spora.android.ui.theme.TextLight
+import to.spora.android.ui.theme.TextMain
+import to.spora.android.ui.theme.TextMuted
 
 @Composable
 fun ShareScreen(modifier: Modifier = Modifier) {
@@ -201,7 +201,7 @@ private fun ActionCard(onClick: () -> Unit) {
 
 @Composable
 private fun ConnectionList(
-    uiState: net.spora.android.ShareUiState,
+    uiState: to.spora.android.ShareUiState,
     context: Context,
     onDelete: (String) -> Unit,
 ) {

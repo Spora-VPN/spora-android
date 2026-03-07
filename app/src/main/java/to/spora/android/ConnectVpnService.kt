@@ -1,4 +1,4 @@
-package net.spora.android
+package to.spora.android
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -301,8 +301,8 @@ class ConnectVpnService : VpnService() {
         private const val NOTIFICATION_CHANNEL_ID = "spora_vpn"
         private const val NOTIFICATION_ID = 2
 
-        private const val ACTION_CONNECT = "net.spora.android.action.CONNECT"
-        private const val ACTION_DISCONNECT = "net.spora.android.action.DISCONNECT"
+        private const val ACTION_CONNECT = "to.spora.android.action.CONNECT"
+        private const val ACTION_DISCONNECT = "to.spora.android.action.DISCONNECT"
         private const val EXTRA_URL = "url"
         private const val EXTRA_CONNECTION_ID = "connection_id"
 

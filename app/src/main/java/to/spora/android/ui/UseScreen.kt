@@ -1,4 +1,4 @@
-package net.spora.android.ui
+package to.spora.android.ui
 
 import android.app.Activity
 import android.content.Context
@@ -40,16 +40,16 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import net.spora.android.R
-import net.spora.android.ConnectState
-import net.spora.android.ConnectVpnService
-import net.spora.android.SavedUseConnection
-import net.spora.android.UseConnectionStore
-import net.spora.android.ui.theme.CardBackground
-import net.spora.android.ui.theme.TextLight
-import net.spora.android.ui.theme.TextMain
-import net.spora.android.ui.theme.TextMuted
-import net.spora.android.ui.theme.Orange
+import to.spora.android.R
+import to.spora.android.ConnectState
+import to.spora.android.ConnectVpnService
+import to.spora.android.SavedUseConnection
+import to.spora.android.UseConnectionStore
+import to.spora.android.ui.theme.CardBackground
+import to.spora.android.ui.theme.TextLight
+import to.spora.android.ui.theme.TextMain
+import to.spora.android.ui.theme.TextMuted
+import to.spora.android.ui.theme.Orange
 
 @Composable
 fun UseScreen(

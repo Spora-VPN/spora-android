@@ -1,4 +1,4 @@
-package net.spora.android
+package to.spora.android
 
 import android.content.Intent
 import android.os.Bundle
@@ -47,15 +47,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlin.math.max
 import kotlinx.coroutines.launch
-import net.spora.android.ui.ShareScreen
-import net.spora.android.ui.SporaIcons
-import net.spora.android.ui.UseScreen
-import net.spora.android.ui.theme.Slate
-import net.spora.android.ui.theme.SporaTheme
-import net.spora.android.ui.theme.TextLight
-import net.spora.android.ui.theme.TextLightMuted
-import net.spora.android.ui.theme.TextMain
-import net.spora.android.ui.theme.TextMuted
+import to.spora.android.ui.ShareScreen
+import to.spora.android.ui.SporaIcons
+import to.spora.android.ui.UseScreen
+import to.spora.android.ui.theme.Slate
+import to.spora.android.ui.theme.SporaTheme
+import to.spora.android.ui.theme.TextLight
+import to.spora.android.ui.theme.TextLightMuted
+import to.spora.android.ui.theme.TextMain
+import to.spora.android.ui.theme.TextMuted
 import uniffi.spora_ffi.initAndroidLogging
 
 class MainActivity : ComponentActivity() {

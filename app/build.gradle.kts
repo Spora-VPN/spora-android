@@ -5,13 +5,13 @@ plugins {
 }
 
 android {
-    namespace = "net.spora.android"
+    namespace = "to.spora.android"
     compileSdk {
         version = release(36)
     }
 
     defaultConfig {
-        applicationId = "net.spora.android"
+        applicationId = "to.spora.android"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

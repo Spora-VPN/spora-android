@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "to.spora.android",
+    "sha256_cert_fingerprints": [
+      "E6:AF:A8:1A:2C:1A:89:B8:77:33:83:C2:10:9B:DE:E8:D7:CE:8C:05:BB:2C:14:D7:CB:FC:6F:55:11:5F:7B:29"
+    ]
+  }
+}]

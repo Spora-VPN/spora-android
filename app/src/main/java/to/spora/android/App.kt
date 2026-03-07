@@ -1,4 +1,4 @@
-package net.spora.android
+package to.spora.android
 import android.app.Application
 import com.bugfender.android.BuildConfig
 import com.bugfender.sdk.Bugfender

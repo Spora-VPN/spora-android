@@ -65,10 +65,10 @@ The VPN uses a two-phase TUN establishment: first without routes (so STUN works)
 
 ## Key Files
 
-- `app/src/main/java/net/spora/android/MainActivity.kt` - UI: `MainScreen` with tab navigation, `ShareScreen`, `ConnectScreen`
-- `app/src/main/java/net/spora/android/ShareForegroundService.kt` - Server mode foreground service
-- `app/src/main/java/net/spora/android/ConnectVpnService.kt` - Client mode VPN service
-- `app/src/main/java/net/spora/android/ShareState.kt` / `ConnectState.kt` - State management singletons
+- `app/src/main/java/to/spora/android/MainActivity.kt` - UI: `MainScreen` with tab navigation, `ShareScreen`, `ConnectScreen`
+- `app/src/main/java/to/spora/android/ShareForegroundService.kt` - Server mode foreground service
+- `app/src/main/java/to/spora/android/ConnectVpnService.kt` - Client mode VPN service
+- `app/src/main/java/to/spora/android/ShareState.kt` / `ConnectState.kt` - State management singletons
 - `app/src/main/java/uniffi/spora_ffi/spora_ffi.kt` - Auto-generated FFI bindings (do not edit)
 - `gradle/libs.versions.toml` - Centralized dependency versions
 
