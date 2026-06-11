@@ -21,6 +21,10 @@ Two modes of operation:
 ./gradlew clean                       # Clean build
 ```
 
+## Dev Feedback Loop (no manual testing needed)
+
+`scripts/emu.sh` drives a headless emulator: boot, install, launch, screenshot, UI dump, input, dark mode/locale/font-scale switching, notification/VPN inspection. A debug-only `DebugStateReceiver` (`app/src/debug/`) lets adb put `ShareState`/`ConnectState` into any state (errors, active shares, connecting) without a relay or peer. Full recipes: `.claude/skills/emulator/SKILL.md`. Screenshots land in `.emu/` (gitignored) — read them to verify UI changes visually.
+
 ## Architecture
 
 ### Data Flow
