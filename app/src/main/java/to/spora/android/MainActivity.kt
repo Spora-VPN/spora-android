@@ -74,7 +74,12 @@ class MainActivity : ComponentActivity() {
         ConnectState.loadConnections(UseConnectionStore.getAll())
         initAndroidLogging()
         requestNotificationPermission()
-        handleDeepLink(intent)
+        // Only on a fresh launch: re-running the deep link on every recreation
+        // (rotation, theme change) would re-trigger a disconnect/reconnect or
+        // reopen the save modal
+        if (savedInstanceState == null) {
+            handleDeepLink(intent)
+        }
         // The UI is always light (sage) at the top and always dark (slate)
         // behind the gesture area; without explicit styles enableEdgeToEdge
         // follows the *system* theme, making status icons unreadable in
@@ -98,6 +103,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        // Keep the activity's intent current so a recreation doesn't replay
+        // the original launch link instead of the latest one
+        setIntent(intent)
         handleDeepLink(intent)
     }
 

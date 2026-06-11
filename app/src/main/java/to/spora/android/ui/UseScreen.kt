@@ -98,11 +98,18 @@ fun UseScreen(
     LaunchedEffect(initialUrl) {
         if (initialUrl != null) {
             val existing = uiState.savedConnections.find { it.url == initialUrl }
+            val alreadyActive = existing != null &&
+                uiState.activeConnectionId == existing.id &&
+                (uiState.isConnected || uiState.isConnecting)
             if (existing != null) {
-                if (uiState.isConnected || uiState.isConnecting) {
-                    ConnectVpnService.disconnect(context)
+                // Don't tear down and re-establish a tunnel that is already
+                // serving this exact connection
+                if (!alreadyActive) {
+                    if (uiState.isConnected || uiState.isConnecting) {
+                        ConnectVpnService.disconnect(context)
+                    }
+                    startVpnConnection(existing.url, existing.id)
                 }
-                startVpnConnection(existing.url, existing.id)
             } else {
                 prefillUrl = initialUrl
                 showModal = true
