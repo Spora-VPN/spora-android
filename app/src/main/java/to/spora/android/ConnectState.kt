@@ -7,7 +7,8 @@ import kotlinx.coroutines.flow.asStateFlow
 data class ConnectUiState(
     val isConnected: Boolean = false,
     val isConnecting: Boolean = false,
-    val errorMessage: String? = null,
+    val error: UserError? = null,
+    val errorConnectionId: String? = null,
     val savedConnections: List<SavedUseConnection> = emptyList(),
     val activeConnectionId: String? = null,
 )
@@ -38,6 +39,7 @@ object ConnectState {
         _uiState.value = _uiState.value.copy(
             savedConnections = _uiState.value.savedConnections.filter { it.id != id },
             activeConnectionId = if (_uiState.value.activeConnectionId == id) null else _uiState.value.activeConnectionId,
+            errorConnectionId = if (_uiState.value.errorConnectionId == id) null else _uiState.value.errorConnectionId,
         )
     }
 
@@ -45,7 +47,8 @@ object ConnectState {
         _uiState.value = _uiState.value.copy(
             isConnecting = true,
             isConnected = false,
-            errorMessage = null,
+            error = null,
+            errorConnectionId = null,
             activeConnectionId = connectionId,
         )
     }
@@ -54,15 +57,17 @@ object ConnectState {
         _uiState.value = _uiState.value.copy(
             isConnected = true,
             isConnecting = false,
-            errorMessage = null,
+            error = null,
+            errorConnectionId = null,
         )
     }
 
-    fun failed(t: Throwable) {
+    fun failed(error: UserError, connectionId: String? = _uiState.value.activeConnectionId) {
         _uiState.value = _uiState.value.copy(
             isConnected = false,
             isConnecting = false,
-            errorMessage = t.message ?: t.toString(),
+            error = error,
+            errorConnectionId = connectionId,
             activeConnectionId = null,
         )
     }
@@ -71,7 +76,8 @@ object ConnectState {
         _uiState.value = _uiState.value.copy(
             isConnected = false,
             isConnecting = false,
-            errorMessage = null,
+            error = null,
+            errorConnectionId = null,
             activeConnectionId = null,
         )
     }

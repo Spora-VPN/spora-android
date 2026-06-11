@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CoroutineScope
@@ -71,7 +72,8 @@ class ShareForegroundService : Service() {
                 ShareState.started(connectionId, result.handle, result.url)
                 updateNotification()
             } catch (t: Throwable) {
-                ShareState.failed(connectionId, t)
+                Log.e(TAG, "share failed for $connectionId", t)
+                ShareState.failed(connectionId, t.toUserError())
                 activeJobs.remove(connectionId)
                 if (activeJobs.isEmpty()) {
                     stopForegroundCompat()
@@ -185,6 +187,7 @@ class ShareForegroundService : Service() {
     }
 
     companion object {
+        private const val TAG = "ShareForegroundService"
         private const val NOTIFICATION_CHANNEL_ID = "spora_share"
         private const val NOTIFICATION_ID = 1
 

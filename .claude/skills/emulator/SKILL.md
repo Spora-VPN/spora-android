@@ -26,9 +26,9 @@ Then **Read the PNG** to see the screen, or `scripts/emu.sh dump` and Read the X
 | cmd | extras | effect |
 |-----|--------|--------|
 | `seed` | `--ei shares N --ei uses N` | N fake saved connections per tab (ids `debug-share-1…`, `debug-use-1…`) |
-| `share-starting` / `share-started` / `share-failed` / `share-stopped` | `--es id debug-share-1` (+ `--es msg "…"` / `--es url "…"`) | per-connection share states |
+| `share-starting` / `share-started` / `share-failed` / `share-stopped` | `--es id debug-share-1` (+ `--es err SHARE_FAILED` / `--es url "…"`) | per-connection share states |
 | `connect-connecting` / `connect-connected` | `--es id debug-use-1` | client-side states (id selects which saved item shows active) |
-| `connect-failed` | `--es msg "relay unreachable"` | sets ConnectState.errorMessage |
+| `connect-failed` | `--es err CONNECT_FAILED --es id debug-use-1` | sets ConnectState.error (err = any UserError name, default GENERIC) |
 | `connect-disconnected` | | back to idle |
 | `reset` | | reload real persisted data |
 

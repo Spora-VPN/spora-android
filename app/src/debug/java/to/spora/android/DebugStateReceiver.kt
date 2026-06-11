@@ -23,8 +23,11 @@ class DebugStateReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val cmd = intent.getStringExtra("cmd") ?: return
         val id = intent.getStringExtra("id")
-        val msg = intent.getStringExtra("msg") ?: "Debug error"
-        Log.d(TAG, "cmd=$cmd id=$id")
+        // e.g. --es err INVALID_URL / VPN_PERMISSION_DENIED; defaults to GENERIC
+        val err = intent.getStringExtra("err")
+            ?.let { runCatching { UserError.valueOf(it) }.getOrNull() }
+            ?: UserError.GENERIC
+        Log.d(TAG, "cmd=$cmd id=$id err=$err")
         when (cmd) {
             "seed" -> {
                 val shares = intent.getIntExtra("shares", 0)
@@ -42,14 +45,14 @@ class DebugStateReceiver : BroadcastReceiver() {
                 handle = DEBUG_HANDLE,
                 url = intent.getStringExtra("url") ?: "https://spora.to/s/debugurl",
             )
-            "share-failed" -> ShareState.failed(id ?: return, Exception(msg))
+            "share-failed" -> ShareState.failed(id ?: return, err)
             "share-stopped" -> ShareState.stopped(id ?: return)
             "connect-connecting" -> ConnectState.connecting(id)
             "connect-connected" -> {
                 ConnectState.connecting(id)
                 ConnectState.connected()
             }
-            "connect-failed" -> ConnectState.failed(Exception(msg))
+            "connect-failed" -> ConnectState.failed(err, id)
             "connect-disconnected" -> ConnectState.disconnected()
             "reset" -> {
                 SharedConnectionStore.init(context)

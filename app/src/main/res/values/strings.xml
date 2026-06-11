@@ -30,7 +30,6 @@
     <string name="share_action_subtitle">Create a link to share your connection</string>
     <string name="share_status_sharing">Sharing</string>
     <string name="share_status_starting">Starting\u2026</string>
-    <string name="share_status_error">Error: %1$s</string>
     <string name="share_status_inactive">Inactive</string>
     <string name="share_link_content_desc">Share link</string>
     <string name="share_default_label">Connection %1$d</string>
@@ -53,6 +52,14 @@
     <string name="use_modal_label_label">Label (Optional)</string>
     <string name="use_modal_label_placeholder">e.g. Home Base</string>
     <string name="use_modal_save">SAVE CONNECTION</string>
+
+    <!-- Errors (user-facing categories, see UserError.kt) -->
+    <string name="error_invalid_url">This link is not a valid Spora connection link.</string>
+    <string name="error_connect_failed">Couldn\'t connect. Check your internet connection and try again.</string>
+    <string name="error_share_failed">Couldn\'t start sharing. Check your internet connection and try again.</string>
+    <string name="error_vpn_permission">Spora needs VPN permission to connect. Try again and allow the VPN request.</string>
+    <string name="error_vpn_unavailable">Couldn\'t set up the VPN tunnel. Restart the app and try again.</string>
+    <string name="error_generic">Something went wrong. Please try again.</string>
 
     <!-- Share notifications -->
     <string name="notif_share_title">Spora sharing</string>

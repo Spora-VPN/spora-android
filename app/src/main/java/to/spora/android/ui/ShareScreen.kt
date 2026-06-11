@@ -42,6 +42,7 @@ import to.spora.android.SharedConnection
 import to.spora.android.SharedConnectionStore
 import to.spora.android.ShareForegroundService
 import to.spora.android.ShareState
+import to.spora.android.UserError
 import to.spora.android.ui.theme.CardBackground
 import to.spora.android.ui.theme.Orange
 import to.spora.android.ui.theme.TextLight
@@ -251,7 +252,7 @@ private fun ConnectionItem(
     label: String,
     isActive: Boolean,
     isStarting: Boolean,
-    error: String?,
+    error: UserError?,
     onToggle: (Boolean) -> Unit,
     onShareClick: (() -> Unit)?,
     onDelete: (() -> Unit)?,
@@ -300,7 +301,7 @@ private fun ConnectionItem(
                         )
                     } else if (error != null) {
                         Text(
-                            text = stringResource(R.string.share_status_error, error),
+                            text = stringResource(error.messageRes),
                             style = MaterialTheme.typography.labelSmall,
                             color = Orange,
                         )

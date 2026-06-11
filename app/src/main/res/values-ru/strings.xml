@@ -28,7 +28,6 @@
     <string name="share_action_subtitle">Создайте ссылку для раздачи подключения</string>
     <string name="share_status_sharing">Раздаётся</string>
     <string name="share_status_starting">Запуск\u2026</string>
-    <string name="share_status_error">Ошибка: %1$s</string>
     <string name="share_status_inactive">Неактивно</string>
     <string name="share_link_content_desc">Поделиться ссылкой</string>
     <string name="share_default_label">Подключение %1$d</string>
@@ -51,6 +50,14 @@
     <string name="use_modal_label_label">Название (необязательно)</string>
     <string name="use_modal_label_placeholder">напр. Домашняя база</string>
     <string name="use_modal_save">СОХРАНИТЬ ПОДКЛЮЧЕНИЕ</string>
+
+    <!-- Errors (user-facing categories, see UserError.kt) -->
+    <string name="error_invalid_url">Эта ссылка не является действительной ссылкой Spora.</string>
+    <string name="error_connect_failed">Не удалось подключиться. Проверьте интернет-соединение и попробуйте ещё раз.</string>
+    <string name="error_share_failed">Не удалось начать раздачу. Проверьте интернет-соединение и попробуйте ещё раз.</string>
+    <string name="error_vpn_permission">Для подключения Spora нужно разрешение VPN. Попробуйте снова и разрешите VPN-запрос.</string>
+    <string name="error_vpn_unavailable">Не удалось создать VPN-туннель. Перезапустите приложение и попробуйте ещё раз.</string>
+    <string name="error_generic">Что-то пошло не так. Попробуйте ещё раз.</string>
 
     <!-- Share notifications -->
     <string name="notif_share_title">Spora — раздача</string>

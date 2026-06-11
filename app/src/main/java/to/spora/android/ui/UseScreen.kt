@@ -45,6 +45,7 @@ import to.spora.android.ConnectState
 import to.spora.android.ConnectVpnService
 import to.spora.android.SavedUseConnection
 import to.spora.android.UseConnectionStore
+import to.spora.android.UserError
 import to.spora.android.ui.theme.CardBackground
 import to.spora.android.ui.theme.TextLight
 import to.spora.android.ui.theme.TextMain
@@ -72,6 +73,8 @@ fun UseScreen(
             pendingUrl?.let { url ->
                 ConnectVpnService.connect(context, url, pendingConnectionId)
             }
+        } else {
+            ConnectState.failed(UserError.VPN_PERMISSION_DENIED, pendingConnectionId)
         }
         pendingUrl = null
         pendingConnectionId = null
@@ -117,6 +120,19 @@ fun UseScreen(
                 showModal = true
             })
 
+            // Errors that can't be attributed to a saved connection
+            // (per-connection errors render inside the matching list item)
+            val unattributedError = uiState.error?.takeIf {
+                uiState.savedConnections.none { c -> c.id == uiState.errorConnectionId }
+            }
+            if (unattributedError != null) {
+                Text(
+                    text = stringResource(unattributedError.messageRes),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Orange,
+                )
+            }
+
             if (uiState.savedConnections.isNotEmpty()) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
@@ -134,6 +150,7 @@ fun UseScreen(
                             connection = connection,
                             isActive = isThisConnected || isThisConnecting,
                             isConnecting = isThisConnecting,
+                            error = uiState.error?.takeIf { uiState.errorConnectionId == connection.id },
                             onToggle = { enabled ->
                                 if (enabled) {
                                     if (uiState.isConnected || uiState.isConnecting) {
@@ -265,6 +282,7 @@ private fun UseConnectionItem(
     connection: SavedUseConnection,
     isActive: Boolean,
     isConnecting: Boolean,
+    error: UserError?,
     onToggle: (Boolean) -> Unit,
     onDelete: (() -> Unit)?,
 ) {
@@ -315,6 +333,12 @@ private fun UseConnectionItem(
                         text = stringResource(R.string.use_status_connecting),
                         style = MaterialTheme.typography.labelSmall,
                         color = TextMuted,
+                    )
+                } else if (error != null) {
+                    Text(
+                        text = stringResource(error.messageRes),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Orange,
                     )
                 }
             }

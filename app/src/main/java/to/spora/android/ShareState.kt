@@ -13,7 +13,7 @@ data class ShareUiState(
     val connections: List<SharedConnection> = emptyList(),
     val activeShares: Map<String, ActiveShareInfo> = emptyMap(),
     val startingIds: Set<String> = emptySet(),
-    val errors: Map<String, String> = emptyMap(),
+    val errors: Map<String, UserError> = emptyMap(),
 )
 
 object ShareState {
@@ -44,10 +44,10 @@ object ShareState {
         )
     }
 
-    fun failed(connectionId: String, t: Throwable) {
+    fun failed(connectionId: String, error: UserError) {
         _uiState.value = _uiState.value.copy(
             startingIds = _uiState.value.startingIds - connectionId,
-            errors = _uiState.value.errors + (connectionId to (t.message ?: t.toString())),
+            errors = _uiState.value.errors + (connectionId to error),
         )
     }
 

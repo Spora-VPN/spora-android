@@ -68,7 +68,8 @@ class ConnectVpnService : VpnService() {
                 if (url != null) {
                     startConnecting(url, connectionId)
                 } else {
-                    ConnectState.failed(IllegalArgumentException("URL is required"))
+                    Log.e(TAG, "Connect intent missing URL extra")
+                    ConnectState.failed(UserError.GENERIC)
                     stopSelf()
                 }
             }
@@ -128,11 +129,12 @@ class ConnectVpnService : VpnService() {
                 rebuildTun(currentMtu)
                 fullRoutesEstablished = true
             } catch (t: Throwable) {
-                ConnectState.failed(t)
+                Log.e(TAG, "connect failed", t)
+                ConnectState.failed(t.toUserError())
                 try {
                     notify(
                         buildNotification(
-                            contentText = getString(R.string.notif_vpn_error, t.message ?: t::class.java.simpleName),
+                            contentText = getString(R.string.notif_vpn_error, getString(t.toUserError().messageRes)),
                             isOngoing = false,
                             includeDisconnectAction = false,
                         )

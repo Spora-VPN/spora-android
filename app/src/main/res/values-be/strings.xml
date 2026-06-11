@@ -28,7 +28,6 @@
     <string name="share_action_subtitle">Стварыце спасылку для раздачы падключэння</string>
     <string name="share_status_sharing">Раздаецца</string>
     <string name="share_status_starting">Запуск\u2026</string>
-    <string name="share_status_error">Памылка: %1$s</string>
     <string name="share_status_inactive">Неактыўна</string>
     <string name="share_link_content_desc">Падзяліцца спасылкай</string>
     <string name="share_default_label">Падключэнне %1$d</string>
@@ -51,6 +50,14 @@
     <string name="use_modal_label_label">Назва (неабавязкова)</string>
     <string name="use_modal_label_placeholder">напр. Хатняя база</string>
     <string name="use_modal_save">ЗАХАВАЦЬ ПАДКЛЮЧЭННЕ</string>
+
+    <!-- Errors (user-facing categories, see UserError.kt) -->
+    <string name="error_invalid_url">Гэтая спасылка не з\'яўляецца сапраўднай спасылкай Spora.</string>
+    <string name="error_connect_failed">Не ўдалося падключыцца. Праверце інтэрнэт-злучэнне і паспрабуйце яшчэ раз.</string>
+    <string name="error_share_failed">Не ўдалося пачаць раздачу. Праверце інтэрнэт-злучэнне і паспрабуйце яшчэ раз.</string>
+    <string name="error_vpn_permission">Для падключэння Spora патрэбны дазвол VPN. Паспрабуйце зноў і дазвольце VPN-запыт.</string>
+    <string name="error_vpn_unavailable">Не ўдалося стварыць VPN-тунэль. Перазапусціце праграму і паспрабуйце яшчэ раз.</string>
+    <string name="error_generic">Нешта пайшло не так. Паспрабуйце яшчэ раз.</string>
 
     <!-- Share notifications -->
     <string name="notif_share_title">Spora — раздача</string>
