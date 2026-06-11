@@ -72,6 +72,18 @@ object ConnectState {
         )
     }
 
+    /**
+     * Service-initiated teardown (onDestroy/onRevoke): drop the live-connection
+     * flags but keep any error so the user can still see why it ended.
+     */
+    fun serviceStopped() {
+        _uiState.value = _uiState.value.copy(
+            isConnected = false,
+            isConnecting = false,
+            activeConnectionId = null,
+        )
+    }
+
     fun disconnected() {
         _uiState.value = _uiState.value.copy(
             isConnected = false,

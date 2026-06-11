@@ -183,6 +183,7 @@ class ShareForegroundService : Service() {
 
     override fun onDestroy() {
         serviceScope.cancel()
+        ShareState.serviceStopped()
         super.onDestroy()
     }
 

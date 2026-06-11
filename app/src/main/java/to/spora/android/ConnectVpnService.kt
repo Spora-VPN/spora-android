@@ -132,12 +132,15 @@ class ConnectVpnService : VpnService() {
                 Log.e(TAG, "connect failed", t)
                 ConnectState.failed(t.toUserError())
                 try {
+                    // Separate id: the foreground notification (NOTIFICATION_ID)
+                    // is removed by the system when the service stops below.
                     notify(
                         buildNotification(
                             contentText = getString(R.string.notif_vpn_error, getString(t.toUserError().messageRes)),
                             isOngoing = false,
                             includeDisconnectAction = false,
-                        )
+                        ),
+                        id = ERROR_NOTIFICATION_ID,
                     )
                 } catch (_: Exception) {}
                 closeTunnel()
@@ -221,9 +224,9 @@ class ConnectVpnService : VpnService() {
         vpnInterface = null
     }
 
-    private fun notify(notification: Notification) {
+    private fun notify(notification: Notification, id: Int = NOTIFICATION_ID) {
         val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        nm.notify(NOTIFICATION_ID, notification)
+        nm.notify(id, notification)
     }
 
     private fun buildNotification(
@@ -291,10 +294,18 @@ class ConnectVpnService : VpnService() {
         }
     }
 
+    // Called by the system when another app becomes the active VPN or the user
+    // kills the VPN from settings; without this the UI keeps saying "Connected".
+    override fun onRevoke() {
+        Log.i(TAG, "VPN revoked by system")
+        disconnect()
+    }
+
     override fun onDestroy() {
         try { unregisterReceiver(screenReceiver) } catch (_: Exception) {}
         serviceScope.cancel()
         closeTunnel()
+        ConnectState.serviceStopped()
         super.onDestroy()
     }
 
@@ -302,6 +313,7 @@ class ConnectVpnService : VpnService() {
         private const val TAG = "ConnectVpnService"
         private const val NOTIFICATION_CHANNEL_ID = "spora_vpn"
         private const val NOTIFICATION_ID = 2
+        private const val ERROR_NOTIFICATION_ID = 3
 
         private const val ACTION_CONNECT = "to.spora.android.action.CONNECT"
         private const val ACTION_DISCONNECT = "to.spora.android.action.DISCONNECT"

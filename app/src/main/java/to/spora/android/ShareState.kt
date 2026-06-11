@@ -57,6 +57,17 @@ object ShareState {
         )
     }
 
+    /**
+     * Service-initiated teardown (onDestroy): every share died with the
+     * service, but keep errors visible.
+     */
+    fun serviceStopped() {
+        _uiState.value = _uiState.value.copy(
+            activeShares = emptyMap(),
+            startingIds = emptySet(),
+        )
+    }
+
     fun renameConnection(id: String, newLabel: String) {
         _uiState.value = _uiState.value.copy(
             connections = _uiState.value.connections.map {
