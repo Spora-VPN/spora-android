@@ -100,14 +100,18 @@ class ShareForegroundService : Service() {
         activeJobs.remove(connectionId)?.cancel()
 
         val shareInfo = ShareState.uiState.value.activeShares[connectionId]
-        shareInfo?.let {
-            try {
-                uniffi.spora_ffi.stopShare(it.handle)
-            } catch (_: Throwable) {
-                // Best-effort cleanup; handle may already be invalid.
+        ShareState.stopped(connectionId)
+        shareInfo?.let { info ->
+            // Blocking FFI teardown off the main thread, on a scope that
+            // survives the stopSelf below
+            teardownScope.launch {
+                try {
+                    uniffi.spora_ffi.stopShare(info.handle)
+                } catch (_: Throwable) {
+                    // Best-effort cleanup; handle may already be invalid.
+                }
             }
         }
-        ShareState.stopped(connectionId)
 
         if (activeJobs.isEmpty()) {
             stopForegroundCompat()
@@ -197,6 +201,10 @@ class ShareForegroundService : Service() {
     }
 
     companion object {
+        // Outlives any service instance so blocking FFI teardown finishes even
+        // after onDestroy cancels serviceScope
+        private val teardownScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
         private const val TAG = "ShareForegroundService"
         private const val NOTIFICATION_CHANNEL_ID = "spora_share"
         private const val NOTIFICATION_ID = 1

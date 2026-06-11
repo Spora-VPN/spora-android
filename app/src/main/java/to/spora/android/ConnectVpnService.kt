@@ -212,35 +212,43 @@ class ConnectVpnService : VpnService() {
         cancelRequested = true
         try { unregisterReceiver(screenReceiver) } catch (_: Exception) {}
         ConnectState.disconnected()
-        closeTunnel()
+        val handle = takeTunnel()
+        // The FFI disconnect blocks; this runs on the main thread, so hand the
+        // teardown to a scope that outlives the service (stopSelf below
+        // triggers onDestroy, which cancels serviceScope).
+        teardownScope.launch { releaseTunnel(handle) }
         stopForegroundCompat()
         stopSelf()
     }
 
-    private fun closeTunnel() {
+    /** Snapshots and clears the tunnel fields; safe to call from any thread. */
+    @Synchronized
+    private fun takeTunnel(): Pair<Int?, ParcelFileDescriptor?> {
+        val taken = tunnelHandle to vpnInterface
+        tunnelHandle = null
+        vpnInterface = null
+        tunFd = -1
         fullRoutesEstablished = false
         currentMtu = DEFAULT_MTU
-        tunFd = -1
-        tunnelHandle?.let { handle ->
+        return taken
+    }
+
+    /** Blocking Rust teardown — never call on the main thread. */
+    private fun releaseTunnel(taken: Pair<Int?, ParcelFileDescriptor?>) {
+        val (handle, iface) = taken
+        if (handle != null) {
             // Release ParcelFileDescriptor ownership of the TUN fd
             // so Rust's disconnect() can close it without fdsan aborting
-            try {
-                vpnInterface?.detachFd()
-            } catch (_: Exception) {
-            }
-            vpnInterface = null
-            try {
-                uniffi.spora_ffi.disconnect(handle)
-            } catch (_: Exception) {
-            }
-            tunnelHandle = null
+            try { iface?.detachFd() } catch (_: Exception) {}
+            try { uniffi.spora_ffi.disconnect(handle) } catch (_: Exception) {}
+        } else {
+            // No tunnel handle means Rust never got the fd — close normally
+            try { iface?.close() } catch (_: Exception) {}
         }
-        // No tunnel handle means Rust never got the fd — close normally
-        try {
-            vpnInterface?.close()
-        } catch (_: Exception) {
-        }
-        vpnInterface = null
+    }
+
+    private fun closeTunnel() {
+        releaseTunnel(takeTunnel())
     }
 
     private fun notify(notification: Notification, id: Int = NOTIFICATION_ID) {
@@ -323,12 +331,17 @@ class ConnectVpnService : VpnService() {
     override fun onDestroy() {
         try { unregisterReceiver(screenReceiver) } catch (_: Exception) {}
         serviceScope.cancel()
-        closeTunnel()
+        val handle = takeTunnel()
+        teardownScope.launch { releaseTunnel(handle) }
         ConnectState.serviceStopped()
         super.onDestroy()
     }
 
     companion object {
+        // Outlives any service instance so blocking FFI teardown finishes even
+        // after onDestroy cancels serviceScope
+        private val teardownScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
         private const val TAG = "ConnectVpnService"
         private const val NOTIFICATION_CHANNEL_ID = "spora_vpn"
         private const val NOTIFICATION_ID = 2
