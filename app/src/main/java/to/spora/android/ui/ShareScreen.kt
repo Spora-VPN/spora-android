@@ -448,9 +448,10 @@ private fun DeleteConfirmContent(
 
 private fun shareUrl(context: Context, url: String) {
     val sendIntent = Intent(Intent.ACTION_SEND).apply {
-        type = "text/html"
+        // text/plain: most share targets don't register for text/html, which
+        // hid them from the chooser
+        type = "text/plain"
         putExtra(Intent.EXTRA_TEXT, url)
-        putExtra(Intent.EXTRA_HTML_TEXT, "<a href=\"$url\">$url</a>")
     }
     context.startActivity(Intent.createChooser(sendIntent, null))
 }
