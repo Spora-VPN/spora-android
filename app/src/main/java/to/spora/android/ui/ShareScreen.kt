@@ -360,10 +360,10 @@ private fun ConnectionItem(
                         .clickable(onClick = onShareClick),
                 )
             }
+            // Stays enabled while starting so a stuck share can be cancelled
             SporaToggle(
                 checked = isActive || isStarting,
                 onCheckedChange = onToggle,
-                enabled = !isStarting,
             )
         }
 

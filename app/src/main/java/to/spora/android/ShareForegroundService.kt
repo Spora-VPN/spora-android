@@ -18,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
@@ -69,9 +70,17 @@ class ShareForegroundService : Service() {
             try {
                 val identityBytes = java.util.Base64.getDecoder().decode(identity)
                 val result = uniffi.spora_ffi.share(identityBytes, null)
+                if (!isActive) {
+                    // Toggled off while share() was blocked starting up: the
+                    // session it just created must be stopped, not surfaced.
+                    try { uniffi.spora_ffi.stopShare(result.handle) } catch (_: Throwable) {}
+                    ShareState.stopped(connectionId)
+                    return@launch
+                }
                 ShareState.started(connectionId, result.handle, result.url)
                 updateNotification()
             } catch (t: Throwable) {
+                if (!isActive) return@launch
                 Log.e(TAG, "share failed for $connectionId", t)
                 ShareState.failed(connectionId, t.toUserError())
                 activeJobs.remove(connectionId)

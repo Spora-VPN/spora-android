@@ -37,6 +37,11 @@ class ConnectVpnService : VpnService() {
     @Volatile private var currentMtu: Int = DEFAULT_MTU
     @Volatile private var fullRoutesEstablished: Boolean = false
 
+    // Set by disconnect() while the connect coroutine is still blocked inside
+    // the FFI connect() call; the coroutine checks it to avoid reporting a
+    // user-initiated cancel as an error or resurrecting torn-down state.
+    @Volatile private var cancelRequested = false
+
     private val screenReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val handle = tunnelHandle ?: return
@@ -82,6 +87,7 @@ class ConnectVpnService : VpnService() {
         val currentState = ConnectState.uiState.value
         if (currentState.isConnecting || currentState.isConnected) return
 
+        cancelRequested = false
         ConnectState.connecting(connectionId)
         startForeground(
             NOTIFICATION_ID,
@@ -123,12 +129,23 @@ class ConnectVpnService : VpnService() {
                 val handle = uniffi.spora_ffi.connect(url, tunFd, protector, mtuCallback)
                 tunnelHandle = handle
 
+                if (cancelRequested) {
+                    // User disconnected while connect() was blocked; the tunnel
+                    // it just established must be torn down, not activated.
+                    closeTunnel()
+                    return@launch
+                }
+
                 // Phase 3: Re-establish TUN with full route and swap fd.
                 // Use currentMtu which may have been updated by the MTU callback
                 // during connect().
                 rebuildTun(currentMtu)
                 fullRoutesEstablished = true
             } catch (t: Throwable) {
+                if (cancelRequested) {
+                    closeTunnel()
+                    return@launch
+                }
                 Log.e(TAG, "connect failed", t)
                 ConnectState.failed(t.toUserError())
                 try {
@@ -148,6 +165,7 @@ class ConnectVpnService : VpnService() {
                 return@launch
             }
 
+            if (cancelRequested) return@launch
             ConnectState.connected()
 
             // Start with keepalive enabled (user's screen is on when they connect)
@@ -191,6 +209,7 @@ class ConnectVpnService : VpnService() {
     }
 
     private fun disconnect() {
+        cancelRequested = true
         try { unregisterReceiver(screenReceiver) } catch (_: Exception) {}
         ConnectState.disconnected()
         closeTunnel()

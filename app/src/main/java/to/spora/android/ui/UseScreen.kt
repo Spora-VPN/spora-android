@@ -353,10 +353,10 @@ private fun UseConnectionItem(
                         .clickable(onClick = onDelete),
                 )
             }
+            // Stays enabled while connecting so a stuck attempt can be cancelled
             SporaToggle(
                 checked = isActive,
                 onCheckedChange = onToggle,
-                enabled = !isConnecting,
             )
         }
     }

@@ -61,7 +61,10 @@ object ShareState {
 
     fun stopped(connectionId: String) {
         _uiState.update {
-            it.copy(activeShares = it.activeShares - connectionId)
+            it.copy(
+                activeShares = it.activeShares - connectionId,
+                startingIds = it.startingIds - connectionId,
+            )
         }
     }
 

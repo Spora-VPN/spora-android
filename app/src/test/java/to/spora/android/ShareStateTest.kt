@@ -46,6 +46,15 @@ class ShareStateTest {
     }
 
     @Test
+    fun `stopped clears both active and starting markers`() {
+        ShareState.starting("a")
+        ShareState.stopped("a")
+
+        assertFalse("a" in state().startingIds)
+        assertFalse("a" in state().activeShares)
+    }
+
+    @Test
     fun `serviceStopped clears live state but keeps errors`() {
         ShareState.starting("a")
         ShareState.started("b", 1, "url")
