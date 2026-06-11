@@ -17,9 +17,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -30,6 +32,9 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import to.spora.android.R
@@ -51,27 +56,40 @@ fun SporaToggle(
     val thumbColor = TextLight
     val trackAlpha = if (enabled) 1f else 0.5f
 
+    // The visual stays 36x20, but the interactive area meets the 48dp minimum
+    // and announces itself as a switch with on/off state.
     Box(
         modifier = modifier
-            .size(width = 36.dp, height = 20.dp)
-            .background(
-                color = trackColor.copy(alpha = trackAlpha),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
-            )
-            .clickable(enabled = enabled) { onCheckedChange(!checked) },
+            .minimumInteractiveComponentSize()
+            .toggleable(
+                value = checked,
+                enabled = enabled,
+                role = Role.Switch,
+                onValueChange = onCheckedChange,
+            ),
+        contentAlignment = Alignment.Center,
     ) {
         Box(
             modifier = Modifier
-                .size(16.dp)
-                .offset(
-                    x = if (checked) 18.dp else 2.dp,
-                    y = 2.dp,
-                )
+                .size(width = 36.dp, height = 20.dp)
                 .background(
-                    color = thumbColor,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(2.dp),
+                    color = trackColor.copy(alpha = trackAlpha),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
                 ),
-        )
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(16.dp)
+                    .offset(
+                        x = if (checked) 18.dp else 2.dp,
+                        y = 2.dp,
+                    )
+                    .background(
+                        color = thumbColor,
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(2.dp),
+                    ),
+            )
+        }
     }
 }
 
@@ -176,6 +194,7 @@ fun InputField(
             cursorBrush = SolidColor(TextMain),
             modifier = Modifier
                 .fillMaxWidth()
+                .semantics { contentDescription = label }
                 .then(
                     if (focusRequester != null) Modifier.focusRequester(focusRequester)
                     else Modifier
