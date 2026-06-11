@@ -683,7 +683,7 @@ internal object IntegrityCheckingUniffiLib {
     ): Short
     external fun uniffi_spora_ffi_checksum_func_init_android_logging(
     ): Short
-    external fun uniffi_spora_ffi_checksum_func_make_secret_key(
+    external fun uniffi_spora_ffi_checksum_func_make_identity(
     ): Short
     external fun uniffi_spora_ffi_checksum_func_set_keepalive(
     ): Short
@@ -720,11 +720,11 @@ internal object UniffiLib {
     ): Unit
     external fun uniffi_spora_ffi_fn_func_init_android_logging(uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    external fun uniffi_spora_ffi_fn_func_make_secret_key(uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_spora_ffi_fn_func_make_identity(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_spora_ffi_fn_func_set_keepalive(`handle`: Int,`intervalSecs`: Int,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    external fun uniffi_spora_ffi_fn_func_share(`key`: RustBuffer.ByValue,`protector`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_spora_ffi_fn_func_share(`identityBytes`: RustBuffer.ByValue,`protector`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_spora_ffi_fn_func_stop_share(`handle`: Int,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
@@ -856,13 +856,13 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_spora_ffi_checksum_func_init_android_logging() != 27785.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_spora_ffi_checksum_func_make_secret_key() != 11105.toShort()) {
+    if (lib.uniffi_spora_ffi_checksum_func_make_identity() != 196.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_spora_ffi_checksum_func_set_keepalive() != 5568.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_spora_ffi_checksum_func_share() != 56740.toShort()) {
+    if (lib.uniffi_spora_ffi_checksum_func_share() != 13924.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_spora_ffi_checksum_func_stop_share() != 57557.toShort()) {
@@ -1098,6 +1098,25 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
         val byteBuf = toUtf8(value)
         buf.putInt(byteBuf.limit())
         buf.put(byteBuf)
+    }
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterByteArray: FfiConverterRustBuffer<ByteArray> {
+    override fun read(buf: ByteBuffer): ByteArray {
+        val len = buf.getInt()
+        val byteArr = ByteArray(len)
+        buf.get(byteArr)
+        return byteArr
+    }
+    override fun allocationSize(value: ByteArray): ULong {
+        return 4UL + value.size.toULong()
+    }
+    override fun write(value: ByteArray, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        buf.put(value)
     }
 }
 
@@ -1557,10 +1576,16 @@ public object FfiConverterOptionalTypeSocketProtectorCallback: FfiConverterRustB
 }
     
     
- fun `makeSecretKey`(): kotlin.String {
-            return FfiConverterString.lift(
+
+        /**
+         * Generate a fresh identity and return its serialized bytes. The platform
+         * (Android app) is expected to persist these bytes — e.g. in
+         * SharedPreferences — and pass them back to `share()` on subsequent
+         * invocations so the share URL stays stable across launches.
+         */ fun `makeIdentity`(): kotlin.ByteArray {
+            return FfiConverterByteArray.lift(
     uniffiRustCall() { _status ->
-    UniffiLib.uniffi_spora_ffi_fn_func_make_secret_key(
+    UniffiLib.uniffi_spora_ffi_fn_func_make_identity(
     
         _status)
 }
@@ -1586,12 +1611,12 @@ public object FfiConverterOptionalTypeSocketProtectorCallback: FfiConverterRustB
     
     
 
-    @Throws(ShareException::class) fun `share`(`key`: kotlin.String, `protector`: SocketProtectorCallback?): ShareResult {
+    @Throws(ShareException::class) fun `share`(`identityBytes`: kotlin.ByteArray, `protector`: SocketProtectorCallback?): ShareResult {
             return FfiConverterTypeShareResult.lift(
     uniffiRustCallWithError(ShareException) { _status ->
     UniffiLib.uniffi_spora_ffi_fn_func_share(
     
-        FfiConverterString.lower(`key`),FfiConverterOptionalTypeSocketProtectorCallback.lower(`protector`),_status)
+        FfiConverterByteArray.lower(`identityBytes`),FfiConverterOptionalTypeSocketProtectorCallback.lower(`protector`),_status)
 }
     )
     }

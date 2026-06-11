@@ -28,12 +28,16 @@ object SharedConnectionStore {
     fun getAll(): List<SharedConnection> {
         val json = prefs.getString(KEY_CONNECTIONS, null) ?: return emptyList()
         val array = JSONArray(json)
-        return (0 until array.length()).map { i ->
+        return (0 until array.length()).mapNotNull { i ->
             val obj = array.getJSONObject(i)
+            // Entries from before the identity-based protocol only carry a
+            // "secretKey", which the relay no longer understands; drop them.
+            val identity = obj.optString("identity")
+            if (identity.isEmpty()) return@mapNotNull null
             SharedConnection(
                 id = obj.getString("id"),
                 label = obj.getString("label"),
-                secretKey = obj.getString("secretKey"),
+                identity = identity,
             )
         }
     }
@@ -60,7 +64,7 @@ object SharedConnectionStore {
             array.put(JSONObject().apply {
                 put("id", c.id)
                 put("label", c.label)
-                put("secretKey", c.secretKey)
+                put("identity", c.identity)
             })
         }
         prefs.edit().putString(KEY_CONNECTIONS, array.toString()).apply()

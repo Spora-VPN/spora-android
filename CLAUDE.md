@@ -49,11 +49,11 @@ The VPN uses a two-phase TUN establishment: first without routes (so STUN works)
 - Native libraries: `app/src/main/jniLibs/` (arm64-v8a, armeabi-v7a, x86, x86_64)
 - `initAndroidLogging()` is called once in `MainActivity.onCreate()`
 - Key FFI functions:
-  - `share(key: String, protector: SocketProtectorCallback?): ShareResult` - starts sharing, returns handle + URL, throws `ShareException`
+  - `share(identityBytes: ByteArray, protector: SocketProtectorCallback?): ShareResult` - starts sharing, returns handle + URL, throws `ShareException`
   - `connect(url: String, tunFd: Int, protector: SocketProtectorCallback): Int` - connects to a peer, returns tunnel handle, throws `ConnectException`. Rust calls `protector.protect(fd)` for each socket that needs `VpnService.protect()`.
   - `disconnect(handle: Int)` - tears down the tunnel identified by handle
   - `stopShare(handle: Int)` - stops the share session identified by handle
-  - `makeSecretKey(): String` - generates a new secret key for sharing
+  - `makeIdentity(): ByteArray` - generates a fresh identity (cert + key + secret) as opaque serialized bytes. The app persists them (base64 in `SharedConnectionStore`) and passes them back to `share()` so the share URL stays stable across launches.
 
 ## Tech Stack
 

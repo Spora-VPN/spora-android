@@ -65,18 +65,19 @@ fun ShareScreen(modifier: Modifier = Modifier) {
     }
 
     fun createAndShare() {
-        val key = uniffi.spora_ffi.makeSecretKey()
+        val identity = java.util.Base64.getEncoder()
+            .encodeToString(uniffi.spora_ffi.makeIdentity())
         val existingCount = uiState.connections.size
         val label = context.getString(R.string.share_default_label, existingCount + 1)
         val connection = SharedConnection(
             id = java.util.UUID.randomUUID().toString(),
             label = label,
-            secretKey = key,
+            identity = identity,
         )
         SharedConnectionStore.save(connection)
         ShareState.addConnection(connection)
         pendingShareConnectionId = connection.id
-        ShareForegroundService.startConnection(context, connection.id, connection.secretKey)
+        ShareForegroundService.startConnection(context, connection.id, connection.identity)
     }
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -228,7 +229,7 @@ private fun ConnectionList(
                         ShareForegroundService.startConnection(
                             context,
                             connection.id,
-                            connection.secretKey,
+                            connection.identity,
                         )
                     } else {
                         ShareForegroundService.stopConnection(context, connection.id)

@@ -12,15 +12,17 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
 
 class ShareForegroundService : Service() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val activeJobs = mutableMapOf<String, Job>()
+    private val activeJobs = ConcurrentHashMap<String, Job>()
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -34,9 +36,9 @@ class ShareForegroundService : Service() {
             ACTION_START_CONNECTION -> {
                 val connectionId = intent.getStringExtra(EXTRA_CONNECTION_ID)
                     ?: return START_NOT_STICKY
-                val key = intent.getStringExtra(EXTRA_KEY)
+                val identity = intent.getStringExtra(EXTRA_IDENTITY)
                     ?: return START_NOT_STICKY
-                startConnection(connectionId, key)
+                startConnection(connectionId, identity)
             }
             ACTION_STOP_CONNECTION -> {
                 val connectionId = intent.getStringExtra(EXTRA_CONNECTION_ID)
@@ -48,7 +50,7 @@ class ShareForegroundService : Service() {
         return START_NOT_STICKY
     }
 
-    private fun startConnection(connectionId: String, key: String) {
+    private fun startConnection(connectionId: String, identity: String) {
         if (activeJobs.containsKey(connectionId)) return
 
         ShareState.starting(connectionId)
@@ -60,9 +62,12 @@ class ShareForegroundService : Service() {
             )
         }
 
-        val job = serviceScope.launch {
+        // Lazy start so the activeJobs entry is in place before the coroutine
+        // can fail and remove it (e.g. a synchronous Base64 decode error).
+        val job = serviceScope.launch(start = CoroutineStart.LAZY) {
             try {
-                val result = uniffi.spora_ffi.share(key, null)
+                val identityBytes = java.util.Base64.getDecoder().decode(identity)
+                val result = uniffi.spora_ffi.share(identityBytes, null)
                 ShareState.started(connectionId, result.handle, result.url)
                 updateNotification()
             } catch (t: Throwable) {
@@ -77,6 +82,7 @@ class ShareForegroundService : Service() {
             }
         }
         activeJobs[connectionId] = job
+        job.start()
     }
 
     private fun stopConnection(connectionId: String) {
@@ -190,13 +196,13 @@ class ShareForegroundService : Service() {
             "to.spora.android.action.STOP_ALL_SHARES"
 
         private const val EXTRA_CONNECTION_ID = "connection_id"
-        private const val EXTRA_KEY = "key"
+        private const val EXTRA_IDENTITY = "identity"
 
-        fun startConnection(context: Context, connectionId: String, key: String) {
+        fun startConnection(context: Context, connectionId: String, identity: String) {
             val intent = Intent(context, ShareForegroundService::class.java)
                 .setAction(ACTION_START_CONNECTION)
                 .putExtra(EXTRA_CONNECTION_ID, connectionId)
-                .putExtra(EXTRA_KEY, key)
+                .putExtra(EXTRA_IDENTITY, identity)
             ContextCompat.startForegroundService(context, intent)
         }
 
