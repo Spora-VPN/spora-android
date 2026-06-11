@@ -38,6 +38,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     ndkVersion = "29.0.14206865"
     applicationVariants.all {
