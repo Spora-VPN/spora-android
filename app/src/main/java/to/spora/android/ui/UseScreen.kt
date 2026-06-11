@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +41,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import to.spora.android.R
 import to.spora.android.ConnectState
@@ -363,6 +366,18 @@ private fun UseConnectionItem(
     }
 }
 
+/**
+ * Accepts the share-link shape the deep link filter handles:
+ * https://spora.to/s/<token>[?r=host:port]
+ */
+internal fun isValidShareUrl(url: String): Boolean {
+    val uri = runCatching { java.net.URI(url) }.getOrNull() ?: return false
+    return uri.scheme == "https" &&
+        uri.host == "spora.to" &&
+        uri.path.orEmpty().length > "/s/".length &&
+        uri.path.orEmpty().startsWith("/s/")
+}
+
 @Composable
 private fun UseModalContent(
     initialUrl: String = "",
@@ -372,6 +387,7 @@ private fun UseModalContent(
 ) {
     var url by rememberSaveable { mutableStateOf(initialUrl) }
     var label by rememberSaveable { mutableStateOf("") }
+    val urlValid = remember(url) { isValidShareUrl(url.trim()) }
     val focusRequester = remember { FocusRequester() }
     val matchedConnection = remember(url, savedConnections) {
         savedConnections.find { it.url == url.trim() }
@@ -394,25 +410,43 @@ private fun UseModalContent(
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
-        InputField(
-            value = url,
-            onValueChange = { url = it },
-            label = stringResource(R.string.use_modal_url_label),
-            placeholder = stringResource(R.string.use_modal_url_placeholder),
-            focusRequester = focusRequester,
-        )
+        Column {
+            InputField(
+                value = url,
+                onValueChange = { url = it },
+                label = stringResource(R.string.use_modal_url_label),
+                placeholder = stringResource(R.string.use_modal_url_placeholder),
+                focusRequester = focusRequester,
+                // A URL keyboard without autocorrect, so pasted/typed links
+                // don't get silently mangled
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Uri,
+                    autoCorrectEnabled = false,
+                    imeAction = ImeAction.Next,
+                ),
+            )
+            if (url.isNotBlank() && !urlValid) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.error_invalid_url),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Orange,
+                )
+            }
+        }
 
         InputField(
             value = label,
             onValueChange = { label = it },
             label = stringResource(R.string.use_modal_label_label),
             placeholder = stringResource(R.string.use_modal_label_placeholder),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         )
 
         PrimaryButton(
             text = stringResource(R.string.use_modal_save),
-            onClick = { if (url.isNotBlank()) onConfirm(url.trim(), label, matchedConnection?.id) },
-            enabled = url.isNotBlank(),
+            onClick = { if (urlValid) onConfirm(url.trim(), label, matchedConnection?.id) },
+            enabled = urlValid,
             trailingIcon = {
                 Icon(
                     imageVector = SporaIcons.Plus,

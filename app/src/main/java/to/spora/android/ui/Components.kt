@@ -19,6 +19,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
@@ -187,6 +189,8 @@ fun InputField(
     modifier: Modifier = Modifier,
     placeholder: String = "",
     focusRequester: FocusRequester? = null,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
@@ -201,6 +205,8 @@ fun InputField(
             onValueChange = onValueChange,
             textStyle = MaterialTheme.typography.headlineMedium.copy(color = TextMain),
             singleLine = true,
+            keyboardOptions = keyboardOptions,
+            keyboardActions = keyboardActions,
             cursorBrush = SolidColor(TextMain),
             modifier = Modifier
                 .fillMaxWidth()
