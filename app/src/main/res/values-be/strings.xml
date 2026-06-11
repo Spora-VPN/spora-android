@@ -26,6 +26,7 @@
     <!-- Share screen -->
     <string name="share_action_title">Раздаць інтэрнэт</string>
     <string name="share_action_subtitle">Стварыце спасылку для раздачы падключэння</string>
+    <string name="share_action_creating">Ствараем вашу спасылку…</string>
     <string name="share_status_sharing">Раздаецца</string>
     <string name="share_status_starting">Запуск\u2026</string>
     <string name="share_status_inactive">Неактыўна</string>

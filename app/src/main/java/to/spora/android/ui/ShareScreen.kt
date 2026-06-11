@@ -27,7 +27,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,13 +56,21 @@ import to.spora.android.ui.theme.TextMuted
 @Composable
 fun ShareScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val uiState by ShareState.uiState.collectAsState()
+    var creatingIdentity by remember { mutableStateOf(false) }
     var pendingShareConnectionId by remember { mutableStateOf<String?>(null) }
     var renameConnectionId by remember { mutableStateOf<String?>(null) }
     var deleteConnectionId by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(pendingShareConnectionId, uiState.activeShares) {
+    LaunchedEffect(pendingShareConnectionId, uiState.activeShares, uiState.errors) {
         val pendingId = pendingShareConnectionId ?: return@LaunchedEffect
+        if (uiState.errors[pendingId] != null) {
+            // The share failed; the list item shows the error — don't let the
+            // share sheet and rename modal fire on a later successful retry.
+            pendingShareConnectionId = null
+            return@LaunchedEffect
+        }
         val url = uiState.activeShares[pendingId]?.url ?: return@LaunchedEffect
         pendingShareConnectionId = null
         shareUrl(context, url)
@@ -66,20 +78,30 @@ fun ShareScreen(modifier: Modifier = Modifier) {
     }
 
     fun createAndShare() {
-        val identity = java.util.Base64.getEncoder()
-            .encodeToString(uniffi.spora_ffi.makeIdentity())
-        val existingCount = uiState.connections.size
-        val label = context.getString(R.string.share_default_label, existingCount + 1)
-        val connection = SharedConnection(
-            id = java.util.UUID.randomUUID().toString(),
-            label = label,
-            identity = identity,
-        )
-        SharedConnectionStore.save(connection)
-        ShareState.addConnection(connection)
-        pendingShareConnectionId = connection.id
-        ShareForegroundService.startConnection(context, connection.id, connection.identity)
+        if (creatingIdentity || pendingShareConnectionId != null) return
+        creatingIdentity = true
+        coroutineScope.launch {
+            // Key/cert generation is a blocking FFI call
+            val identity = withContext(Dispatchers.Default) {
+                java.util.Base64.getEncoder()
+                    .encodeToString(uniffi.spora_ffi.makeIdentity())
+            }
+            val existingCount = ShareState.uiState.value.connections.size
+            val label = context.getString(R.string.share_default_label, existingCount + 1)
+            val connection = SharedConnection(
+                id = java.util.UUID.randomUUID().toString(),
+                label = label,
+                identity = identity,
+            )
+            SharedConnectionStore.save(connection)
+            ShareState.addConnection(connection)
+            pendingShareConnectionId = connection.id
+            ShareForegroundService.startConnection(context, connection.id, connection.identity)
+            creatingIdentity = false
+        }
     }
+
+    val busy = creatingIdentity || pendingShareConnectionId != null
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(
@@ -89,7 +111,7 @@ fun ShareScreen(modifier: Modifier = Modifier) {
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(32.dp),
         ) {
-            ActionCard(onClick = { createAndShare() })
+            ActionCard(busy = busy, onClick = { createAndShare() })
 
             if (uiState.connections.isNotEmpty()) {
                 ConnectionList(
@@ -149,7 +171,7 @@ fun ShareScreen(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun ActionCard(onClick: () -> Unit) {
+private fun ActionCard(busy: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -160,8 +182,8 @@ private fun ActionCard(onClick: () -> Unit) {
                 spotColor = Orange.copy(alpha = 0.4f),
             )
             .clip(RoundedCornerShape(24.dp))
-            .background(Orange)
-            .clickable(onClick = onClick)
+            .background(Orange.copy(alpha = if (busy) 0.6f else 1f))
+            .clickable(enabled = !busy, onClick = onClick)
             .padding(32.dp),
     ) {
         Column(
@@ -174,7 +196,9 @@ private fun ActionCard(onClick: () -> Unit) {
                 color = TextLight,
             )
             Text(
-                text = stringResource(R.string.share_action_subtitle),
+                text = stringResource(
+                    if (busy) R.string.share_action_creating else R.string.share_action_subtitle,
+                ),
                 style = MaterialTheme.typography.labelSmall,
                 color = TextLight.copy(alpha = 0.7f),
             )

@@ -28,6 +28,7 @@
     <!-- Share screen -->
     <string name="share_action_title">Share Your Internet</string>
     <string name="share_action_subtitle">Create a link to share your connection</string>
+    <string name="share_action_creating">Creating your link…</string>
     <string name="share_status_sharing">Sharing</string>
     <string name="share_status_starting">Starting\u2026</string>
     <string name="share_status_inactive">Inactive</string>

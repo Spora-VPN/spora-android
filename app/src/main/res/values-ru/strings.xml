@@ -26,6 +26,7 @@
     <!-- Share screen -->
     <string name="share_action_title">Раздать интернет</string>
     <string name="share_action_subtitle">Создайте ссылку для раздачи подключения</string>
+    <string name="share_action_creating">Создаём вашу ссылку…</string>
     <string name="share_status_sharing">Раздаётся</string>
     <string name="share_status_starting">Запуск\u2026</string>
     <string name="share_status_inactive">Неактивно</string>
