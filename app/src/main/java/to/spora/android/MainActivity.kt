@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
@@ -73,7 +74,17 @@ class MainActivity : ComponentActivity() {
         initAndroidLogging()
         requestNotificationPermission()
         handleDeepLink(intent)
-        enableEdgeToEdge()
+        // The UI is always light (sage) at the top and always dark (slate)
+        // behind the gesture area; without explicit styles enableEdgeToEdge
+        // follows the *system* theme, making status icons unreadable in
+        // system dark mode and the nav pill low-contrast in light mode.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.light(
+                android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT,
+            ),
+            navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
+        )
         setContent {
             SporaTheme {
                 MainScreen(
