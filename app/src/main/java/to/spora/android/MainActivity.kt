@@ -1,6 +1,9 @@
 package to.spora.android
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -68,6 +71,7 @@ class MainActivity : ComponentActivity() {
         ShareState.loadConnections(SharedConnectionStore.getAll())
         ConnectState.loadConnections(UseConnectionStore.getAll())
         initAndroidLogging()
+        requestNotificationPermission()
         handleDeepLink(intent)
         enableEdgeToEdge()
         setContent {
@@ -83,6 +87,14 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleDeepLink(intent)
+    }
+
+    // Both services communicate status (and their only error/stop affordances)
+    // through notifications, which Android 13+ suppresses until this is granted.
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return
+        requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
     }
 
     private fun handleDeepLink(intent: Intent?) {
