@@ -2,10 +2,12 @@ package to.spora.android
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
 
 object UseConnectionStore {
+    private const val TAG = "UseConnectionStore"
     private const val PREFS_NAME = "use_connections"
     private const val KEY_CONNECTIONS = "connections"
 
@@ -16,17 +18,23 @@ object UseConnectionStore {
         prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     }
 
-    fun getAll(): List<SavedUseConnection> {
-        val json = prefs.getString(KEY_CONNECTIONS, null) ?: return emptyList()
-        val array = JSONArray(json)
-        return (0 until array.length()).map { i ->
-            val obj = array.getJSONObject(i)
-            SavedUseConnection(
-                id = obj.getString("id"),
-                label = obj.getString("label"),
-                url = obj.getString("url"),
-            )
+    fun getAll(): List<SavedUseConnection> = try {
+        val json = prefs.getString(KEY_CONNECTIONS, null)
+        if (json == null) emptyList() else {
+            val array = JSONArray(json)
+            (0 until array.length()).map { i ->
+                val obj = array.getJSONObject(i)
+                SavedUseConnection(
+                    id = obj.getString("id"),
+                    label = obj.getString("label"),
+                    url = obj.getString("url"),
+                )
+            }
         }
+    } catch (e: Exception) {
+        Log.e(TAG, "Corrupted connections entry; resetting store", e)
+        try { prefs.edit().remove(KEY_CONNECTIONS).apply() } catch (_: Exception) {}
+        emptyList()
     }
 
     fun save(connection: SavedUseConnection) {
