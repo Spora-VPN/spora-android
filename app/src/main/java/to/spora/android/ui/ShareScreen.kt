@@ -27,6 +27,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.Dispatchers
@@ -59,9 +60,9 @@ fun ShareScreen(modifier: Modifier = Modifier) {
     val coroutineScope = rememberCoroutineScope()
     val uiState by ShareState.uiState.collectAsState()
     var creatingIdentity by remember { mutableStateOf(false) }
-    var pendingShareConnectionId by remember { mutableStateOf<String?>(null) }
-    var renameConnectionId by remember { mutableStateOf<String?>(null) }
-    var deleteConnectionId by remember { mutableStateOf<String?>(null) }
+    var pendingShareConnectionId by rememberSaveable { mutableStateOf<String?>(null) }
+    var renameConnectionId by rememberSaveable { mutableStateOf<String?>(null) }
+    var deleteConnectionId by rememberSaveable { mutableStateOf<String?>(null) }
 
     LaunchedEffect(pendingShareConnectionId, uiState.activeShares, uiState.errors) {
         val pendingId = pendingShareConnectionId ?: return@LaunchedEffect
@@ -376,7 +377,7 @@ private fun RenameModalContent(
     onConfirm: (label: String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var label by remember { mutableStateOf(currentLabel) }
+    var label by rememberSaveable { mutableStateOf(currentLabel) }
     val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {

@@ -30,6 +30,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,11 +61,11 @@ fun UseScreen(
 ) {
     val context = LocalContext.current
     val uiState by ConnectState.uiState.collectAsState()
-    var showModal by remember { mutableStateOf(false) }
-    var pendingUrl by remember { mutableStateOf<String?>(null) }
-    var pendingConnectionId by remember { mutableStateOf<String?>(null) }
-    var deleteConnectionId by remember { mutableStateOf<String?>(null) }
-    var prefillUrl by remember { mutableStateOf("") }
+    var showModal by rememberSaveable { mutableStateOf(false) }
+    var pendingUrl by rememberSaveable { mutableStateOf<String?>(null) }
+    var pendingConnectionId by rememberSaveable { mutableStateOf<String?>(null) }
+    var deleteConnectionId by rememberSaveable { mutableStateOf<String?>(null) }
+    var prefillUrl by rememberSaveable { mutableStateOf("") }
 
     val vpnPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult(),
@@ -369,8 +370,8 @@ private fun UseModalContent(
     onConfirm: (url: String, label: String, existingConnectionId: String?) -> Unit,
     onCancel: () -> Unit,
 ) {
-    var url by remember { mutableStateOf(initialUrl) }
-    var label by remember { mutableStateOf("") }
+    var url by rememberSaveable { mutableStateOf(initialUrl) }
+    var label by rememberSaveable { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
     val matchedConnection = remember(url, savedConnections) {
         savedConnections.find { it.url == url.trim() }
