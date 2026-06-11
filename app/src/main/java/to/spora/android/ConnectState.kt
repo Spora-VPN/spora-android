@@ -1,8 +1,10 @@
 package to.spora.android
 
+import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 data class ConnectUiState(
     val isConnected: Boolean = false,
@@ -13,63 +15,86 @@ data class ConnectUiState(
     val activeConnectionId: String? = null,
 )
 
+// All mutations go through MutableStateFlow.update so concurrent writers
+// (service IO coroutines vs. the main thread) can't lose each other's changes.
 object ConnectState {
     private val _uiState = MutableStateFlow(ConnectUiState())
     val uiState: StateFlow<ConnectUiState> = _uiState.asStateFlow()
 
     fun loadConnections(connections: List<SavedUseConnection>) {
-        _uiState.value = _uiState.value.copy(savedConnections = connections)
+        _uiState.update { it.copy(savedConnections = connections) }
     }
 
     fun addConnection(connection: SavedUseConnection) {
-        _uiState.value = _uiState.value.copy(
-            savedConnections = _uiState.value.savedConnections + connection,
-        )
+        _uiState.update { it.copy(savedConnections = it.savedConnections + connection) }
     }
 
     fun updateConnection(connection: SavedUseConnection) {
-        _uiState.value = _uiState.value.copy(
-            savedConnections = _uiState.value.savedConnections.map {
-                if (it.id == connection.id) connection else it
-            },
-        )
+        _uiState.update { state ->
+            state.copy(
+                savedConnections = state.savedConnections.map {
+                    if (it.id == connection.id) connection else it
+                },
+            )
+        }
     }
 
     fun removeConnection(id: String) {
-        _uiState.value = _uiState.value.copy(
-            savedConnections = _uiState.value.savedConnections.filter { it.id != id },
-            activeConnectionId = if (_uiState.value.activeConnectionId == id) null else _uiState.value.activeConnectionId,
-            errorConnectionId = if (_uiState.value.errorConnectionId == id) null else _uiState.value.errorConnectionId,
-        )
+        _uiState.update { state ->
+            state.copy(
+                savedConnections = state.savedConnections.filter { it.id != id },
+                activeConnectionId = if (state.activeConnectionId == id) null else state.activeConnectionId,
+                errorConnectionId = if (state.errorConnectionId == id) null else state.errorConnectionId,
+            )
+        }
     }
 
     fun connecting(connectionId: String? = null) {
-        _uiState.value = _uiState.value.copy(
-            isConnecting = true,
-            isConnected = false,
-            error = null,
-            errorConnectionId = null,
-            activeConnectionId = connectionId,
-        )
+        _uiState.update {
+            it.copy(
+                isConnecting = true,
+                isConnected = false,
+                error = null,
+                errorConnectionId = null,
+                activeConnectionId = connectionId,
+            )
+        }
     }
 
     fun connected() {
-        _uiState.value = _uiState.value.copy(
-            isConnected = true,
-            isConnecting = false,
-            error = null,
-            errorConnectionId = null,
-        )
+        _uiState.update {
+            it.copy(
+                isConnected = true,
+                isConnecting = false,
+                error = null,
+                errorConnectionId = null,
+            )
+        }
     }
 
-    fun failed(error: UserError, connectionId: String? = _uiState.value.activeConnectionId) {
-        _uiState.value = _uiState.value.copy(
-            isConnected = false,
-            isConnecting = false,
-            error = error,
-            errorConnectionId = connectionId,
-            activeConnectionId = null,
-        )
+    /** Attributes the error to whatever connection was active when it failed. */
+    fun failed(error: UserError) {
+        _uiState.update {
+            it.copy(
+                isConnected = false,
+                isConnecting = false,
+                error = error,
+                errorConnectionId = it.activeConnectionId,
+                activeConnectionId = null,
+            )
+        }
+    }
+
+    fun failed(error: UserError, connectionId: String?) {
+        _uiState.update {
+            it.copy(
+                isConnected = false,
+                isConnecting = false,
+                error = error,
+                errorConnectionId = connectionId,
+                activeConnectionId = null,
+            )
+        }
     }
 
     /**
@@ -77,20 +102,29 @@ object ConnectState {
      * flags but keep any error so the user can still see why it ended.
      */
     fun serviceStopped() {
-        _uiState.value = _uiState.value.copy(
-            isConnected = false,
-            isConnecting = false,
-            activeConnectionId = null,
-        )
+        _uiState.update {
+            it.copy(
+                isConnected = false,
+                isConnecting = false,
+                activeConnectionId = null,
+            )
+        }
     }
 
     fun disconnected() {
-        _uiState.value = _uiState.value.copy(
-            isConnected = false,
-            isConnecting = false,
-            error = null,
-            errorConnectionId = null,
-            activeConnectionId = null,
-        )
+        _uiState.update {
+            it.copy(
+                isConnected = false,
+                isConnecting = false,
+                error = null,
+                errorConnectionId = null,
+                activeConnectionId = null,
+            )
+        }
+    }
+
+    @VisibleForTesting
+    internal fun reset() {
+        _uiState.value = ConnectUiState()
     }
 }

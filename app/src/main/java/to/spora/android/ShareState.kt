@@ -1,8 +1,10 @@
 package to.spora.android
 
+import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 data class ActiveShareInfo(
     val handle: Int,
@@ -16,45 +18,51 @@ data class ShareUiState(
     val errors: Map<String, UserError> = emptyMap(),
 )
 
+// All mutations go through MutableStateFlow.update so concurrent writers
+// (service IO coroutines vs. the main thread) can't lose each other's changes.
 object ShareState {
     private val _uiState = MutableStateFlow(ShareUiState())
     val uiState: StateFlow<ShareUiState> = _uiState.asStateFlow()
 
     fun loadConnections(connections: List<SharedConnection>) {
-        _uiState.value = _uiState.value.copy(connections = connections)
+        _uiState.update { it.copy(connections = connections) }
     }
 
     fun addConnection(connection: SharedConnection) {
-        _uiState.value = _uiState.value.copy(
-            connections = _uiState.value.connections + connection,
-        )
+        _uiState.update { it.copy(connections = it.connections + connection) }
     }
 
     fun starting(connectionId: String) {
-        _uiState.value = _uiState.value.copy(
-            startingIds = _uiState.value.startingIds + connectionId,
-            errors = _uiState.value.errors - connectionId,
-        )
+        _uiState.update {
+            it.copy(
+                startingIds = it.startingIds + connectionId,
+                errors = it.errors - connectionId,
+            )
+        }
     }
 
     fun started(connectionId: String, handle: Int, url: String) {
-        _uiState.value = _uiState.value.copy(
-            startingIds = _uiState.value.startingIds - connectionId,
-            activeShares = _uiState.value.activeShares + (connectionId to ActiveShareInfo(handle, url)),
-        )
+        _uiState.update {
+            it.copy(
+                startingIds = it.startingIds - connectionId,
+                activeShares = it.activeShares + (connectionId to ActiveShareInfo(handle, url)),
+            )
+        }
     }
 
     fun failed(connectionId: String, error: UserError) {
-        _uiState.value = _uiState.value.copy(
-            startingIds = _uiState.value.startingIds - connectionId,
-            errors = _uiState.value.errors + (connectionId to error),
-        )
+        _uiState.update {
+            it.copy(
+                startingIds = it.startingIds - connectionId,
+                errors = it.errors + (connectionId to error),
+            )
+        }
     }
 
     fun stopped(connectionId: String) {
-        _uiState.value = _uiState.value.copy(
-            activeShares = _uiState.value.activeShares - connectionId,
-        )
+        _uiState.update {
+            it.copy(activeShares = it.activeShares - connectionId)
+        }
     }
 
     /**
@@ -62,26 +70,37 @@ object ShareState {
      * service, but keep errors visible.
      */
     fun serviceStopped() {
-        _uiState.value = _uiState.value.copy(
-            activeShares = emptyMap(),
-            startingIds = emptySet(),
-        )
+        _uiState.update {
+            it.copy(
+                activeShares = emptyMap(),
+                startingIds = emptySet(),
+            )
+        }
     }
 
     fun renameConnection(id: String, newLabel: String) {
-        _uiState.value = _uiState.value.copy(
-            connections = _uiState.value.connections.map {
-                if (it.id == id) it.copy(label = newLabel) else it
-            },
-        )
+        _uiState.update { state ->
+            state.copy(
+                connections = state.connections.map {
+                    if (it.id == id) it.copy(label = newLabel) else it
+                },
+            )
+        }
     }
 
     fun removeConnection(id: String) {
-        _uiState.value = _uiState.value.copy(
-            connections = _uiState.value.connections.filter { it.id != id },
-            activeShares = _uiState.value.activeShares - id,
-            startingIds = _uiState.value.startingIds - id,
-            errors = _uiState.value.errors - id,
-        )
+        _uiState.update { state ->
+            state.copy(
+                connections = state.connections.filter { it.id != id },
+                activeShares = state.activeShares - id,
+                startingIds = state.startingIds - id,
+                errors = state.errors - id,
+            )
+        }
+    }
+
+    @VisibleForTesting
+    internal fun reset() {
+        _uiState.value = ShareUiState()
     }
 }
