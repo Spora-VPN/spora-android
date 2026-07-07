@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="sage">#FFD2D6CC</color>
-    <color name="slate">#FF4D5954</color>
+    <color name="sage">#FFD6DAD3</color>
+    <color name="pine">#FF272E29</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 </resources>

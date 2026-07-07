@@ -2,7 +2,16 @@
 <resources>
     <style name="Theme.Spora" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:statusBarColor">@color/sage</item>
-        <item name="android:navigationBarColor">@color/slate</item>
+        <item name="android:navigationBarColor">@color/pine</item>
         <item name="android:windowLightStatusBar">true</item>
+        <!-- Brand surface before Compose draws — no white flash -->
+        <item name="android:windowBackground">@color/sage</item>
+    </style>
+
+    <!-- SplashScreen API: mark on the brand surface (design 5d) -->
+    <style name="Theme.Spora.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/sage</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.Spora</item>
     </style>
 </resources>

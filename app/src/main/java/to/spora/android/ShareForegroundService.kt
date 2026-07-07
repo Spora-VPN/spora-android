@@ -60,7 +60,10 @@ class ShareForegroundService : Service() {
         if (activeJobs.isEmpty()) {
             startForeground(
                 NOTIFICATION_ID,
-                buildNotification(getString(R.string.notif_share_starting)),
+                buildNotification(
+                    getString(R.string.notif_share_title),
+                    getString(R.string.notif_share_starting),
+                ),
             )
         }
 
@@ -126,9 +129,15 @@ class ShareForegroundService : Service() {
     }
 
     private fun updateNotification() {
+        // Design 5d: the count line is the title, the shared names the body
+        // ("Sharing 2 connections" / "Mom's Phone · For Anya")
         val count = activeJobs.size
-        val text = resources.getQuantityString(R.plurals.notif_share_count, count, count)
-        notify(buildNotification(text))
+        val title = resources.getQuantityString(R.plurals.notif_share_count, count, count)
+        val connections = ShareState.uiState.value.connections
+        val names = activeJobs.keys.mapNotNull { id ->
+            connections.find { it.id == id }?.label
+        }.joinToString(" · ")
+        notify(buildNotification(title, names.ifEmpty { null }))
     }
 
     private fun notify(notification: Notification) {
@@ -136,7 +145,7 @@ class ShareForegroundService : Service() {
         nm.notify(NOTIFICATION_ID, notification)
     }
 
-    private fun buildNotification(contentText: String): Notification {
+    private fun buildNotification(title: String, contentText: String?): Notification {
         val openIntent = Intent(this, MainActivity::class.java)
         val openPendingIntent = PendingIntent.getActivity(
             this,
@@ -155,8 +164,9 @@ class ShareForegroundService : Service() {
         )
 
         return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle(getString(R.string.notif_share_title))
+            .setSmallIcon(R.drawable.ic_stat_spora)
+            .setColor(0xFF587536.toInt()) // success green — the share family accent
+            .setContentTitle(title)
             .setContentText(contentText)
             .setStyle(NotificationCompat.BigTextStyle().bigText(contentText))
             .setContentIntent(openPendingIntent)

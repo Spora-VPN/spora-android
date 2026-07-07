@@ -59,7 +59,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.ui.text.google.fonts)
+    implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.security.crypto)
     implementation(libs.jna) {
         artifact {

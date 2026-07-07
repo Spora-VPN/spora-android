@@ -1,28 +1,20 @@
 package to.spora.android.ui
 
 import android.app.Activity
-import android.content.Context
 import android.net.VpnService
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,11 +27,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -50,11 +40,10 @@ import to.spora.android.ConnectVpnService
 import to.spora.android.SavedUseConnection
 import to.spora.android.UseConnectionStore
 import to.spora.android.UserError
-import to.spora.android.ui.theme.CardBackground
-import to.spora.android.ui.theme.TextLight
-import to.spora.android.ui.theme.TextMain
+import to.spora.android.ui.theme.ColorError
+import to.spora.android.ui.theme.ColorPendingText
+import to.spora.android.ui.theme.ColorSuccessText
 import to.spora.android.ui.theme.TextMuted
-import to.spora.android.ui.theme.Orange
 
 @Composable
 fun UseScreen(
@@ -123,13 +112,18 @@ fun UseScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(32.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            UseActionCard(onClick = {
-                prefillUrl = ""
-                showModal = true
-            })
+            SporaActionCard(
+                eyebrow = stringResource(R.string.use_action_eyebrow),
+                title = stringResource(R.string.use_action_title),
+                subtitle = stringResource(R.string.use_action_subtitle),
+                onClick = {
+                    prefillUrl = ""
+                    showModal = true
+                },
+            )
 
             // Errors that can't be attributed to a saved connection
             // (per-connection errors render inside the matching list item)
@@ -137,45 +131,80 @@ fun UseScreen(
                 uiState.savedConnections.none { c -> c.id == uiState.errorConnectionId }
             }
             if (unattributedError != null) {
-                Text(
-                    text = stringResource(unattributedError.messageRes),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Orange,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(7.dp),
+                ) {
+                    StatusDot(DotState.Error)
+                    Text(
+                        text = stringResource(unattributedError.messageRes),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = ColorError,
+                    )
+                }
             }
 
-            if (uiState.savedConnections.isNotEmpty()) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(
-                        text = stringResource(R.string.saved_connections_header),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextMuted,
+            Column {
+                Text(
+                    text = stringResource(R.string.saved_connections_header),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextMuted,
+                    modifier = Modifier.padding(bottom = 10.dp),
+                )
+                if (uiState.savedConnections.isEmpty()) {
+                    EmptyStateCard(
+                        title = stringResource(R.string.empty_list_title),
+                        body = stringResource(R.string.use_empty_body),
+                        logo = painterResource(R.drawable.ic_logo),
                     )
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                        uiState.savedConnections.forEach { connection ->
+                            val isThisActive = uiState.activeConnectionId == connection.id
+                            val isThisConnecting = isThisActive && uiState.isConnecting
+                            val isThisConnected = isThisActive && uiState.isConnected
+                            val error = uiState.error?.takeIf { uiState.errorConnectionId == connection.id }
 
-                    uiState.savedConnections.forEach { connection ->
-                        val isThisActive = uiState.activeConnectionId == connection.id
-                        val isThisConnecting = isThisActive && uiState.isConnecting
-                        val isThisConnected = isThisActive && uiState.isConnected
+                            val dotState = when {
+                                isThisConnected -> DotState.Active
+                                isThisConnecting -> DotState.Pending
+                                else -> DotState.None
+                            }
+                            val statusText = when {
+                                isThisConnected -> stringResource(R.string.use_status_connected)
+                                isThisConnecting -> stringResource(R.string.use_status_connecting)
+                                else -> null
+                            }
+                            val statusColor = when {
+                                isThisConnected -> ColorSuccessText
+                                else -> ColorPendingText
+                            }
 
-                        UseConnectionItem(
-                            connection = connection,
-                            isActive = isThisConnected || isThisConnecting,
-                            isConnecting = isThisConnecting,
-                            error = uiState.error?.takeIf { uiState.errorConnectionId == connection.id },
-                            onToggle = { enabled ->
-                                if (enabled) {
-                                    if (uiState.isConnected || uiState.isConnecting) {
+                            ConnectionCard(
+                                name = connection.label,
+                                url = connection.url,
+                                dotState = dotState,
+                                statusText = statusText,
+                                statusColor = statusColor,
+                                errorText = error?.let { stringResource(it.messageRes) },
+                                checked = isThisConnected || isThisConnecting,
+                                // Stays enabled while connecting so a stuck
+                                // attempt can be cancelled
+                                onToggle = { enabled ->
+                                    if (enabled) {
+                                        if (uiState.isConnected || uiState.isConnecting) {
+                                            ConnectVpnService.disconnect(context)
+                                        }
+                                        startVpnConnection(connection.url, connection.id)
+                                    } else {
                                         ConnectVpnService.disconnect(context)
                                     }
-                                    startVpnConnection(connection.url, connection.id)
-                                } else {
-                                    ConnectVpnService.disconnect(context)
-                                }
-                            },
-                            onDelete = if (!isThisActive) {
-                                { deleteConnectionId = connection.id }
-                            } else null,
-                        )
+                                },
+                                onDelete = if (!isThisActive) {
+                                    { deleteConnectionId = connection.id }
+                                } else null,
+                            )
+                        }
                     }
                 }
             }
@@ -183,7 +212,7 @@ fun UseScreen(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // Modal overlay
+        // Save/edit modal
         ModalOverlay(
             visible = showModal,
             onDismiss = { showModal = false },
@@ -222,7 +251,7 @@ fun UseScreen(
             visible = deleteConnectionId != null,
             onDismiss = { deleteConnectionId = null },
         ) {
-            UseDeleteConfirmContent(
+            DeleteConfirmContent(
                 onConfirm = {
                     deleteConnectionId?.let { id ->
                         UseConnectionStore.delete(id)
@@ -231,143 +260,6 @@ fun UseScreen(
                     deleteConnectionId = null
                 },
                 onCancel = { deleteConnectionId = null },
-            )
-        }
-    }
-}
-
-@Composable
-private fun UseActionCard(onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(
-                elevation = 16.dp,
-                shape = RoundedCornerShape(24.dp),
-                ambientColor = Orange.copy(alpha = 0.4f),
-                spotColor = Orange.copy(alpha = 0.4f),
-            )
-            .clip(RoundedCornerShape(24.dp))
-            .background(Orange)
-            .clickable(onClick = onClick)
-            .padding(32.dp),
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.use_action_title),
-                style = MaterialTheme.typography.headlineLarge,
-                color = TextLight,
-            )
-            Text(
-                text = stringResource(R.string.use_action_subtitle),
-                style = MaterialTheme.typography.labelSmall,
-                color = TextLight.copy(alpha = 0.7f),
-            )
-        }
-
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .size(40.dp)
-                .background(
-                    color = Color.White.copy(alpha = 0.2f),
-                    shape = CircleShape,
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = SporaIcons.ArrowRight,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(18.dp),
-            )
-        }
-    }
-}
-
-@Composable
-private fun UseConnectionItem(
-    connection: SavedUseConnection,
-    isActive: Boolean,
-    isConnecting: Boolean,
-    error: UserError?,
-    onToggle: (Boolean) -> Unit,
-    onDelete: (() -> Unit)?,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                color = CardBackground,
-                shape = RoundedCornerShape(12.dp),
-            )
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = connection.label,
-                    style = MaterialTheme.typography.displayMedium,
-                    color = TextMain,
-                )
-                Text(
-                    text = if (connection.url.length > 25) connection.url.take(25) + "\u2026" else connection.url,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextMuted.copy(alpha = 0.5f),
-                )
-                if (isActive && !isConnecting) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(6.dp)
-                                .background(Color(0xFF4CAF50), CircleShape),
-                        )
-                        Text(
-                            text = stringResource(R.string.use_status_connected),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextMuted,
-                        )
-                    }
-                } else if (isConnecting) {
-                    Text(
-                        text = stringResource(R.string.use_status_connecting),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextMuted,
-                    )
-                } else if (error != null) {
-                    Text(
-                        text = stringResource(error.messageRes),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Orange,
-                    )
-                }
-            }
-            if (onDelete != null) {
-                Icon(
-                    imageVector = SporaIcons.Delete,
-                    contentDescription = stringResource(R.string.delete_connection_content_desc),
-                    tint = TextMuted,
-                    modifier = Modifier
-                        .padding(horizontal = 8.dp)
-                        .size(20.dp)
-                        .clickable(onClick = onDelete),
-                )
-            }
-            // Stays enabled while connecting so a stuck attempt can be cancelled
-            SporaToggle(
-                checked = isActive,
-                onCheckedChange = onToggle,
             )
         }
     }
@@ -416,87 +308,42 @@ private fun UseModalContent(
         focusRequester.requestFocus()
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
-        Column {
-            InputField(
-                value = url,
-                onValueChange = { url = it },
-                label = stringResource(R.string.use_modal_url_label),
-                placeholder = stringResource(R.string.use_modal_url_placeholder),
-                focusRequester = focusRequester,
-                // A URL keyboard without autocorrect, so pasted/typed links
-                // don't get silently mangled
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Uri,
-                    autoCorrectEnabled = false,
-                    imeAction = ImeAction.Next,
-                ),
-            )
-            if (url.isNotBlank() && !urlValid) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = stringResource(R.string.error_invalid_url),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Orange,
-                )
-            }
-        }
+    Column {
+        InputField(
+            value = url,
+            onValueChange = { url = it },
+            label = stringResource(R.string.use_modal_url_label),
+            placeholder = stringResource(R.string.use_modal_url_placeholder),
+            error = if (url.isNotBlank() && !urlValid) {
+                stringResource(R.string.error_invalid_url)
+            } else null,
+            focusRequester = focusRequester,
+            // A URL keyboard without autocorrect, so pasted/typed links
+            // don't get silently mangled
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Uri,
+                autoCorrectEnabled = false,
+                imeAction = ImeAction.Next,
+            ),
+        )
+
+        Spacer(modifier = Modifier.height(22.dp))
 
         InputField(
             value = label,
             onValueChange = { label = it },
             label = stringResource(R.string.use_modal_label_label),
             placeholder = stringResource(R.string.use_modal_label_placeholder),
+            helper = stringResource(R.string.use_modal_label_helper),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         )
+
+        Spacer(modifier = Modifier.height(24.dp))
 
         PrimaryButton(
             text = stringResource(R.string.use_modal_save),
             onClick = { if (urlValid) onConfirm(url.trim(), label, matchedConnection?.id) },
             enabled = urlValid,
-            trailingIcon = {
-                Icon(
-                    imageVector = SporaIcons.Plus,
-                    contentDescription = null,
-                    tint = TextLight,
-                    modifier = Modifier.size(20.dp),
-                )
-            },
-        )
-
-        CancelButton(onClick = onCancel)
-    }
-}
-
-@Composable
-private fun UseDeleteConfirmContent(
-    onConfirm: () -> Unit,
-    onCancel: () -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
-        Column {
-            Text(
-                text = stringResource(R.string.delete_modal_header),
-                style = MaterialTheme.typography.labelSmall,
-                color = TextMuted,
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = stringResource(R.string.delete_modal_title),
-                style = MaterialTheme.typography.headlineLarge,
-                color = TextMain,
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = stringResource(R.string.delete_modal_message),
-                style = MaterialTheme.typography.labelSmall,
-                color = TextMuted,
-            )
-        }
-
-        PrimaryButton(
-            text = stringResource(R.string.action_delete),
-            onClick = onConfirm,
         )
 
         CancelButton(onClick = onCancel)

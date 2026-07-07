@@ -1,3 +1,5 @@
+<!-- The spore mark, recolor B (§3.1): green swoosh + soil arc. Tight bbox —
+     for inline lockups next to the wordmark (the tail balances the text). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="33dp"
     android:height="40dp"
@@ -9,10 +11,10 @@
         <path
             android:pathData="M123.34,129.567c7.324,6.152 11.416,15.592 10.043,25.484 -2.164,15.585 -17.077,26.391 -33.308,24.137 -7.059,-0.98 -13.205,-4.27 -17.719,-8.956"
             android:fillColor="#00000000"
-            android:strokeColor="#8c663d"
+            android:strokeColor="#3E4A40"
             android:strokeWidth="10.267" />
         <path
             android:pathData="M130.376,100.571c0,0 -0.448,2.053 -0.843,2.795l-0.362,0.68c-1.973,3.622 -4.381,6.811 -7.262,9.754l-0.708,0.748c-5.847,6.059 -13.335,9.705 -21.393,11.808 -5.434,1.418 -10.062,3.282 -14.147,7.287l-0.611,0.582c-2.574,2.628 -4.293,6.195 -5.21,9.737l-0.179,0.665c-2.379,10.568 3.03,17.968 4.098,19.561l-7.359,7.026c-1.712,-2.024 -9.799,-12.505 -7.374,-27.384 0.496,-2.628 1.265,-5.099 2.347,-7.541l0.227,-0.523c5.712,-12.506 16.166,-17.513 28.78,-20.095 5.206,-1.05 10.14,-2.71 14.913,-5.046l0.614,-0.299c4.744,-2.34 8.955,-5.228 13.001,-8.624 0.476,-0.394 0.966,-0.767 1.466,-1.131z"
-            android:fillColor="#6c9044" />
+            android:fillColor="#6C9044" />
     </group>
 </vector>

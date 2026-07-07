@@ -181,9 +181,17 @@ class ConnectVpnService : VpnService() {
             registerReceiver(screenReceiver, filter)
 
             try {
+                // "Connected — Dana's Home" when the label is known (design 5d)
+                val label = connectionId?.let { id ->
+                    ConnectState.uiState.value.savedConnections.find { it.id == id }?.label
+                }
                 notify(
                     buildNotification(
-                        contentText = getString(R.string.notif_vpn_connected),
+                        contentText = if (label != null) {
+                            getString(R.string.notif_vpn_connected_name, label)
+                        } else {
+                            getString(R.string.notif_vpn_connected)
+                        },
                         isOngoing = true,
                         includeDisconnectAction = true,
                     )
@@ -270,7 +278,8 @@ class ConnectVpnService : VpnService() {
         )
 
         val builder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_stat_spora)
+            .setColor(0xFF3E4A40.toInt()) // soil — the VPN family accent
             .setContentTitle(getString(R.string.notif_vpn_title))
             .setContentText(contentText)
             .setStyle(NotificationCompat.BigTextStyle().bigText(contentText))

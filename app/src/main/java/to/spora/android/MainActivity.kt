@@ -11,8 +11,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,11 +23,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -44,34 +41,41 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import kotlin.math.max
 import kotlinx.coroutines.launch
+import to.spora.android.ui.DotState
 import to.spora.android.ui.FeedbackModalContent
 import to.spora.android.ui.ModalOverlay
 import to.spora.android.ui.ShareScreen
+import to.spora.android.ui.SmallIconButton
 import to.spora.android.ui.SporaIcons
+import to.spora.android.ui.StatusDot
 import to.spora.android.ui.UseScreen
-import to.spora.android.ui.theme.Slate
 import to.spora.android.ui.theme.SporaTheme
-import to.spora.android.ui.theme.TextLight
-import to.spora.android.ui.theme.TextLightMuted
-import to.spora.android.ui.theme.TextMain
+import to.spora.android.ui.theme.SurfaceNav
 import to.spora.android.ui.theme.TextMuted
+import to.spora.android.ui.theme.TextOnDark
+import to.spora.android.ui.theme.TextOnDarkMuted
+import to.spora.android.ui.theme.TextPrimary
 import uniffi.spora_ffi.initAndroidLogging
 
 class MainActivity : ComponentActivity() {
     private var deepLinkUrl = mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Brand surface instead of a white flash before Compose draws
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         SharedConnectionStore.init(this)
         UseConnectionStore.init(this)
@@ -85,7 +89,7 @@ class MainActivity : ComponentActivity() {
         if (savedInstanceState == null) {
             handleDeepLink(intent)
         }
-        // The UI is always light (sage) at the top and always dark (slate)
+        // The UI is always light (sage) at the top and always dark (pine)
         // behind the gesture area; without explicit styles enableEdgeToEdge
         // follows the *system* theme, making status icons unreadable in
         // system dark mode and the nav pill low-contrast in light mode.
@@ -182,6 +186,12 @@ fun MainScreen(
     }
 }
 
+private data class HeaderStatusRow(
+    val dot: DotState,
+    val direction: String?, // "↑" share / "↓" use — semantic, echoed in mono
+    val text: String,
+)
+
 @Composable
 private fun AppHeader(onFeedbackClick: () -> Unit) {
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -195,100 +205,98 @@ private fun AppHeader(onFeedbackClick: () -> Unit) {
         connectState.savedConnections.find { it.id == id }
     }
 
-    val statusDotColor: Color
-    val statusText: String
-
-    when {
-        connectState.isConnected && activeUseConnection != null -> {
-            statusDotColor = Color(0xFF4CAF50)
-            statusText = stringResource(R.string.header_status_connected_via, activeUseConnection.label)
-        }
-        connectState.isConnecting && activeUseConnection != null -> {
-            statusDotColor = Color(0xFFFFC107)
-            statusText = stringResource(R.string.header_status_connecting_to, activeUseConnection.label)
-        }
-        activeShareNames.isNotEmpty() -> {
-            statusDotColor = Color(0xFF4CAF50)
-            statusText = stringResource(R.string.header_status_sharing_with, activeShareNames.joinToString(", "))
-        }
-        shareState.startingIds.isNotEmpty() -> {
-            statusDotColor = Color(0xFFFFC107)
-            statusText = stringResource(R.string.header_status_starting)
-        }
-        else -> {
-            statusDotColor = TextMuted
-            statusText = stringResource(R.string.header_status_offline)
-        }
+    // Dual-role shows BOTH rows (combined, §11.5) — connection first.
+    val rows = mutableListOf<HeaderStatusRow>()
+    if (activeUseConnection != null && connectState.isConnected) {
+        rows += HeaderStatusRow(
+            DotState.Active,
+            "↓",
+            stringResource(R.string.header_status_connected, activeUseConnection.label.uppercase()),
+        )
+    } else if (activeUseConnection != null && connectState.isConnecting) {
+        rows += HeaderStatusRow(
+            DotState.Pending,
+            "↓",
+            stringResource(R.string.header_status_connecting, activeUseConnection.label.uppercase()),
+        )
+    }
+    if (activeShareNames.isNotEmpty()) {
+        rows += HeaderStatusRow(
+            DotState.Active,
+            "↑",
+            stringResource(
+                R.string.header_status_sharing,
+                activeShareNames.joinToString(", ") { it.uppercase() },
+            ),
+        )
+    } else if (shareState.startingIds.isNotEmpty()) {
+        rows += HeaderStatusRow(
+            DotState.Pending,
+            "↑",
+            stringResource(R.string.header_status_starting),
+        )
+    }
+    if (rows.isEmpty()) {
+        rows += HeaderStatusRow(DotState.None, null, stringResource(R.string.header_status_offline))
     }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 20.dp, end = 20.dp, top = statusBarTop + 16.dp, bottom = 20.dp),
+            .padding(start = 16.dp, end = 16.dp, top = statusBarTop + 14.dp, bottom = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(11.dp),
+            modifier = Modifier.weight(1f, fill = false),
         ) {
             Image(
                 painter = painterResource(R.drawable.ic_logo),
                 contentDescription = stringResource(R.string.header_logo_content_desc),
-                modifier = Modifier.height(36.dp),
+                modifier = Modifier.height(32.dp),
             )
 
-            Text(
-                text = "SPORA",
-                style = MaterialTheme.typography.titleMedium,
-                color = TextMain,
-            )
-        }
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            // End-aligned: the weighted status text makes this row absorb all
-            // leftover header width
-            horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End),
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(6.dp)
-                    .background(statusDotColor, CircleShape),
-            )
-            Text(
-                text = statusText,
-                style = MaterialTheme.typography.labelSmall,
-                color = TextMuted,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                // Measured after the feedback button, so a long status
-                // ellipsizes instead of pushing the button off-screen
-                modifier = Modifier.weight(1f, fill = false),
-            )
-            // The 48dp touch target overflows the 36dp header instead of
-            // inflating it: the outer box reports the glyph's 20dp to layout,
-            // keeping the icon on the content edge and the header height
-            // logo-driven
-            Box(
-                modifier = Modifier.size(20.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .requiredSize(48.dp)
-                        .clickable(role = Role.Button, onClick = onFeedbackClick),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = SporaIcons.Feedback,
-                        contentDescription = stringResource(R.string.feedback_button_content_desc),
-                        tint = TextMuted,
-                        modifier = Modifier.size(20.dp),
-                    )
+            Column {
+                Text(
+                    text = "SPORA",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextPrimary,
+                )
+                rows.forEachIndexed { i, row ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.padding(top = if (i == 0) 4.dp else 3.dp),
+                    ) {
+                        StatusDot(row.dot)
+                        if (row.direction != null) {
+                            Text(
+                                text = row.direction,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = TextMuted,
+                            )
+                        }
+                        Text(
+                            text = row.text,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = TextMuted,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
             }
         }
+
+        SmallIconButton(
+            icon = SporaIcons.Feedback,
+            contentDescription = stringResource(R.string.feedback_button_content_desc),
+            onClick = onFeedbackClick,
+            tint = TextPrimary,
+            iconSize = 19.dp,
+        )
     }
 }
 
@@ -298,32 +306,33 @@ private fun BottomNav(
     onTabSelected: (Int) -> Unit,
 ) {
     val navBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    val bottomPadding = max(navBarBottom.value + 8, 32f).dp
+    val bottomPadding = max(navBarBottom.value + 6, 18f).dp
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .shadow(
                 elevation = 16.dp,
-                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+                shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
             )
-            .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-            .background(Slate)
-            .padding(top = 20.dp, bottom = bottomPadding),
-        horizontalArrangement = Arrangement.SpaceEvenly,
+            .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+            .background(SurfaceNav)
+            .padding(start = 24.dp, end = 24.dp, top = 13.dp, bottom = bottomPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         NavItem(
-            icon = SporaIcons.Share,
+            icon = SporaIcons.NavShare,
             label = stringResource(R.string.tab_share),
             selected = selectedTab == 0,
             onClick = { onTabSelected(0) },
+            modifier = Modifier.weight(1f),
         )
         NavItem(
-            icon = SporaIcons.CloudDownload,
+            icon = SporaIcons.NavUse,
             label = stringResource(R.string.tab_use),
             selected = selectedTab == 1,
             onClick = { onTabSelected(1) },
+            modifier = Modifier.weight(1f),
         )
     }
 }
@@ -334,27 +343,28 @@ private fun NavItem(
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val tint = if (selected) TextLight else TextLightMuted
-    val iconAlpha = if (selected) 1f else 0.5f
+    val tint = if (selected) TextOnDark else TextOnDarkMuted
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-        modifier = Modifier
+        verticalArrangement = Arrangement.spacedBy(5.dp),
+        modifier = modifier
             .selectable(selected = selected, role = Role.Tab, onClick = onClick)
-            .padding(horizontal = 32.dp, vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .alpha(if (selected) 1f else 0.5f),
     ) {
         Icon(
             imageVector = icon,
             // The label Text below already names the tab for TalkBack
             contentDescription = null,
-            tint = tint.copy(alpha = iconAlpha),
-            modifier = Modifier.size(24.dp),
+            tint = tint,
+            modifier = Modifier.size(20.dp),
         )
         Text(
             text = label,
-            style = MaterialTheme.typography.labelMedium,
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
             color = tint,
         )
     }

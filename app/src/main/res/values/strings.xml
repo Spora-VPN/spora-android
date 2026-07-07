@@ -1,57 +1,69 @@
 <resources>
     <string name="app_name" translatable="false">Spora</string>
 
+    <!-- Micro-labels, statuses, buttons and nav are written ALREADY-UPPERCASE
+         in source (design rule: ru/be caps are intentional and wide). -->
+
     <!-- Common -->
     <string name="action_cancel">CANCEL</string>
     <string name="action_delete">DELETE</string>
     <string name="action_save">SAVE</string>
     <string name="saved_connections_header">SAVED CONNECTIONS</string>
     <string name="delete_connection_content_desc">Delete connection</string>
+    <string name="empty_list_title">Nothing here yet</string>
 
     <!-- Delete confirmation modal (shared) -->
     <string name="delete_modal_header">DELETE CONNECTION</string>
     <string name="delete_modal_title">Are you sure?</string>
     <string name="delete_modal_message">This connection will be permanently removed.</string>
 
-    <!-- Header / Status -->
-    <string name="header_status_connected_via">Connected via %1$s</string>
-    <string name="header_status_connecting_to">Connecting to %1$s\u2026</string>
-    <string name="header_status_sharing_with">Sharing with %1$s</string>
-    <string name="header_status_starting">Starting\u2026</string>
-    <string name="header_status_offline">Offline</string>
+    <!-- Header / Status (mono status lines; dual-role shows both rows) -->
+    <string name="header_status_connected">CONNECTED — %1$s</string>
+    <string name="header_status_connecting">CONNECTING — %1$s…</string>
+    <string name="header_status_sharing">SHARING — %1$s</string>
+    <string name="header_status_starting">STARTING…</string>
+    <string name="header_status_offline">OFFLINE</string>
     <string name="header_logo_content_desc">Spora logo</string>
 
     <!-- Tabs -->
     <string name="tab_share">SHARE</string>
-    <string name="tab_use">USE</string>
+    <string name="tab_use">CONNECT</string>
 
     <!-- Share screen -->
-    <string name="share_action_title">Share Your Internet</string>
-    <string name="share_action_subtitle">Create a link to share your connection</string>
+    <string name="share_action_eyebrow">CREATE A LINK</string>
+    <string name="share_action_eyebrow_busy">ONE MOMENT</string>
+    <string name="share_action_title">Share your internet</string>
     <string name="share_action_creating">Creating your link…</string>
-    <string name="share_status_sharing">Sharing</string>
-    <string name="share_status_starting">Starting\u2026</string>
-    <string name="share_status_inactive">Inactive</string>
+    <string name="share_action_subtitle">Send the link to someone you trust.</string>
+    <string name="share_action_subtitle_busy">We\'ll open the share sheet when it\'s ready.</string>
+    <string name="share_status_sharing">SHARING</string>
+    <string name="share_status_starting">STARTING…</string>
+    <string name="share_status_inactive">INACTIVE</string>
     <string name="share_link_content_desc">Share link</string>
     <string name="share_default_label">Connection %1$d</string>
+    <string name="share_empty_body">Connections you share will appear here.</string>
 
     <!-- Share rename modal -->
-    <string name="share_rename_label">Name This Connection</string>
-    <string name="share_rename_placeholder">e.g. Mom\'s Phone</string>
-    <string name="share_rename_hint">Naming helps identify who is using your net.</string>
+    <string name="share_rename_label">NAME THIS SHARE</string>
+    <string name="share_rename_placeholder">Mom\'s Phone</string>
+    <string name="share_rename_hint">A name helps you see who is using your connection.</string>
+    <string name="share_rename_skip">SKIP</string>
 
     <!-- Use screen -->
-    <string name="use_action_title">Connect via Friend</string>
-    <string name="use_action_subtitle">Use a connection a friend has shared with you</string>
-    <string name="use_status_connected">Connected</string>
-    <string name="use_status_connecting">Connecting\u2026</string>
-    <string name="use_default_label">Unknown Connection</string>
+    <string name="use_action_eyebrow">HAVE A LINK?</string>
+    <string name="use_action_title">Connect via a friend</string>
+    <string name="use_action_subtitle">Paste the link a friend sent you.</string>
+    <string name="use_status_connected">CONNECTED</string>
+    <string name="use_status_connecting">CONNECTING…</string>
+    <string name="use_default_label">Unknown connection</string>
+    <string name="use_empty_body">When a friend sends you a link, it will appear here.</string>
 
     <!-- Use modal -->
-    <string name="use_modal_url_label">Connection URL</string>
-    <string name="use_modal_url_placeholder">https://spora.to/...</string>
-    <string name="use_modal_label_label">Label (Optional)</string>
-    <string name="use_modal_label_placeholder">e.g. Home Base</string>
+    <string name="use_modal_url_label">CONNECTION LINK</string>
+    <string name="use_modal_url_placeholder">spora.to/s/…</string>
+    <string name="use_modal_label_label">NAME — OPTIONAL</string>
+    <string name="use_modal_label_placeholder">Dana\'s Home</string>
+    <string name="use_modal_label_helper">A name helps you recognize it later.</string>
     <string name="use_modal_save">SAVE CONNECTION</string>
 
     <!-- Feedback modal -->
@@ -59,9 +71,9 @@
     <string name="feedback_modal_header">SEND FEEDBACK</string>
     <string name="feedback_modal_title">Help us improve</string>
     <string name="feedback_modal_hint">Tell us what went wrong or what could be better.</string>
-    <string name="feedback_subject_label">Subject</string>
-    <string name="feedback_subject_placeholder">e.g. Connection keeps dropping</string>
-    <string name="feedback_message_label">Message</string>
+    <string name="feedback_subject_label">SUBJECT</string>
+    <string name="feedback_subject_placeholder">Connection keeps dropping</string>
+    <string name="feedback_message_label">MESSAGE</string>
     <string name="feedback_message_placeholder">What happened?</string>
     <string name="feedback_send">SEND</string>
     <string name="feedback_done">DONE</string>
@@ -69,7 +81,7 @@
     <string name="feedback_thanks_message">Your feedback has been sent to the developers.</string>
 
     <!-- Errors (user-facing categories, see UserError.kt) -->
-    <string name="error_invalid_url">This link is not a valid Spora connection link.</string>
+    <string name="error_invalid_url">This doesn\'t look like a Spora link.</string>
     <string name="error_connect_failed">Couldn\'t connect. Check your internet connection and try again.</string>
     <string name="error_share_failed">Couldn\'t start sharing. Check your internet connection and try again.</string>
     <string name="error_vpn_permission">Spora needs VPN permission to connect. Try again and allow the VPN request.</string>
@@ -78,7 +90,7 @@
 
     <!-- Share notifications -->
     <string name="notif_share_title">Spora sharing</string>
-    <string name="notif_share_starting">Starting\u2026</string>
+    <string name="notif_share_starting">Starting…</string>
     <string name="notif_share_stop_all">Stop all</string>
     <string name="notif_share_channel_name">Spora sharing</string>
     <string name="notif_share_channel_desc">Required notification while sharing is active</string>
@@ -89,8 +101,9 @@
 
     <!-- VPN notifications -->
     <string name="notif_vpn_title">Spora VPN</string>
-    <string name="notif_vpn_connecting">Connecting\u2026</string>
+    <string name="notif_vpn_connecting">Connecting…</string>
     <string name="notif_vpn_connected">Connected</string>
+    <string name="notif_vpn_connected_name">Connected — %1$s</string>
     <string name="notif_vpn_error">Error: %1$s</string>
     <string name="notif_vpn_disconnect">Disconnect</string>
     <string name="notif_vpn_channel_name">Spora VPN</string>

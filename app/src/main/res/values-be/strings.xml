@@ -1,10 +1,14 @@
 <resources>
+    <!-- Мікра-надпісы, статусы, кнопкі і навігацыя запісаны ВЯЛІКІМІ
+         ў крыніцы (правіла дызайну). -->
+
     <!-- Common -->
     <string name="action_cancel">АДМЕНА</string>
     <string name="action_delete">ВЫДАЛІЦЬ</string>
     <string name="action_save">ЗАХАВАЦЬ</string>
     <string name="saved_connections_header">ЗАХАВАНЫЯ ПАДКЛЮЧЭННІ</string>
     <string name="delete_connection_content_desc">Выдаліць падключэнне</string>
+    <string name="empty_list_title">Пакуль нічога няма</string>
 
     <!-- Delete confirmation modal -->
     <string name="delete_modal_header">ВЫДАЛЕННЕ ПАДКЛЮЧЭННЯ</string>
@@ -12,44 +16,52 @@
     <string name="delete_modal_message">Гэта падключэнне будзе выдалена назаўсёды.</string>
 
     <!-- Header / Status -->
-    <string name="header_status_connected_via">Падключана праз %1$s</string>
-    <string name="header_status_connecting_to">Падключэнне да %1$s\u2026</string>
-    <string name="header_status_sharing_with">Раздаецца: %1$s</string>
-    <string name="header_status_starting">Запуск\u2026</string>
-    <string name="header_status_offline">Не ў сетцы</string>
+    <string name="header_status_connected">ПАДКЛЮЧАНА — %1$s</string>
+    <string name="header_status_connecting">ПАДКЛЮЧАЕМ — %1$s…</string>
+    <string name="header_status_sharing">ДЗЯЛЮСЯ — %1$s</string>
+    <string name="header_status_starting">ЗАПУСК…</string>
+    <string name="header_status_offline">АФЛАЙН</string>
     <string name="header_logo_content_desc">Лагатып Spora</string>
 
     <!-- Tabs -->
-    <string name="tab_share">РАЗДАЦЬ</string>
-    <string name="tab_use">ВЫКАРЫСТАЦЬ</string>
+    <string name="tab_share">РАЗДАЧА</string>
+    <string name="tab_use">ПАДКЛЮЧЭННЕ</string>
 
     <!-- Share screen -->
-    <string name="share_action_title">Раздаць інтэрнэт</string>
-    <string name="share_action_subtitle">Стварыце спасылку для раздачы падключэння</string>
-    <string name="share_action_creating">Ствараем вашу спасылку…</string>
-    <string name="share_status_sharing">Раздаецца</string>
-    <string name="share_status_starting">Запуск\u2026</string>
-    <string name="share_status_inactive">Неактыўна</string>
+    <string name="share_action_eyebrow">СТВАРЫЦЬ СПАСЫЛКУ</string>
+    <string name="share_action_eyebrow_busy">АДНУ СЕКУНДУ</string>
+    <string name="share_action_title">Падзяліцца інтэрнэтам</string>
+    <string name="share_action_creating">Ствараем спасылку…</string>
+    <string name="share_action_subtitle">Адпраўце спасылку таму, каму давяраеце.</string>
+    <string name="share_action_subtitle_busy">Адкрыем акно адпраўкі, калі ўсё будзе гатова.</string>
+    <string name="share_status_sharing">ДЗЯЛЮСЯ</string>
+    <string name="share_status_starting">ЗАПУСК…</string>
+    <string name="share_status_inactive">НЕАКТЫЎНА</string>
     <string name="share_link_content_desc">Падзяліцца спасылкай</string>
     <string name="share_default_label">Падключэнне %1$d</string>
+    <string name="share_empty_body">Падключэнні, якімі вы дзеліцеся, з\'явяцца тут.</string>
 
     <!-- Share rename modal -->
-    <string name="share_rename_label">Назавіце падключэнне</string>
-    <string name="share_rename_placeholder">напр. Мамін тэлефон</string>
-    <string name="share_rename_hint">Назва дапаможа вызначыць, хто карыстаецца вашым інтэрнэтам.</string>
+    <string name="share_rename_label">НАЗАВІЦЕ ГЭТУЮ РАЗДАЧУ</string>
+    <string name="share_rename_placeholder">Мамін тэлефон</string>
+    <string name="share_rename_hint">Назва дапаможа бачыць, хто карыстаецца вашай сеткай.</string>
+    <string name="share_rename_skip">ПРАПУСЦІЦЬ</string>
 
     <!-- Use screen -->
+    <string name="use_action_eyebrow">ЁСЦЬ СПАСЫЛКА?</string>
     <string name="use_action_title">Падключыцца праз сябра</string>
-    <string name="use_action_subtitle">Выкарыстайце падключэнне, якім падзяліўся сябар</string>
-    <string name="use_status_connected">Падключана</string>
-    <string name="use_status_connecting">Падключэнне\u2026</string>
+    <string name="use_action_subtitle">Устаўце спасылку, якую прыслаў сябар.</string>
+    <string name="use_status_connected">ПАДКЛЮЧАНА</string>
+    <string name="use_status_connecting">ПАДКЛЮЧАЕМ…</string>
     <string name="use_default_label">Невядомае падключэнне</string>
+    <string name="use_empty_body">Калі сябар прышле спасылку, яна з\'явіцца тут.</string>
 
     <!-- Use modal -->
-    <string name="use_modal_url_label">URL падключэння</string>
-    <string name="use_modal_url_placeholder">https://spora.to/...</string>
-    <string name="use_modal_label_label">Назва (неабавязкова)</string>
-    <string name="use_modal_label_placeholder">напр. Хатняя база</string>
+    <string name="use_modal_url_label">СПАСЫЛКА НА ПАДКЛЮЧЭННЕ</string>
+    <string name="use_modal_url_placeholder">spora.to/s/…</string>
+    <string name="use_modal_label_label">НАЗВА — НЕАБАВЯЗКОВА</string>
+    <string name="use_modal_label_placeholder">Хата Даны</string>
+    <string name="use_modal_label_helper">Назва дапаможа пазнаць яго пазней.</string>
     <string name="use_modal_save">ЗАХАВАЦЬ ПАДКЛЮЧЭННЕ</string>
 
     <!-- Feedback modal -->
@@ -57,9 +69,9 @@
     <string name="feedback_modal_header">ДАСЛАЦЬ ВОДГУК</string>
     <string name="feedback_modal_title">Дапамажыце нам стаць лепшымі</string>
     <string name="feedback_modal_hint">Раскажыце, што пайшло не так або што можна палепшыць.</string>
-    <string name="feedback_subject_label">Тэма</string>
-    <string name="feedback_subject_placeholder">напр. Знікае падключэнне</string>
-    <string name="feedback_message_label">Паведамленне</string>
+    <string name="feedback_subject_label">ТЭМА</string>
+    <string name="feedback_subject_placeholder">Знікае падключэнне</string>
+    <string name="feedback_message_label">ПАВЕДАМЛЕННЕ</string>
     <string name="feedback_message_placeholder">Што здарылася?</string>
     <string name="feedback_send">ДАСЛАЦЬ</string>
     <string name="feedback_done">ГАТОВА</string>
@@ -67,32 +79,33 @@
     <string name="feedback_thanks_message">Ваш водгук дасланы распрацоўшчыкам.</string>
 
     <!-- Errors (user-facing categories, see UserError.kt) -->
-    <string name="error_invalid_url">Гэтая спасылка не з\'яўляецца сапраўднай спасылкай Spora.</string>
+    <string name="error_invalid_url">Гэта не падобна на спасылку Spora.</string>
     <string name="error_connect_failed">Не ўдалося падключыцца. Праверце інтэрнэт-злучэнне і паспрабуйце яшчэ раз.</string>
     <string name="error_share_failed">Не ўдалося пачаць раздачу. Праверце інтэрнэт-злучэнне і паспрабуйце яшчэ раз.</string>
-    <string name="error_vpn_permission">Для падключэння Spora патрэбны дазвол VPN. Паспрабуйце зноў і дазвольце VPN-запыт.</string>
+    <string name="error_vpn_permission">Дазвольце Spora доступ да VPN і паспрабуйце зноў.</string>
     <string name="error_vpn_unavailable">Не ўдалося стварыць VPN-тунэль. Перазапусціце праграму і паспрабуйце яшчэ раз.</string>
     <string name="error_generic">Нешта пайшло не так. Паспрабуйце яшчэ раз.</string>
 
     <!-- Share notifications -->
     <string name="notif_share_title">Spora — раздача</string>
-    <string name="notif_share_starting">Запуск\u2026</string>
+    <string name="notif_share_starting">Запуск…</string>
     <string name="notif_share_stop_all">Спыніць усё</string>
     <string name="notif_share_channel_name">Раздача Spora</string>
     <string name="notif_share_channel_desc">Абавязковае апавяшчэнне падчас раздачы</string>
     <plurals name="notif_share_count">
-        <item quantity="one">Раздаецца %1$d падключэнне</item>
-        <item quantity="few">Раздаецца %1$d падключэнні</item>
-        <item quantity="many">Раздаецца %1$d падключэнняў</item>
-        <item quantity="other">Раздаецца %1$d падключэнняў</item>
+        <item quantity="one">Раздаю %1$d падключэнне</item>
+        <item quantity="few">Раздаю %1$d падключэнні</item>
+        <item quantity="many">Раздаю %1$d падключэнняў</item>
+        <item quantity="other">Раздаю %1$d падключэнняў</item>
     </plurals>
 
     <!-- VPN notifications -->
     <string name="notif_vpn_title">Spora VPN</string>
-    <string name="notif_vpn_connecting">Падключэнне\u2026</string>
+    <string name="notif_vpn_connecting">Падключаем…</string>
     <string name="notif_vpn_connected">Падключана</string>
+    <string name="notif_vpn_connected_name">Падключана — %1$s</string>
     <string name="notif_vpn_error">Памылка: %1$s</string>
-    <string name="notif_vpn_disconnect">Адключыцца</string>
+    <string name="notif_vpn_disconnect">Адключыць</string>
     <string name="notif_vpn_channel_name">Spora VPN</string>
     <string name="notif_vpn_channel_desc">Абавязковае апавяшчэнне пры актыўным VPN</string>
 </resources>

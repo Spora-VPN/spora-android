@@ -19,7 +19,7 @@
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
-            android:theme="@style/Theme.Spora">
+            android:theme="@style/Theme.Spora.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

@@ -1,12 +1,9 @@
 package to.spora.android.ui
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,9 +28,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import to.spora.android.R
-import to.spora.android.ui.theme.TextLight
-import to.spora.android.ui.theme.TextMain
 import to.spora.android.ui.theme.TextMuted
+import to.spora.android.ui.theme.TextPrimary
 
 @Composable
 fun FeedbackModalContent(onDismiss: () -> Unit) {
@@ -43,7 +39,7 @@ fun FeedbackModalContent(onDismiss: () -> Unit) {
     val focusRequester = remember { FocusRequester() }
 
     if (sent) {
-        Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
+        Column {
             Column(
                 // The form this replaces held accessibility focus; without a
                 // live region TalkBack would never announce the confirmation
@@ -54,15 +50,17 @@ fun FeedbackModalContent(onDismiss: () -> Unit) {
                 Text(
                     text = stringResource(R.string.feedback_thanks_title),
                     style = MaterialTheme.typography.headlineLarge,
-                    color = TextMain,
+                    color = TextPrimary,
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = stringResource(R.string.feedback_thanks_message),
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = TextMuted,
                 )
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             PrimaryButton(
                 text = stringResource(R.string.feedback_done),
@@ -76,7 +74,7 @@ fun FeedbackModalContent(onDismiss: () -> Unit) {
         focusRequester.requestFocus()
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
+    Column {
         Column {
             Text(
                 text = stringResource(R.string.feedback_modal_header),
@@ -87,15 +85,17 @@ fun FeedbackModalContent(onDismiss: () -> Unit) {
             Text(
                 text = stringResource(R.string.feedback_modal_title),
                 style = MaterialTheme.typography.headlineLarge,
-                color = TextMain,
+                color = TextPrimary,
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = stringResource(R.string.feedback_modal_hint),
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = TextMuted,
             )
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
 
         InputField(
             value = subject,
@@ -109,6 +109,8 @@ fun FeedbackModalContent(onDismiss: () -> Unit) {
             ),
         )
 
+        Spacer(modifier = Modifier.height(22.dp))
+
         InputField(
             value = message,
             onValueChange = { message = it },
@@ -121,6 +123,8 @@ fun FeedbackModalContent(onDismiss: () -> Unit) {
             ),
         )
 
+        Spacer(modifier = Modifier.height(24.dp))
+
         PrimaryButton(
             text = stringResource(R.string.feedback_send),
             onClick = {
@@ -132,14 +136,6 @@ fun FeedbackModalContent(onDismiss: () -> Unit) {
                 }
             },
             enabled = subject.isNotBlank() && message.isNotBlank(),
-            trailingIcon = {
-                Icon(
-                    imageVector = SporaIcons.ArrowRight,
-                    contentDescription = null,
-                    tint = TextLight,
-                    modifier = Modifier.size(20.dp),
-                )
-            },
         )
 
         CancelButton(onClick = onDismiss)
