@@ -11,6 +11,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.statusBars
@@ -38,6 +40,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,6 +55,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlin.math.max
 import kotlinx.coroutines.launch
+import to.spora.android.ui.FeedbackModalContent
+import to.spora.android.ui.ModalOverlay
 import to.spora.android.ui.ShareScreen
 import to.spora.android.ui.SporaIcons
 import to.spora.android.ui.UseScreen
@@ -133,6 +138,7 @@ fun MainScreen(
 ) {
     val pagerState = rememberPagerState(pageCount = { 2 })
     val coroutineScope = rememberCoroutineScope()
+    var showFeedbackModal by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(deepLinkUrl) {
         if (deepLinkUrl != null) {
@@ -145,7 +151,7 @@ fun MainScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        AppHeader()
+        AppHeader(onFeedbackClick = { showFeedbackModal = true })
 
         HorizontalPager(
             state = pagerState,
@@ -167,10 +173,17 @@ fun MainScreen(
             onTabSelected = { coroutineScope.launch { pagerState.animateScrollToPage(it) } },
         )
     }
+
+    ModalOverlay(
+        visible = showFeedbackModal,
+        onDismiss = { showFeedbackModal = false },
+    ) {
+        FeedbackModalContent(onDismiss = { showFeedbackModal = false })
+    }
 }
 
 @Composable
-private fun AppHeader() {
+private fun AppHeader(onFeedbackClick: () -> Unit) {
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val shareState by ShareState.uiState.collectAsState()
     val connectState by ConnectState.uiState.collectAsState()
@@ -234,7 +247,9 @@ private fun AppHeader() {
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            // End-aligned: the weighted status text makes this row absorb all
+            // leftover header width
+            horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End),
         ) {
             Box(
                 modifier = Modifier
@@ -247,7 +262,32 @@ private fun AppHeader() {
                 color = TextMuted,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                // Measured after the feedback button, so a long status
+                // ellipsizes instead of pushing the button off-screen
+                modifier = Modifier.weight(1f, fill = false),
             )
+            // The 48dp touch target overflows the 36dp header instead of
+            // inflating it: the outer box reports the glyph's 20dp to layout,
+            // keeping the icon on the content edge and the header height
+            // logo-driven
+            Box(
+                modifier = Modifier.size(20.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .requiredSize(48.dp)
+                        .clickable(role = Role.Button, onClick = onFeedbackClick),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = SporaIcons.Feedback,
+                        contentDescription = stringResource(R.string.feedback_button_content_desc),
+                        tint = TextMuted,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
         }
     }
 }

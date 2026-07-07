@@ -52,6 +52,20 @@
     <string name="use_modal_label_placeholder">напр. Домашняя база</string>
     <string name="use_modal_save">СОХРАНИТЬ ПОДКЛЮЧЕНИЕ</string>
 
+    <!-- Feedback modal -->
+    <string name="feedback_button_content_desc">Отправить отзыв</string>
+    <string name="feedback_modal_header">ОТПРАВИТЬ ОТЗЫВ</string>
+    <string name="feedback_modal_title">Помогите нам стать лучше</string>
+    <string name="feedback_modal_hint">Расскажите, что пошло не так или что можно улучшить.</string>
+    <string name="feedback_subject_label">Тема</string>
+    <string name="feedback_subject_placeholder">напр. Пропадает подключение</string>
+    <string name="feedback_message_label">Сообщение</string>
+    <string name="feedback_message_placeholder">Что случилось?</string>
+    <string name="feedback_send">ОТПРАВИТЬ</string>
+    <string name="feedback_done">ГОТОВО</string>
+    <string name="feedback_thanks_title">Спасибо!</string>
+    <string name="feedback_thanks_message">Ваш отзыв отправлен разработчикам.</string>
+
     <!-- Errors (user-facing categories, see UserError.kt) -->
     <string name="error_invalid_url">Эта ссылка не является действительной ссылкой Spora.</string>
     <string name="error_connect_failed">Не удалось подключиться. Проверьте интернет-соединение и попробуйте ещё раз.</string>

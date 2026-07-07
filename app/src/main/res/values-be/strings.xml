@@ -52,6 +52,20 @@
     <string name="use_modal_label_placeholder">напр. Хатняя база</string>
     <string name="use_modal_save">ЗАХАВАЦЬ ПАДКЛЮЧЭННЕ</string>
 
+    <!-- Feedback modal -->
+    <string name="feedback_button_content_desc">Даслаць водгук</string>
+    <string name="feedback_modal_header">ДАСЛАЦЬ ВОДГУК</string>
+    <string name="feedback_modal_title">Дапамажыце нам стаць лепшымі</string>
+    <string name="feedback_modal_hint">Раскажыце, што пайшло не так або што можна палепшыць.</string>
+    <string name="feedback_subject_label">Тэма</string>
+    <string name="feedback_subject_placeholder">напр. Знікае падключэнне</string>
+    <string name="feedback_message_label">Паведамленне</string>
+    <string name="feedback_message_placeholder">Што здарылася?</string>
+    <string name="feedback_send">ДАСЛАЦЬ</string>
+    <string name="feedback_done">ГАТОВА</string>
+    <string name="feedback_thanks_title">Дзякуй!</string>
+    <string name="feedback_thanks_message">Ваш водгук дасланы распрацоўшчыкам.</string>
+
     <!-- Errors (user-facing categories, see UserError.kt) -->
     <string name="error_invalid_url">Гэтая спасылка не з\'яўляецца сапраўднай спасылкай Spora.</string>
     <string name="error_connect_failed">Не ўдалося падключыцца. Праверце інтэрнэт-злучэнне і паспрабуйце яшчэ раз.</string>

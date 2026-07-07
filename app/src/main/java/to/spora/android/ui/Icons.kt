@@ -127,6 +127,41 @@ object SporaIcons {
         }.build()
     }
 
+    val Feedback: ImageVector by lazy {
+        ImageVector.Builder(
+            name = "Feedback",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f,
+        ).apply {
+            path(fill = SolidColor(Color.Black)) {
+                moveTo(20f, 2f)
+                horizontalLineTo(4f)
+                curveToRelative(-1.1f, 0f, -1.99f, 0.9f, -1.99f, 2f)
+                lineTo(2f, 22f)
+                lineToRelative(4f, -4f)
+                horizontalLineToRelative(14f)
+                curveToRelative(1.1f, 0f, 2f, -0.9f, 2f, -2f)
+                verticalLineTo(4f)
+                curveToRelative(0f, -1.1f, -0.9f, -2f, -2f, -2f)
+                close()
+                moveTo(13f, 14f)
+                horizontalLineToRelative(-2f)
+                verticalLineToRelative(-2f)
+                horizontalLineToRelative(2f)
+                verticalLineToRelative(2f)
+                close()
+                moveTo(13f, 10f)
+                horizontalLineToRelative(-2f)
+                verticalLineTo(6f)
+                horizontalLineToRelative(2f)
+                verticalLineToRelative(4f)
+                close()
+            }
+        }.build()
+    }
+
     val Plus: ImageVector by lazy {
         ImageVector.Builder(
             name = "Plus",

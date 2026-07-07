@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Spora</string>
+    <string name="app_name" translatable="false">Spora</string>
 
     <!-- Common -->
     <string name="action_cancel">CANCEL</string>
@@ -53,6 +53,20 @@
     <string name="use_modal_label_label">Label (Optional)</string>
     <string name="use_modal_label_placeholder">e.g. Home Base</string>
     <string name="use_modal_save">SAVE CONNECTION</string>
+
+    <!-- Feedback modal -->
+    <string name="feedback_button_content_desc">Send feedback</string>
+    <string name="feedback_modal_header">SEND FEEDBACK</string>
+    <string name="feedback_modal_title">Help us improve</string>
+    <string name="feedback_modal_hint">Tell us what went wrong or what could be better.</string>
+    <string name="feedback_subject_label">Subject</string>
+    <string name="feedback_subject_placeholder">e.g. Connection keeps dropping</string>
+    <string name="feedback_message_label">Message</string>
+    <string name="feedback_message_placeholder">What happened?</string>
+    <string name="feedback_send">SEND</string>
+    <string name="feedback_done">DONE</string>
+    <string name="feedback_thanks_title">Thank you!</string>
+    <string name="feedback_thanks_message">Your feedback has been sent to the developers.</string>
 
     <!-- Errors (user-facing categories, see UserError.kt) -->
     <string name="error_invalid_url">This link is not a valid Spora connection link.</string>

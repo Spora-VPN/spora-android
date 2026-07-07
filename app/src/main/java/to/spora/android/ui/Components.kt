@@ -189,6 +189,8 @@ fun InputField(
     modifier: Modifier = Modifier,
     placeholder: String = "",
     focusRequester: FocusRequester? = null,
+    singleLine: Boolean = true,
+    minLines: Int = 1,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
 ) {
@@ -204,7 +206,8 @@ fun InputField(
             value = value,
             onValueChange = onValueChange,
             textStyle = MaterialTheme.typography.headlineMedium.copy(color = TextMain),
-            singleLine = true,
+            singleLine = singleLine,
+            minLines = minLines,
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
             cursorBrush = SolidColor(TextMain),
