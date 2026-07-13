@@ -724,7 +724,7 @@ internal object UniffiLib {
     ): RustBuffer.ByValue
     external fun uniffi_spora_ffi_fn_func_set_keepalive(`handle`: Int,`intervalSecs`: Int,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    external fun uniffi_spora_ffi_fn_func_share(`identityBytes`: RustBuffer.ByValue,`protector`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_spora_ffi_fn_func_share(`identityBytes`: RustBuffer.ByValue,`protector`: RustBuffer.ByValue,`connLogDir`: RustBuffer.ByValue,`connLogRetentionDays`: RustBuffer.ByValue,`connLogSessionsOnly`: Byte,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_spora_ffi_fn_func_stop_share(`handle`: Int,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
@@ -862,7 +862,7 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_spora_ffi_checksum_func_set_keepalive() != 5568.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_spora_ffi_checksum_func_share() != 13924.toShort()) {
+    if (lib.uniffi_spora_ffi_checksum_func_share() != 33536.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_spora_ffi_checksum_func_stop_share() != 57557.toShort()) {
@@ -1041,6 +1041,29 @@ public object FfiConverterInt: FfiConverter<Int, Int> {
 
     override fun write(value: Int, buf: ByteBuffer) {
         buf.putInt(value)
+    }
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterBoolean: FfiConverter<Boolean, Byte> {
+    override fun lift(value: Byte): Boolean {
+        return value.toInt() != 0
+    }
+
+    override fun read(buf: ByteBuffer): Boolean {
+        return lift(buf.get())
+    }
+
+    override fun lower(value: Boolean): Byte {
+        return if (value) 1.toByte() else 0.toByte()
+    }
+
+    override fun allocationSize(value: Boolean) = 1UL
+
+    override fun write(value: Boolean, buf: ByteBuffer) {
+        buf.put(lower(value))
     }
 }
 
@@ -1478,6 +1501,70 @@ public object FfiConverterTypeSocketProtectorCallback: FfiConverterCallbackInter
 /**
  * @suppress
  */
+public object FfiConverterOptionalUInt: FfiConverterRustBuffer<kotlin.UInt?> {
+    override fun read(buf: ByteBuffer): kotlin.UInt? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterUInt.read(buf)
+    }
+
+    override fun allocationSize(value: kotlin.UInt?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterUInt.allocationSize(value)
+        }
+    }
+
+    override fun write(value: kotlin.UInt?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterUInt.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?> {
+    override fun read(buf: ByteBuffer): kotlin.String? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterString.read(buf)
+    }
+
+    override fun allocationSize(value: kotlin.String?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterString.allocationSize(value)
+        }
+    }
+
+    override fun write(value: kotlin.String?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterString.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterOptionalTypeMtuCallback: FfiConverterRustBuffer<MtuCallback?> {
     override fun read(buf: ByteBuffer): MtuCallback? {
         if (buf.get().toInt() == 0) {
@@ -1611,12 +1698,26 @@ public object FfiConverterOptionalTypeSocketProtectorCallback: FfiConverterRustB
     
     
 
-    @Throws(ShareException::class) fun `share`(`identityBytes`: kotlin.ByteArray, `protector`: SocketProtectorCallback?): ShareResult {
+        /**
+         * Starts sharing this device's connection.
+         *
+         * Connection logging (the sharer-side per-flow record, see spora-core's
+         * `connlog`): pass `conn_log_dir` to enable it. The app should pass a
+         * directory under its files dir (e.g. `filesDir/connlog`) and exclude it
+         * from Android auto-backup. `conn_log_dir = None` disables logging.
+         * `conn_log_retention_days = None` uses the core default (90 days).
+         * `conn_log_sessions_only = true` records who was connected and when, but
+         * no per-flow destination records.
+         *
+         * Fails if `conn_log_dir` is set but not writable — a default-on liability
+         * log must not silently degrade at startup.
+         */
+    @Throws(ShareException::class) fun `share`(`identityBytes`: kotlin.ByteArray, `protector`: SocketProtectorCallback?, `connLogDir`: kotlin.String?, `connLogRetentionDays`: kotlin.UInt?, `connLogSessionsOnly`: kotlin.Boolean): ShareResult {
             return FfiConverterTypeShareResult.lift(
     uniffiRustCallWithError(ShareException) { _status ->
     UniffiLib.uniffi_spora_ffi_fn_func_share(
     
-        FfiConverterByteArray.lower(`identityBytes`),FfiConverterOptionalTypeSocketProtectorCallback.lower(`protector`),_status)
+        FfiConverterByteArray.lower(`identityBytes`),FfiConverterOptionalTypeSocketProtectorCallback.lower(`protector`),FfiConverterOptionalString.lower(`connLogDir`),FfiConverterOptionalUInt.lower(`connLogRetentionDays`),FfiConverterBoolean.lower(`connLogSessionsOnly`),_status)
 }
     )
     }

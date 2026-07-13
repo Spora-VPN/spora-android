@@ -72,7 +72,15 @@ class ShareForegroundService : Service() {
         val job = serviceScope.launch(start = CoroutineStart.LAZY) {
             try {
                 val identityBytes = java.util.Base64.getDecoder().decode(identity)
-                val result = uniffi.spora_ffi.share(identityBytes, null)
+                // Connection logging stays off until the app wires up a log
+                // directory (and backup exclusion) for it.
+                val result = uniffi.spora_ffi.share(
+                    identityBytes,
+                    null,
+                    connLogDir = null,
+                    connLogRetentionDays = null,
+                    connLogSessionsOnly = false,
+                )
                 if (!isActive) {
                     // Toggled off while share() was blocked starting up: the
                     // session it just created must be stopped, not surfaced.
