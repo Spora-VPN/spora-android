@@ -72,12 +72,15 @@ class ShareForegroundService : Service() {
         val job = serviceScope.launch(start = CoroutineStart.LAZY) {
             try {
                 val identityBytes = java.util.Base64.getDecoder().decode(identity)
-                // Connection logging stays off until the app wires up a log
-                // directory (and backup exclusion) for it.
+                // The connection log is a liability record for the sharer, so
+                // it is always on. The dir is excluded from auto-backup (see
+                // res/xml backup rules); retention/destination logging use the
+                // core defaults (90 days, destinations included).
+                val connLogDir = java.io.File(filesDir, "connlog").apply { mkdirs() }
                 val result = uniffi.spora_ffi.share(
                     identityBytes,
                     null,
-                    connLogDir = null,
+                    connLogDir = connLogDir.absolutePath,
                     connLogRetentionDays = null,
                     connLogSessionsOnly = false,
                 )

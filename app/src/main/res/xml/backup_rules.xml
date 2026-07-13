@@ -4,7 +4,11 @@
      the device Keystore and never leaves the device, so a restored copy is
      undecryptable and would crash the store on first read
    - use_connections holds share URLs, which act as bearer credentials
+
+   The connlog dir holds the sharer-side connection log (who connected, what
+   destinations they reached) and must stay on the device it was recorded on.
 -->
 <full-backup-content>
     <exclude domain="sharedpref" path="." />
+    <exclude domain="file" path="connlog" />
 </full-backup-content>
