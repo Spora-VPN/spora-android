@@ -8,6 +8,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SDK="${ANDROID_HOME:-$HOME/Android/Sdk}"
 ADB="$SDK/platform-tools/adb"
 EMULATOR="$SDK/emulator/emulator"
+# Pin adb (and gradle installDebug) to the emulator so an attached USB phone
+# can't be mistaken for it or receive commands meant for it.
+export ANDROID_SERIAL="${ANDROID_SERIAL:-emulator-5554}"
 JAVA_HOME_DEFAULT="$HOME/install/android-studio/jbr"
 AVD="${AVD:-Pixel_6_root}"   # API 36 google_apis (the API 33 AVDs have no system image installed)
 PKG="to.spora.android"
