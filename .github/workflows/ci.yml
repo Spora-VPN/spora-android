@@ -1,0 +1,50 @@
+name: ci
+
+on:
+  push:
+    branches: [main, ci]
+  pull_request:
+
+# Each run ends by force-pushing an empty ref whose NAME encodes
+# run id + job + status (ci-result/<run>/<job>/<status>). This repo is
+# private and the dev machine has no GitHub API token, so `git ls-remote`
+# over SSH is how CI outcomes are read from there. The refs are ephemeral;
+# delete them freely.
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: true
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Unit tests, lint, assemble
+        run: ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --console=plain
+
+      # The APK built here contains NO native libs: jniLibs/ is gitignored
+      # (the .so files come from the core repo's spora-ffi release bundle,
+      # built by ../spora/build-ffi.sh locally). Compile + tests + lint are
+      # fully exercised regardless — JNA loads the library at runtime only.
+      # TODO(once a core release is published): download the pinned
+      # spora-ffi-<tag>-android.zip release asset, verify its checksum
+      # against SHA256SUMS, and unzip jniLibs/ into app/src/main/ before
+      # assembling, so the CI APK is installable.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: app-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+
+      - name: Report result
+        if: always()
+        run: git push -f origin HEAD:refs/heads/ci-result/${{ github.run_id }}/${{ github.job }}/${{ job.status }}
