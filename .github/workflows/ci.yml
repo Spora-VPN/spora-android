@@ -2,25 +2,69 @@ name: ci
 
 on:
   push:
-    branches: [main, ci]
+    branches: [main, ci, ci-ffi]
   pull_request:
 
 # Each run ends by force-pushing an empty ref whose NAME encodes
 # run id + job + status (ci-result/<run>/<job>/<status>). This repo is
-# private and the dev machine has no GitHub API token, so `git ls-remote`
-# over SSH is how CI outcomes are read from there. The refs are ephemeral;
-# delete them freely.
+# private; `git ls-remote` over SSH is a tokenless way to read CI outcomes
+# from the dev machine. The refs are ephemeral; delete them freely.
 permissions:
   contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: true
+
+      # --- native libs + bindings, built from the pinned core ref ---------
+      # The FFI is built from core SOURCE at .github/core-ref (any tag or
+      # sha — no core release required). This keeps the committed bindings
+      # honest (drift check below) and makes the CI APK installable.
+
+      - name: Read pinned core ref
+        id: core
+        run: echo "ref=$(grep -v '^#' .github/core-ref | head -1)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v7
+        with:
+          repository: atereshkin/spora
+          ref: ${{ steps.core.outputs.ref }}
+          path: core
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,x86_64-linux-android
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: core
+          cache-on-failure: true
+
+      - name: Install cargo-ndk
+        run: command -v cargo-ndk >/dev/null || cargo install cargo-ndk --locked
+
+      # arm64-v8a covers real devices, x86_64 covers emulators; the 32-bit
+      # ABIs only matter for store release builds.
+      - name: Build spora-ffi from the pinned core
+        run: core/build-ffi.sh --abi arm64-v8a --abi x86_64 --out "$GITHUB_WORKSPACE/ffi-out"
+
+      - name: Bindings drift check
+        run: |
+          if ! diff -q ffi-out/kotlin/uniffi/spora_ffi/spora_ffi.kt \
+                       app/src/main/java/uniffi/spora_ffi/spora_ffi.kt; then
+            echo "::error::committed spora_ffi.kt does not match bindings generated at the pinned core ref — run ../spora/build-ffi.sh (at that ref) and commit the result, or bump .github/core-ref"
+            exit 1
+          fi
+
+      - name: Install jniLibs
+        run: cp -r ffi-out/jniLibs app/src/main/
+
+      # --- the app itself -------------------------------------------------
 
       - uses: actions/setup-java@v5
         with:
@@ -32,14 +76,6 @@ jobs:
       - name: Unit tests, lint, assemble
         run: ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --console=plain
 
-      # The APK built here contains NO native libs: jniLibs/ is gitignored
-      # (the .so files come from the core repo's spora-ffi release bundle,
-      # built by ../spora/build-ffi.sh locally). Compile + tests + lint are
-      # fully exercised regardless — JNA loads the library at runtime only.
-      # TODO(once a core release is published): download the pinned
-      # spora-ffi-<tag>-android.zip release asset, verify its checksum
-      # against SHA256SUMS, and unzip jniLibs/ into app/src/main/ before
-      # assembling, so the CI APK is installable.
       - uses: actions/upload-artifact@v7
         with:
           name: app-debug-apk

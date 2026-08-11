@@ -610,11 +610,33 @@ internal open class UniffiForeignFutureResultVoid(
 internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
     fun callback(`callbackData`: Long,`result`: UniffiForeignFutureResultVoid.UniffiByValue,)
 }
+internal interface UniffiCallbackInterfaceEventCallbackMethod0 : com.sun.jna.Callback {
+    fun callback(`uniffiHandle`: Long,`event`: RustBuffer.ByValue,`uniffiOutReturn`: Pointer,uniffiCallStatus: UniffiRustCallStatus,)
+}
 internal interface UniffiCallbackInterfaceMtuCallbackMethod0 : com.sun.jna.Callback {
     fun callback(`uniffiHandle`: Long,`mtu`: Int,`uniffiOutReturn`: Pointer,uniffiCallStatus: UniffiRustCallStatus,)
 }
 internal interface UniffiCallbackInterfaceSocketProtectorCallbackMethod0 : com.sun.jna.Callback {
     fun callback(`uniffiHandle`: Long,`fd`: Int,`uniffiOutReturn`: Pointer,uniffiCallStatus: UniffiRustCallStatus,)
+}
+@Structure.FieldOrder("uniffiFree", "uniffiClone", "onEvent")
+internal open class UniffiVTableCallbackInterfaceEventCallback(
+    @JvmField internal var `uniffiFree`: UniffiCallbackInterfaceFree? = null,
+    @JvmField internal var `uniffiClone`: UniffiCallbackInterfaceClone? = null,
+    @JvmField internal var `onEvent`: UniffiCallbackInterfaceEventCallbackMethod0? = null,
+) : Structure() {
+    class UniffiByValue(
+        `uniffiFree`: UniffiCallbackInterfaceFree? = null,
+        `uniffiClone`: UniffiCallbackInterfaceClone? = null,
+        `onEvent`: UniffiCallbackInterfaceEventCallbackMethod0? = null,
+    ): UniffiVTableCallbackInterfaceEventCallback(`uniffiFree`,`uniffiClone`,`onEvent`,), Structure.ByValue
+
+   internal fun uniffiSetValue(other: UniffiVTableCallbackInterfaceEventCallback) {
+        `uniffiFree` = other.`uniffiFree`
+        `uniffiClone` = other.`uniffiClone`
+        `onEvent` = other.`onEvent`
+    }
+
 }
 @Structure.FieldOrder("uniffiFree", "uniffiClone", "onMtu")
 internal open class UniffiVTableCallbackInterfaceMtuCallback(
@@ -679,6 +701,8 @@ internal object IntegrityCheckingUniffiLib {
     }
     external fun uniffi_spora_ffi_checksum_func_connect(
     ): Short
+    external fun uniffi_spora_ffi_checksum_func_connect_utun(
+    ): Short
     external fun uniffi_spora_ffi_checksum_func_disconnect(
     ): Short
     external fun uniffi_spora_ffi_checksum_func_init_android_logging(
@@ -690,6 +714,8 @@ internal object IntegrityCheckingUniffiLib {
     external fun uniffi_spora_ffi_checksum_func_share(
     ): Short
     external fun uniffi_spora_ffi_checksum_func_stop_share(
+    ): Short
+    external fun uniffi_spora_ffi_checksum_method_eventcallback_on_event(
     ): Short
     external fun uniffi_spora_ffi_checksum_method_mtucallback_on_mtu(
     ): Short
@@ -706,15 +732,20 @@ internal object UniffiLib {
 
     init {
         Native.register(UniffiLib::class.java, findLibraryName(componentName = "spora_ffi"))
+        uniffiCallbackInterfaceEventCallback.register(this)
         uniffiCallbackInterfaceMtuCallback.register(this)
         uniffiCallbackInterfaceSocketProtectorCallback.register(this)
         
     }
+    external fun uniffi_spora_ffi_fn_init_callback_vtable_eventcallback(`vtable`: UniffiVTableCallbackInterfaceEventCallback,
+    ): Unit
     external fun uniffi_spora_ffi_fn_init_callback_vtable_mtucallback(`vtable`: UniffiVTableCallbackInterfaceMtuCallback,
     ): Unit
     external fun uniffi_spora_ffi_fn_init_callback_vtable_socketprotectorcallback(`vtable`: UniffiVTableCallbackInterfaceSocketProtectorCallback,
     ): Unit
     external fun uniffi_spora_ffi_fn_func_connect(`url`: RustBuffer.ByValue,`tunFd`: Int,`protector`: Long,`mtuCallback`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Int
+    external fun uniffi_spora_ffi_fn_func_connect_utun(`url`: RustBuffer.ByValue,`tunFd`: Int,`protector`: RustBuffer.ByValue,`mtuCallback`: RustBuffer.ByValue,`eventCallback`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Int
     external fun uniffi_spora_ffi_fn_func_disconnect(`handle`: Int,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
@@ -850,6 +881,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_spora_ffi_checksum_func_connect() != 21855.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_spora_ffi_checksum_func_connect_utun() != 64033.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_spora_ffi_checksum_func_disconnect() != 23751.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -866,6 +900,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_spora_ffi_checksum_func_stop_share() != 57557.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_spora_ffi_checksum_method_eventcallback_on_event() != 43028.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_spora_ffi_checksum_method_mtucallback_on_mtu() != 17990.toShort()) {
@@ -1314,6 +1351,217 @@ public object FfiConverterTypeShareError : FfiConverterRustBuffer<ShareException
 
 
 
+/**
+ * Tunnel lifecycle events surfaced to the host (used by the Apple client to
+ * drive status UI: reconnecting, direct-path upgrade, session ended). Mirrors
+ * [`spora_core::TunnelEvent`] with string-typed socket addresses so it lowers
+ * cleanly over UniFFI.
+ */
+sealed class SporaEvent {
+    
+    /**
+     * A relay-via session is up. `peer` is the remote address (the relay's
+     * address when the path goes through it).
+     */
+    data class RelaySessionEstablished(
+        val `peer`: kotlin.String) : SporaEvent()
+        
+    {
+        
+
+        companion object
+    }
+    
+    /**
+     * A direct (hole-punched) connection was established and handed to the
+     * transport router; the actual swap applies shortly after.
+     */
+    data class DirectUpgradeSucceeded(
+        val `local`: kotlin.String, 
+        val `peer`: kotlin.String) : SporaEvent()
+        
+    {
+        
+
+        companion object
+    }
+    
+    /**
+     * One direct-upgrade attempt failed (the upgrade task may retry).
+     */
+    data class DirectUpgradeFailed(
+        val `reason`: kotlin.String) : SporaEvent()
+        
+    {
+        
+
+        companion object
+    }
+    
+    /**
+     * Client only: a re-dial is starting after the transport died.
+     */
+    object Reconnecting : SporaEvent()
+    
+    
+    /**
+     * Client only: the re-dial succeeded.
+     */
+    object Reconnected : SporaEvent()
+    
+    
+    /**
+     * The active session ended (peer replaced, cancelled, or transport closed).
+     */
+    data class SessionEnded(
+        val `reason`: kotlin.String) : SporaEvent()
+        
+    {
+        
+
+        companion object
+    }
+    
+    /**
+     * Share side: the connection log could not be written.
+     */
+    data class ConnLogDegraded(
+        val `detail`: kotlin.String) : SporaEvent()
+        
+    {
+        
+
+        companion object
+    }
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeSporaEvent : FfiConverterRustBuffer<SporaEvent>{
+    override fun read(buf: ByteBuffer): SporaEvent {
+        return when(buf.getInt()) {
+            1 -> SporaEvent.RelaySessionEstablished(
+                FfiConverterString.read(buf),
+                )
+            2 -> SporaEvent.DirectUpgradeSucceeded(
+                FfiConverterString.read(buf),
+                FfiConverterString.read(buf),
+                )
+            3 -> SporaEvent.DirectUpgradeFailed(
+                FfiConverterString.read(buf),
+                )
+            4 -> SporaEvent.Reconnecting
+            5 -> SporaEvent.Reconnected
+            6 -> SporaEvent.SessionEnded(
+                FfiConverterString.read(buf),
+                )
+            7 -> SporaEvent.ConnLogDegraded(
+                FfiConverterString.read(buf),
+                )
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: SporaEvent) = when(value) {
+        is SporaEvent.RelaySessionEstablished -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterString.allocationSize(value.`peer`)
+            )
+        }
+        is SporaEvent.DirectUpgradeSucceeded -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterString.allocationSize(value.`local`)
+                + FfiConverterString.allocationSize(value.`peer`)
+            )
+        }
+        is SporaEvent.DirectUpgradeFailed -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterString.allocationSize(value.`reason`)
+            )
+        }
+        is SporaEvent.Reconnecting -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+        is SporaEvent.Reconnected -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+        is SporaEvent.SessionEnded -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterString.allocationSize(value.`reason`)
+            )
+        }
+        is SporaEvent.ConnLogDegraded -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterString.allocationSize(value.`detail`)
+            )
+        }
+    }
+
+    override fun write(value: SporaEvent, buf: ByteBuffer) {
+        when(value) {
+            is SporaEvent.RelaySessionEstablished -> {
+                buf.putInt(1)
+                FfiConverterString.write(value.`peer`, buf)
+                Unit
+            }
+            is SporaEvent.DirectUpgradeSucceeded -> {
+                buf.putInt(2)
+                FfiConverterString.write(value.`local`, buf)
+                FfiConverterString.write(value.`peer`, buf)
+                Unit
+            }
+            is SporaEvent.DirectUpgradeFailed -> {
+                buf.putInt(3)
+                FfiConverterString.write(value.`reason`, buf)
+                Unit
+            }
+            is SporaEvent.Reconnecting -> {
+                buf.putInt(4)
+                Unit
+            }
+            is SporaEvent.Reconnected -> {
+                buf.putInt(5)
+                Unit
+            }
+            is SporaEvent.SessionEnded -> {
+                buf.putInt(6)
+                FfiConverterString.write(value.`reason`, buf)
+                Unit
+            }
+            is SporaEvent.ConnLogDegraded -> {
+                buf.putInt(7)
+                FfiConverterString.write(value.`detail`, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
 
 
 sealed class TunnelException: kotlin.Exception() {
@@ -1364,6 +1612,71 @@ public object FfiConverterTypeTunnelError : FfiConverterRustBuffer<TunnelExcepti
     }
 
 }
+
+
+
+
+
+/**
+ * Callback interface for tunnel lifecycle events. Implementations MUST be
+ * non-blocking (enqueue and return) — the callback is invoked inline from the
+ * tunnel's async tasks (see [`spora_core::EventHook`]).
+ */
+public interface EventCallback {
+    
+    fun `onEvent`(`event`: SporaEvent)
+    
+    companion object
+}
+
+
+
+// Put the implementation in an object so we don't pollute the top-level namespace
+internal object uniffiCallbackInterfaceEventCallback {
+    internal object `onEvent`: UniffiCallbackInterfaceEventCallbackMethod0 {
+        override fun callback(`uniffiHandle`: Long,`event`: RustBuffer.ByValue,`uniffiOutReturn`: Pointer,uniffiCallStatus: UniffiRustCallStatus,) {
+            val uniffiObj = FfiConverterTypeEventCallback.handleMap.get(uniffiHandle)
+            val makeCall = { ->
+                uniffiObj.`onEvent`(
+                    FfiConverterTypeSporaEvent.lift(`event`),
+                )
+            }
+            val writeReturn = { _: Unit -> Unit }
+            uniffiTraitInterfaceCall(uniffiCallStatus, makeCall, writeReturn)
+        }
+    }
+
+    internal object uniffiFree: UniffiCallbackInterfaceFree {
+        override fun callback(handle: Long) {
+            FfiConverterTypeEventCallback.handleMap.remove(handle)
+        }
+    }
+
+    internal object uniffiClone: UniffiCallbackInterfaceClone {
+        override fun callback(handle: Long): Long {
+            return FfiConverterTypeEventCallback.handleMap.clone(handle)
+        }
+    }
+
+    internal var vtable = UniffiVTableCallbackInterfaceEventCallback.UniffiByValue(
+        uniffiFree,
+        uniffiClone,
+        `onEvent`,
+    )
+
+    // Registers the foreign callback with the Rust side.
+    // This method is generated for each callback interface.
+    internal fun register(lib: UniffiLib) {
+        lib.uniffi_spora_ffi_fn_init_callback_vtable_eventcallback(vtable)
+    }
+}
+
+/**
+ * The ffiConverter which transforms the Callbacks in to handles to pass to Rust.
+ *
+ * @suppress
+ */
+public object FfiConverterTypeEventCallback: FfiConverterCallbackInterface<EventCallback>()
 
 
 
@@ -1565,6 +1878,38 @@ public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?>
 /**
  * @suppress
  */
+public object FfiConverterOptionalTypeEventCallback: FfiConverterRustBuffer<EventCallback?> {
+    override fun read(buf: ByteBuffer): EventCallback? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeEventCallback.read(buf)
+    }
+
+    override fun allocationSize(value: EventCallback?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeEventCallback.allocationSize(value)
+        }
+    }
+
+    override fun write(value: EventCallback?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeEventCallback.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterOptionalTypeMtuCallback: FfiConverterRustBuffer<MtuCallback?> {
     override fun read(buf: ByteBuffer): MtuCallback? {
         if (buf.get().toInt() == 0) {
@@ -1637,6 +1982,31 @@ public object FfiConverterOptionalTypeSocketProtectorCallback: FfiConverterRustB
     UniffiLib.uniffi_spora_ffi_fn_func_connect(
     
         FfiConverterString.lower(`url`),FfiConverterInt.lower(`tunFd`),FfiConverterTypeSocketProtectorCallback.lower(`protector`),FfiConverterOptionalTypeMtuCallback.lower(`mtuCallback`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Apple counterpart to [`connect`]. Establishes a tunnel and pumps packets
+         * against an Apple `utun` descriptor (4-byte AF framing, unlike Android's raw
+         * TUN). A `protector` (bind sockets to the physical interface via
+         * `IP_BOUND_IF`) is required on macOS: unlike iOS, the OS does not auto-bypass
+         * provider sockets, so without it the relay dial loops back into the tunnel and
+         * dead-locks. An optional [`EventCallback`] surfaces lifecycle events for
+         * status UI.
+         *
+         * Blocks until the relay session is established, then spawns the tunnel loop
+         * and returns a handle. The `tun_fd` ownership is transferred to Rust, which
+         * closes it when the tunnel ends (the caller must hand over a `dup()` of the
+         * provider's utun fd and not use it afterward).
+         */
+    @Throws(ConnectException::class) fun `connectUtun`(`url`: kotlin.String, `tunFd`: kotlin.Int, `protector`: SocketProtectorCallback?, `mtuCallback`: MtuCallback?, `eventCallback`: EventCallback?): kotlin.Int {
+            return FfiConverterInt.lift(
+    uniffiRustCallWithError(ConnectException) { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_connect_utun(
+    
+        FfiConverterString.lower(`url`),FfiConverterInt.lower(`tunFd`),FfiConverterOptionalTypeSocketProtectorCallback.lower(`protector`),FfiConverterOptionalTypeMtuCallback.lower(`mtuCallback`),FfiConverterOptionalTypeEventCallback.lower(`eventCallback`),_status)
 }
     )
     }
