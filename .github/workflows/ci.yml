@@ -2,7 +2,7 @@ name: ci
 
 on:
   push:
-    branches: [main, ci, ci-ffi, signing]
+    branches: [main, ci]
   pull_request:
 
 # Each run ends by force-pushing an empty ref whose NAME encodes
