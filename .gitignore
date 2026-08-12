@@ -12,3 +12,5 @@ jniLibs
 .idea
 .kotlin
 .emu/
+.local/
+*~
