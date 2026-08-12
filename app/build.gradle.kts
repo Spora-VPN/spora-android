@@ -20,6 +20,29 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Release signing, configured entirely from ~/.gradle/gradle.properties
+    // or the environment — never committed. When absent (CI, other machines)
+    // assembleRelease produces an unsigned APK and debug builds are
+    // unaffected. The keystore is the app's permanent identity: updates only
+    // install over installs signed with the same certificate.
+    val sporaKeystore = providers.gradleProperty("sporaKeystore").orNull
+        ?: System.getenv("SPORA_KEYSTORE")
+    val sporaKeystorePassword = providers.gradleProperty("sporaKeystorePassword").orNull
+        ?: System.getenv("SPORA_KEYSTORE_PASSWORD")
+
+    signingConfigs {
+        if (sporaKeystore != null && sporaKeystorePassword != null) {
+            create("release") {
+                storeFile = file(sporaKeystore)
+                storePassword = sporaKeystorePassword
+                keyAlias = providers.gradleProperty("sporaKeyAlias").orNull
+                    ?: System.getenv("SPORA_KEY_ALIAS") ?: "spora"
+                keyPassword = providers.gradleProperty("sporaKeyPassword").orNull
+                    ?: System.getenv("SPORA_KEY_PASSWORD") ?: sporaKeystorePassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -27,6 +50,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.findByName("release")
         }
     }
     compileOptions {
