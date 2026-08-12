@@ -54,6 +54,43 @@ case "$answer" in
   *) echo "aborted — edit app/build.gradle.kts and re-run"; exit 1 ;;
 esac
 
+# --- native libs: rebuild from the sibling core so the shipped .so and the
+# committed bindings provably match. Stale jniLibs crash at app start:
+# UniFFI's generated Kotlin runs a load-time API-checksum handshake against
+# the loaded library, and a missing/mismatched symbol aborts before any UI.
+CORE_DIR="${SPORA_CORE:-../spora}"
+CORE_PROVENANCE="unknown (jniLibs rebuild skipped)"
+if [ -x "$CORE_DIR/build-ffi.sh" ]; then
+  read -rp "Rebuild native libs from $CORE_DIR (release profile, recommended)? [Y/n] " ffi
+  case "$ffi" in
+    n|N|no|NO)
+      echo "warning: shipping the existing app/src/main/jniLibs — provenance unrecorded"
+      ;;
+    *)
+      TMP=$(mktemp -d)
+      trap 'rm -rf "$TMP"' EXIT
+      "$CORE_DIR/build-ffi.sh" --release --out "$TMP"
+      if ! diff -q "$TMP/kotlin/uniffi/spora_ffi/spora_ffi.kt" \
+                   app/src/main/java/uniffi/spora_ffi/spora_ffi.kt >/dev/null; then
+        echo "error: committed bindings do not match the core at $CORE_DIR —" >&2
+        echo "       review and commit the regenerated bindings first:" >&2
+        echo "         cp $TMP/kotlin/uniffi/spora_ffi/spora_ffi.kt app/src/main/java/uniffi/spora_ffi/" >&2
+        echo "       (kept: $TMP)" >&2
+        trap - EXIT
+        exit 1
+      fi
+      rm -rf app/src/main/jniLibs
+      cp -r "$TMP/jniLibs" app/src/main/
+      rm -rf "$TMP"; trap - EXIT
+      CORE_PROVENANCE=$(git -C "$CORE_DIR" rev-parse --short HEAD 2>/dev/null || echo unknown)
+      [ -z "$(git -C "$CORE_DIR" status --porcelain 2>/dev/null)" ] || CORE_PROVENANCE="$CORE_PROVENANCE-dirty"
+      echo "native libs installed (core $CORE_PROVENANCE, bindings verified)"
+      ;;
+  esac
+else
+  echo "warning: no core checkout at $CORE_DIR (set SPORA_CORE) — cannot rebuild jniLibs"
+fi
+
 read -rsp "Keystore password for $KEYSTORE: " SPORA_KEYSTORE_PASSWORD
 echo
 export SPORA_KEYSTORE="$KEYSTORE" SPORA_KEYSTORE_PASSWORD
@@ -97,10 +134,9 @@ else
   read -rp "Tag HEAD as $TAG (annotated, versionCode $VCODE)? [y/N] " tagit
   case "$tagit" in
     y|Y|yes|YES)
-      CORE_HEAD=$(git -C ../spora rev-parse --short HEAD 2>/dev/null || echo unknown)
       git tag -a "$TAG" -m "spora-android $VERSION (versionCode $VCODE)
 
-native libs built from core checkout at: $CORE_HEAD"
+native libs built from core checkout at: $CORE_PROVENANCE"
       echo "tagged $TAG — push with: git push origin $TAG"
       ;;
     *)
