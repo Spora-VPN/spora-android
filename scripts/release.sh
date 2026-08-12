@@ -69,5 +69,33 @@ fi
 
 echo
 echo "built: $APK"
+
+# Offer an annotated tag for the exact source state of this build — only on
+# a clean tree (a tag on a dirty build would name a commit that is not what
+# shipped), and never moving an existing tag (rebuild-after-fix case).
+VERSION=$(grep -oE 'versionName = "[^"]+"' app/build.gradle.kts | cut -d'"' -f2)
+VCODE=$(grep -oE 'versionCode = [0-9]+' app/build.gradle.kts | grep -oE '[0-9]+')
+TAG="v$VERSION"
+if [ -n "$(git status --porcelain)" ]; then
+  echo "note: working tree dirty — not offering tag $TAG (it would not describe this build)"
+elif git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+  echo "note: tag $TAG already exists — not re-tagging (delete it first if this build supersedes it)"
+else
+  read -rp "Tag HEAD as $TAG (annotated, versionCode $VCODE)? [y/N] " tagit
+  case "$tagit" in
+    y|Y|yes|YES)
+      CORE_HEAD=$(git -C ../spora rev-parse --short HEAD 2>/dev/null || echo unknown)
+      git tag -a "$TAG" -m "spora-android $VERSION (versionCode $VCODE)
+
+native libs built from core checkout at: $CORE_HEAD"
+      echo "tagged $TAG — push with: git push origin $TAG"
+      ;;
+    *)
+      echo "skipped — tag later with: git tag -a $TAG && git push origin $TAG"
+      ;;
+  esac
+fi
+
+echo
 echo "next:  install + sanity-check on a device (share, connect, tap an /s/ link),"
-echo "       upload via the website admin, then commit & tag this state."
+echo "       then upload via the website admin."
