@@ -24,6 +24,19 @@ RELEASE_SHA256="ba76b2331d8d67caf357257f15caa1f5700a099d7a9e9a56178d79ab2c2730d0
 KEYSTORE="${SPORA_KEYSTORE:-$HOME/secure/spora-release.jks}"
 [ -f "$KEYSTORE" ] || { echo "error: keystore not found: $KEYSTORE (set SPORA_KEYSTORE)" >&2; exit 1; }
 
+# Gradle needs a full JDK. The apt-installed /usr/lib/jvm default on this
+# machine is a javac-less JRE (Android Studio builds work because Studio
+# uses its bundled JBR) — so prefer an explicit JAVA_HOME only if it really
+# has javac, then fall back to the Studio JBR, then any real JDK.
+if [ ! -x "${JAVA_HOME:-/nonexistent}/bin/javac" ]; then
+  for cand in "$HOME/install/android-studio/jbr" /usr/lib/jvm/*; do
+    if [ -x "$cand/bin/javac" ]; then export JAVA_HOME="$cand"; break; fi
+  done
+fi
+[ -x "${JAVA_HOME:-/nonexistent}/bin/javac" ] \
+  || { echo "error: no JDK with javac found — set JAVA_HOME to a full JDK" >&2; exit 1; }
+echo "using JDK: $JAVA_HOME"
+
 if [ -n "$(git status --porcelain)" ]; then
   echo "warning: working tree is not clean — this build will not be reproducible from a commit:"
   git status --short | head -10
