@@ -705,11 +705,15 @@ internal object IntegrityCheckingUniffiLib {
     ): Short
     external fun uniffi_spora_ffi_checksum_func_disconnect(
     ): Short
+    external fun uniffi_spora_ffi_checksum_func_dns_forwarder_address(
+    ): Short
     external fun uniffi_spora_ffi_checksum_func_init_android_logging(
     ): Short
     external fun uniffi_spora_ffi_checksum_func_make_identity(
     ): Short
     external fun uniffi_spora_ffi_checksum_func_set_keepalive(
+    ): Short
+    external fun uniffi_spora_ffi_checksum_func_set_share_dns_servers(
     ): Short
     external fun uniffi_spora_ffi_checksum_func_share(
     ): Short
@@ -749,11 +753,15 @@ internal object UniffiLib {
     ): Int
     external fun uniffi_spora_ffi_fn_func_disconnect(`handle`: Int,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
+    external fun uniffi_spora_ffi_fn_func_dns_forwarder_address(uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     external fun uniffi_spora_ffi_fn_func_init_android_logging(uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     external fun uniffi_spora_ffi_fn_func_make_identity(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_spora_ffi_fn_func_set_keepalive(`handle`: Int,`intervalSecs`: Int,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    external fun uniffi_spora_ffi_fn_func_set_share_dns_servers(`handle`: Int,`servers`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     external fun uniffi_spora_ffi_fn_func_share(`identityBytes`: RustBuffer.ByValue,`protector`: RustBuffer.ByValue,`connLogDir`: RustBuffer.ByValue,`connLogRetentionDays`: RustBuffer.ByValue,`connLogSessionsOnly`: Byte,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -887,6 +895,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_spora_ffi_checksum_func_disconnect() != 23751.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_spora_ffi_checksum_func_dns_forwarder_address() != 10238.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_spora_ffi_checksum_func_init_android_logging() != 27785.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -894,6 +905,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_spora_ffi_checksum_func_set_keepalive() != 5568.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_spora_ffi_checksum_func_set_share_dns_servers() != 50734.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_spora_ffi_checksum_func_share() != 33536.toShort()) {
@@ -1360,6 +1374,23 @@ public object FfiConverterTypeShareError : FfiConverterRustBuffer<ShareException
 sealed class SporaEvent {
     
     /**
+     * A transport path is active. `carrier` and `path` use the stable
+     * diagnostic-record vocabulary (for example `nz` and
+     * `direct_punched`).
+     */
+    data class PathActivated(
+        val `carrier`: kotlin.String, 
+        val `path`: kotlin.String, 
+        val `local`: kotlin.String?, 
+        val `peer`: kotlin.String) : SporaEvent()
+        
+    {
+        
+
+        companion object
+    }
+    
+    /**
      * A relay-via session is up. `peer` is the remote address (the relay's
      * address when the path goes through it).
      */
@@ -1388,8 +1419,11 @@ sealed class SporaEvent {
     
     /**
      * One direct-upgrade attempt failed (the upgrade task may retry).
+     * `code` is the stable vocabulary entry (`spora_core::record::Reason`);
+     * `reason` is the same thing in words. Count the first, show the second.
      */
     data class DirectUpgradeFailed(
+        val `code`: kotlin.String, 
         val `reason`: kotlin.String) : SporaEvent()
         
     {
@@ -1445,22 +1479,29 @@ sealed class SporaEvent {
 public object FfiConverterTypeSporaEvent : FfiConverterRustBuffer<SporaEvent>{
     override fun read(buf: ByteBuffer): SporaEvent {
         return when(buf.getInt()) {
-            1 -> SporaEvent.RelaySessionEstablished(
+            1 -> SporaEvent.PathActivated(
+                FfiConverterString.read(buf),
+                FfiConverterString.read(buf),
+                FfiConverterOptionalString.read(buf),
                 FfiConverterString.read(buf),
                 )
-            2 -> SporaEvent.DirectUpgradeSucceeded(
+            2 -> SporaEvent.RelaySessionEstablished(
+                FfiConverterString.read(buf),
+                )
+            3 -> SporaEvent.DirectUpgradeSucceeded(
                 FfiConverterString.read(buf),
                 FfiConverterString.read(buf),
                 )
-            3 -> SporaEvent.DirectUpgradeFailed(
+            4 -> SporaEvent.DirectUpgradeFailed(
+                FfiConverterString.read(buf),
                 FfiConverterString.read(buf),
                 )
-            4 -> SporaEvent.Reconnecting
-            5 -> SporaEvent.Reconnected
-            6 -> SporaEvent.SessionEnded(
+            5 -> SporaEvent.Reconnecting
+            6 -> SporaEvent.Reconnected
+            7 -> SporaEvent.SessionEnded(
                 FfiConverterString.read(buf),
                 )
-            7 -> SporaEvent.ConnLogDegraded(
+            8 -> SporaEvent.ConnLogDegraded(
                 FfiConverterString.read(buf),
                 )
             else -> throw RuntimeException("invalid enum value, something is very wrong!!")
@@ -1468,6 +1509,16 @@ public object FfiConverterTypeSporaEvent : FfiConverterRustBuffer<SporaEvent>{
     }
 
     override fun allocationSize(value: SporaEvent) = when(value) {
+        is SporaEvent.PathActivated -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterString.allocationSize(value.`carrier`)
+                + FfiConverterString.allocationSize(value.`path`)
+                + FfiConverterOptionalString.allocationSize(value.`local`)
+                + FfiConverterString.allocationSize(value.`peer`)
+            )
+        }
         is SporaEvent.RelaySessionEstablished -> {
             // Add the size for the Int that specifies the variant plus the size needed for all fields
             (
@@ -1487,6 +1538,7 @@ public object FfiConverterTypeSporaEvent : FfiConverterRustBuffer<SporaEvent>{
             // Add the size for the Int that specifies the variant plus the size needed for all fields
             (
                 4UL
+                + FfiConverterString.allocationSize(value.`code`)
                 + FfiConverterString.allocationSize(value.`reason`)
             )
         }
@@ -1520,37 +1572,46 @@ public object FfiConverterTypeSporaEvent : FfiConverterRustBuffer<SporaEvent>{
 
     override fun write(value: SporaEvent, buf: ByteBuffer) {
         when(value) {
-            is SporaEvent.RelaySessionEstablished -> {
+            is SporaEvent.PathActivated -> {
                 buf.putInt(1)
+                FfiConverterString.write(value.`carrier`, buf)
+                FfiConverterString.write(value.`path`, buf)
+                FfiConverterOptionalString.write(value.`local`, buf)
+                FfiConverterString.write(value.`peer`, buf)
+                Unit
+            }
+            is SporaEvent.RelaySessionEstablished -> {
+                buf.putInt(2)
                 FfiConverterString.write(value.`peer`, buf)
                 Unit
             }
             is SporaEvent.DirectUpgradeSucceeded -> {
-                buf.putInt(2)
+                buf.putInt(3)
                 FfiConverterString.write(value.`local`, buf)
                 FfiConverterString.write(value.`peer`, buf)
                 Unit
             }
             is SporaEvent.DirectUpgradeFailed -> {
-                buf.putInt(3)
+                buf.putInt(4)
+                FfiConverterString.write(value.`code`, buf)
                 FfiConverterString.write(value.`reason`, buf)
                 Unit
             }
             is SporaEvent.Reconnecting -> {
-                buf.putInt(4)
-                Unit
-            }
-            is SporaEvent.Reconnected -> {
                 buf.putInt(5)
                 Unit
             }
-            is SporaEvent.SessionEnded -> {
+            is SporaEvent.Reconnected -> {
                 buf.putInt(6)
+                Unit
+            }
+            is SporaEvent.SessionEnded -> {
+                buf.putInt(7)
                 FfiConverterString.write(value.`reason`, buf)
                 Unit
             }
             is SporaEvent.ConnLogDegraded -> {
-                buf.putInt(7)
+                buf.putInt(8)
                 FfiConverterString.write(value.`detail`, buf)
                 Unit
             }
@@ -1967,6 +2028,34 @@ public object FfiConverterOptionalTypeSocketProtectorCallback: FfiConverterRustB
         }
     }
 }
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceString: FfiConverterRustBuffer<List<kotlin.String>> {
+    override fun read(buf: ByteBuffer): List<kotlin.String> {
+        val len = buf.getInt()
+        return List<kotlin.String>(len) {
+            FfiConverterString.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<kotlin.String>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterString.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<kotlin.String>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterString.write(it, buf)
+        }
+    }
+}
         /**
          * Establishes a tunnel connection and returns a handle for managing it.
          *
@@ -2024,6 +2113,23 @@ public object FfiConverterOptionalTypeSocketProtectorCallback: FfiConverterRustB
 }
     
     
+
+        /**
+         * The tunnel's synthetic resolver address (spora-core's `dns::PROXY_ADDR`,
+         * port 53). A *client* app sets it as the VPN's DNS server
+         * (`VpnService.Builder.addDnsServer`); the sharer's DNS forwarder answers
+         * it from the sharer's own resolvers, so the client never needs to know
+         * what those are. Pure convention — nothing is negotiated on the wire.
+         */ fun `dnsForwarderAddress`(): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_dns_forwarder_address(
+    
+        _status)
+}
+    )
+    }
+    
  fun `initAndroidLogging`()
         = 
     uniffiRustCall() { _status ->
@@ -2064,6 +2170,30 @@ public object FfiConverterOptionalTypeSocketProtectorCallback: FfiConverterRustB
     UniffiLib.uniffi_spora_ffi_fn_func_set_keepalive(
     
         FfiConverterInt.lower(`handle`),FfiConverterUInt.lower(`intervalSecs`),_status)
+}
+    
+    
+
+        /**
+         * Tell a share session which resolvers this device is using, so clients'
+         * queries are forwarded there. Android has no resolv.conf, so the app
+         * supplies them: `ConnectivityManager.getLinkProperties(activeNetwork)
+         * .getDnsServers()` right after `share()`, and again from
+         * `NetworkCallback.onLinkPropertiesChanged`. Entries are `ip` or `ip:port`
+         * (a v6 literal with a port is bracketed); unparseable ones are skipped
+         * with a log line. An empty list means "unknown": the public fallback
+         * answers.
+         *
+         * Known defect: with Private DNS in strict mode the system resolves over
+         * TLS while the forwarder sends plain UDP to the same addresses (see
+         * spora-core's `dns`).
+         */
+    @Throws(TunnelException::class) fun `setShareDnsServers`(`handle`: kotlin.Int, `servers`: List<kotlin.String>)
+        = 
+    uniffiRustCallWithError(TunnelException) { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_set_share_dns_servers(
+    
+        FfiConverterInt.lower(`handle`),FfiConverterSequenceString.lower(`servers`),_status)
 }
     
     

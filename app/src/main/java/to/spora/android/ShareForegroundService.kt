@@ -7,6 +7,9 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.LinkProperties
+import android.net.Network
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
@@ -25,6 +28,13 @@ import java.util.concurrent.ConcurrentHashMap
 class ShareForegroundService : Service() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val activeJobs = ConcurrentHashMap<String, Job>()
+
+    // Android has no resolv.conf, so the core's DNS forwarder (which answers
+    // clients' queries from this device's resolvers) is told what they are:
+    // once per share at start, and again whenever the default network's link
+    // changes (WiFi <-> cellular, a DHCP renew with new resolvers).
+    private val connectivity by lazy { getSystemService(ConnectivityManager::class.java) }
+    @Volatile private var networkCallback: ConnectivityManager.NetworkCallback? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -93,6 +103,10 @@ class ShareForegroundService : Service() {
                 }
                 ShareState.started(connectionId, result.handle, result.url)
                 updateNotification()
+                connectivity.activeNetwork
+                    ?.let { connectivity.getLinkProperties(it) }
+                    ?.let { pushDnsServers(it, listOf(result.handle)) }
+                ensureNetworkCallback()
             } catch (t: Throwable) {
                 if (!isActive) return@launch
                 Log.e(TAG, "share failed for $connectionId", t)
@@ -108,6 +122,52 @@ class ShareForegroundService : Service() {
         }
         activeJobs[connectionId] = job
         job.start()
+    }
+
+    /**
+     * Tell the share sessions in [handles] which resolvers this device uses
+     * (see spora-core's `dns`: the forwarder sends clients' queries there,
+     * with a public fallback when the list is empty or nothing answers).
+     */
+    private fun pushDnsServers(lp: LinkProperties, handles: Collection<Int>) {
+        val servers = lp.dnsServers.mapNotNull { it.hostAddress }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && lp.isPrivateDnsActive) {
+            // Known defect (spora-core `dns`): the system resolves over TLS,
+            // the forwarder sends plain UDP to the same servers.
+            Log.w(
+                TAG,
+                "Private DNS is active (${lp.privateDnsServerName ?: "opportunistic"}): " +
+                    "clients' queries are forwarded to $servers in the clear",
+            )
+        }
+        Log.d(TAG, "resolvers for shares $handles: $servers")
+        for (handle in handles) {
+            try {
+                uniffi.spora_ffi.setShareDnsServers(handle, servers)
+            } catch (t: Throwable) {
+                // The share may have been stopped between the snapshot and
+                // this call; the next link change will not include it.
+                Log.w(TAG, "setShareDnsServers($handle) failed", t)
+            }
+        }
+    }
+
+    @Synchronized
+    private fun ensureNetworkCallback() {
+        if (networkCallback != null) return
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            override fun onLinkPropertiesChanged(network: Network, lp: LinkProperties) {
+                val handles = ShareState.uiState.value.activeShares.values.map { it.handle }
+                if (handles.isNotEmpty()) pushDnsServers(lp, handles)
+            }
+        }
+        networkCallback = callback
+        try {
+            connectivity.registerDefaultNetworkCallback(callback)
+        } catch (t: Throwable) {
+            Log.w(TAG, "cannot follow the default network's resolvers", t)
+            networkCallback = null
+        }
     }
 
     private fun stopConnection(connectionId: String) {
@@ -217,6 +277,10 @@ class ShareForegroundService : Service() {
 
     override fun onDestroy() {
         serviceScope.cancel()
+        networkCallback?.let { cb ->
+            try { connectivity.unregisterNetworkCallback(cb) } catch (_: Throwable) {}
+        }
+        networkCallback = null
         ShareState.serviceStopped()
         super.onDestroy()
     }

@@ -205,7 +205,11 @@ class ConnectVpnService : VpnService() {
             .setSession("Spora VPN")
             .addAddress(TUN_ADDRESS, TUN_PREFIX_LENGTH)
             .addRoute("0.0.0.0", 0)
-            .addDnsServer(DNS_SERVER)
+            // The sharer's DNS forwarder, at its synthetic tunnel address
+            // (spora-core `dns::PROXY_ADDR`): queries are answered from the
+            // sharer's own resolvers, whatever they are. A convention both
+            // ends are built to; nothing is negotiated.
+            .addDnsServer(uniffi.spora_ffi.dnsForwarderAddress())
             .setMtu(mtu)
             .addDisallowedApplication("com.google.android.gms")
             .establish()
@@ -365,7 +369,6 @@ class ConnectVpnService : VpnService() {
         private const val TUN_ADDRESS = "10.11.0.2"
         private const val TUN_PREFIX_LENGTH = 24
         private const val DEFAULT_MTU = 1280
-        private const val DNS_SERVER = "8.8.8.8"
 
         fun connect(context: Context, url: String, connectionId: String? = null) {
             val intent = Intent(context, ConnectVpnService::class.java)
