@@ -4,4 +4,4 @@
 # committed app/src/main/java/uniffi/spora_ffi/spora_ffi.kt must match the
 # bindings generated at this ref (CI diffs them; regenerate with
 # ../spora/build-ffi.sh and commit when it fails).
-726ab56f40de352bf5d8840b10b85b4a94edfcb6
+v0.2.1
