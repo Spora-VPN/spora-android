@@ -39,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -72,6 +73,7 @@ import uniffi.spora_ffi.initAndroidLogging
 
 class MainActivity : ComponentActivity() {
     private var deepLinkUrl = mutableStateOf<String?>(null)
+    private val uiPrefs by lazy { getSharedPreferences(UI_PREFS_NAME, MODE_PRIVATE) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Brand surface instead of a white flash before Compose draws
@@ -100,9 +102,12 @@ class MainActivity : ComponentActivity() {
             ),
             navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
         )
+        val lastTab = uiPrefs.getInt(KEY_LAST_TAB, 0).coerceIn(0, 1)
         setContent {
             SporaTheme {
                 MainScreen(
+                    initialTab = lastTab,
+                    onTabSettled = { uiPrefs.edit().putInt(KEY_LAST_TAB, it).apply() },
                     deepLinkUrl = deepLinkUrl.value,
                     onDeepLinkConsumed = { deepLinkUrl.value = null },
                 )
@@ -133,16 +138,30 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    private companion object {
+        const val UI_PREFS_NAME = "ui"
+        const val KEY_LAST_TAB = "last_tab"
+    }
 }
 
 @Composable
 fun MainScreen(
+    initialTab: Int = 0,
+    onTabSettled: (Int) -> Unit = {},
     deepLinkUrl: String? = null,
     onDeepLinkConsumed: () -> Unit = {},
 ) {
-    val pagerState = rememberPagerState(pageCount = { 2 })
+    // initialTab only matters on a cold start; after a recreation the pager's
+    // own saved state wins
+    val pagerState = rememberPagerState(initialPage = initialTab, pageCount = { 2 })
     val coroutineScope = rememberCoroutineScope()
     var showFeedbackModal by rememberSaveable { mutableStateOf(false) }
+
+    // settledPage, not currentPage: no writes mid-swipe or mid-animation
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.settledPage }.collect(onTabSettled)
+    }
 
     LaunchedEffect(deepLinkUrl) {
         if (deepLinkUrl != null) {
