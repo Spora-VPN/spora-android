@@ -83,10 +83,13 @@ class ShareForegroundService : Service() {
             try {
                 val identityBytes = java.util.Base64.getDecoder().decode(identity)
                 // The connection log is a liability record for the sharer, so
-                // it is always on. The dir is excluded from auto-backup (see
+                // it is always on. One dir per connection: the core binds a
+                // database to the identity that created it and refuses to open
+                // it for any other, so a shared dir breaks every share after
+                // the first. The connlog tree is excluded from auto-backup (see
                 // res/xml backup rules); retention/destination logging use the
                 // core defaults (90 days, destinations included).
-                val connLogDir = java.io.File(filesDir, "connlog").apply { mkdirs() }
+                val connLogDir = java.io.File(filesDir, "connlog/$connectionId").apply { mkdirs() }
                 val result = uniffi.spora_ffi.share(
                     identityBytes,
                     null,
