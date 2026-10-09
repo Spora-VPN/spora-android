@@ -5,12 +5,8 @@ on:
     branches: [main, ci]
   pull_request:
 
-# Each run ends by force-pushing an empty ref whose NAME encodes
-# run id + job + status (ci-result/<run>/<job>/<status>). This repo is
-# private; `git ls-remote` over SSH is a tokenless way to read CI outcomes
-# from the dev machine. The refs are ephemeral; delete them freely.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
@@ -18,8 +14,6 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
-        with:
-          persist-credentials: true
 
       # --- native libs + bindings, built from the pinned core ref ---------
       # The FFI is built from core SOURCE at .github/core-ref (any tag or
@@ -80,7 +74,3 @@ jobs:
         with:
           name: app-debug-apk
           path: app/build/outputs/apk/debug/*.apk
-
-      - name: Report result
-        if: always()
-        run: git push -f origin HEAD:refs/heads/ci-result/${{ github.run_id }}/${{ github.job }}/${{ job.status }}
