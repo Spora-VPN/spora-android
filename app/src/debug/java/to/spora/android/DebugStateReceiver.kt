@@ -35,7 +35,11 @@ class DebugStateReceiver : BroadcastReceiver() {
                     SharedConnection("debug-share-$i", LABELS[(i - 1) % LABELS.size], DEBUG_IDENTITY)
                 })
                 ConnectState.loadConnections((1..uses).map { i ->
-                    SavedUseConnection("debug-use-$i", LABELS[(i - 1) % LABELS.size], "https://spora.to/s/debug$i")
+                    SavedUseConnection(
+                        "debug-use-$i",
+                        LABELS[(i - 1) % LABELS.size],
+                        "https://spora.to/s/" + TOKENS[(i - 1) % TOKENS.size],
+                    )
                 })
             }
             "share-starting" -> ShareState.starting(id ?: return)
@@ -72,5 +76,13 @@ class DebugStateReceiver : BroadcastReceiver() {
         const val DEBUG_IDENTITY = "ZGVidWc="
 
         val LABELS = listOf("Mom's Phone", "Anya", "Office", "Dacha", "Backup")
+
+        // Made-up tokens shaped like real ones (48 base64url chars), so
+        // screenshots (store listing included) show plausible links.
+        val TOKENS = listOf(
+            "h6oq8ZpkfGm6hBxCiiL11CLePU8hH4n9S71H3l7DXmWKjoJU",
+            "xde8UW0nmCwxxcsAPUe5kojq_vc7rCl7makGphbrvh1VbwE5",
+            "Rjy3-6BcAqGpg6aIUofGJNmPEJJI-YxmLRAluE0tj4GhnhZz",
+        )
     }
 }

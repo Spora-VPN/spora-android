@@ -1,0 +1,18 @@
+Spora is a VPN between people who trust each other. One person shares their internet connection, the other connects through it. There is no VPN provider in between: your traffic leaves through your friend's connection.
+
+<b>Share your internet</b>
+Create a link and send it to someone you trust. While sharing is on, they can use your connection from wherever they are. Keep a separate link for each person, switch each one on and off, and see when it is in use.
+
+<b>Connect via a friend</b>
+Paste the link a friend sent you and switch it on. Spora sets up a VPN on your phone that carries your traffic through your friend's device.
+
+<b>Made to get through</b>
+Spora is built for connectivity where networks are hostile: censorship, blocking, geo-restrictions. It works when both phones are behind NAT or a firewall, connecting them directly where it can and through a relay where it cannot. The relay forwards traffic it cannot read; its software is open source, like the rest of Spora.
+
+<b>Before you use it</b>
+Spora is a tool for connectivity, not for privacy. Whoever shares their connection carries your traffic the way an internet provider would, and the sharing phone keeps a local log of which sites its connections reach. Share only with people you trust, and connect only through people you trust.
+
+<b>Diagnostics</b>
+Spora keeps connection records, an app log and crash reports on your phone. Telemetry, which sends them to the developers automatically to show where and how networks block Spora, is off by default. The records contain network addresses. Once telemetry has been on, Spora checks about once a day whether your account requires it (for example, for a promotion you signed up for); if it does, Spora turns it back on and tells you. Feedback goes out only when you send it yourself, from an app of your choice, with a diagnostic report attached.
+
+Spora is free software (GPL-3.0). The networking core is written in Rust: https://github.com/Spora-VPN/spora
