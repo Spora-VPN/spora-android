@@ -13,8 +13,11 @@ Two modes of operation:
 ## Build Commands
 
 ```bash
+git submodule update --init           # the Rust core, at core/
+scripts/build-native.sh --install-toolchain  # pinned Rust, Android targets, cargo-ndk, NDK
+scripts/build-native.sh               # dev native libs (debug) + regenerated bindings
 ./gradlew :app:assembleDebug          # Build debug APK
-./gradlew :app:assembleRelease        # Build release APK
+./gradlew :app:assembleRelease        # Build release APK (builds the native libs from core/ itself)
 ./gradlew :app:test                   # Run unit tests
 ./gradlew :app:connectedAndroidTest   # Run instrumented tests (requires device/emulator)
 ./gradlew lint                        # Run lint checks
@@ -50,7 +53,8 @@ The VPN uses a two-phase TUN establishment: first without routes (so STUN works)
 ### Rust/UniFFI Integration
 
 - Auto-generated bindings: `app/src/main/java/uniffi/spora_ffi/spora_ffi.kt` (**do not edit manually**)
-- Native libraries: `app/src/main/jniLibs/` (arm64-v8a, armeabi-v7a, x86, x86_64)
+- The core is the `core/` submodule (github.com/Spora-VPN/spora, HTTPS URL so anonymous clones work); its recorded commit is the core the app is built against, and the committed bindings must match it (CI regenerates them and fails on a diff). Bumping the core: check out the new commit in `core/`, run `scripts/build-native.sh`, commit `core` together with `app/src/main/java/uniffi`. Core work can happen in a sibling checkout: `scripts/build-native.sh --core ../spora` (or `../spora/build-ffi.sh`) builds dev libs from it.
+- Native libraries (arm64-v8a, armeabi-v7a, x86, x86_64): debug APKs package the dev libs in the gitignored `app/src/main/jniLibs/` (despite the path, debug only: `main`'s jniLibs are switched off in `app/build.gradle.kts`). Release APKs package only what Gradle's `buildNativeRelease` task builds from `core/` with `scripts/build-native.sh --release`, so a stale dev library can never ship.
 - Logging, the diagnostics service and network reporting are set up in `App.onCreate()` (see "Diagnostics" below)
 - Key FFI functions:
   - `share(identityBytes: ByteArray, protector: SocketProtectorCallback?, connLogDir, connLogRetentionDays, connLogSessionsOnly, recordDir: String?): ShareResult` - starts sharing, returns handle + URL, throws `ShareException`
@@ -157,13 +161,24 @@ proprietary SDK blocked F-Droid publication).
   `setTelemetryEnabled`, `acknowledgeTelemetryNotice`, `exportBugReport`)
   run off the main thread. `logLine` and `telemetryStatus` are cheap.
 
+## Reproducible Releases (F-Droid)
+
+F-Droid rebuilds each release from its tag and publishes our signed APK only if its rebuild is byte-identical (recipe: `AllowedAPKSigningKeys` = the release cert, `binary` = the APK on the tag's GitHub release, which `scripts/release.sh` offers to create). What keeps a release reproducible:
+
+- `scripts/build-native.sh` pins Rust (`RUST_VERSION`) and cargo-ndk (`CARGO_NDK_VERSION`); the NDK is `ndkVersion` and the API level is `minSdk` from `app/build.gradle.kts`. Changing any of them changes the output: change the recipe's `ndk:` line (and anything else it pins) in the same release.
+- Release native builds remap the build machine's paths (`--remap-path-prefix` for `core/`, `CARGO_HOME`, the toolchain's rust-src), set the core's build stamp from the submodule commit, use `--locked`, and ignore RUSTFLAGS/wrappers/`CARGO_PROFILE_*` from the environment. They refuse a dirty `core/`, or one not at the commit HEAD records.
+- Releases are built from a clean tree at the tagged commit, with JDK 21 (F-Droid's build server runs Debian trixie's OpenJDK 21), and signed by Gradle's signingConfig. Do not re-sign with `apksigner` from build-tools 35+: its padding breaks F-Droid's signature copy.
+- `dependenciesInfo` is off (no Google-encrypted block in the signing block); `abiFilters` keeps JNA's dead ABIs out.
+- Store listing text, icon, screenshots and per-versionCode changelogs live in `fastlane/metadata/android/{en-US,ru,be}/`.
+
 ## Tech Stack
 
 - **Kotlin**: 2.0.21, JVM target 11
 - **Jetpack Compose**: BOM 2024.09.00 with Material 3
 - **Target SDK**: 36 (min SDK 26)
 - **JNA**: 5.18.1 (AAR artifact) for native interop
-- **NDK**: 29.0.14206865
+- **NDK**: 29.0.14206865 (`ndkVersion`; the native build uses the same one)
+- **Rust**: 1.97.1, cargo-ndk 4.1.2 (pinned in `scripts/build-native.sh`)
 
 ## Key Files
 
@@ -179,6 +194,8 @@ proprietary SDK blocked F-Droid publication).
 - `app/src/main/java/to/spora/android/ui/FeedbackModal.kt` / `ui/DiagnosticsModal.kt` - feedback (with report) and the diagnostics switch
 - `app/src/main/java/uniffi/spora_ffi/spora_ffi.kt` - Auto-generated FFI bindings (do not edit)
 - `gradle/libs.versions.toml` - Centralized dependency versions
+- `scripts/build-native.sh` - builds the native library from `core/` (dev and release modes, toolchain pins, reproducibility flags)
+- `scripts/release.sh` - the signed-release ceremony (checks, build, cert check, tag, draft GitHub release)
 
 ## Internationalization (i18n)
 

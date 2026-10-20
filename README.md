@@ -4,13 +4,26 @@ Android app for [Spora](https://github.com/Spora-VPN/spora), a P2P VPN: share yo
 
 ## Build
 
-The native library and its Kotlin bindings are built from the core, checked out next to this repo (as `spora/` beside `spora-android/`) at the ref pinned in [`.github/core-ref`](.github/core-ref):
+The core is a git submodule at `core/`. The native library is built from it with a pinned Rust toolchain, cargo-ndk and NDK ([`scripts/build-native.sh`](scripts/build-native.sh) has the versions):
 
 ```bash
-git clone https://github.com/Spora-VPN/spora ../spora
-git -C ../spora checkout "$(grep -v '^#' .github/core-ref | head -1)"
-../spora/build-ffi.sh    # needs cargo-ndk and an Android NDK; see the script header
+git clone --recurse-submodules https://github.com/Spora-VPN/spora-android
+cd spora-android
+scripts/build-native.sh --install-toolchain   # needs rustup and an Android SDK
+scripts/build-native.sh                       # dev build of the native library
 ./gradlew :app:assembleDebug
+```
+
+`./gradlew :app:assembleRelease` builds the native library for all four ABIs from `core/` itself, and produces an unsigned APK unless a signing key is configured.
+
+## Reproducible builds
+
+Release builds are reproducible: building a release tag with `./gradlew :app:assembleRelease` (JDK 21) gives the same APK as the published one, apart from its signature. The native build removes the build machine's paths, takes its version stamp from the submodule commit, and pins every tool. F-Droid checks each release this way before publishing it.
+
+To check a release yourself, compare your unsigned build with the published APK using [apksigcopier](https://github.com/obfusk/apksigcopier):
+
+```bash
+apksigcopier compare spora-<version>.apk --unsigned app/build/outputs/apk/release/spora-<version>.apk
 ```
 
 ## License

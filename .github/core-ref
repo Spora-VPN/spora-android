@@ -1,7 +1,0 @@
-# Ref (tag, branch, or sha) of github.com/Spora-VPN/spora that CI builds
-# the spora-ffi native libs and Kotlin bindings from. Any ref works — pin a
-# release tag when stable, a sha when tracking unreleased core changes. The
-# committed app/src/main/java/uniffi/spora_ffi/spora_ffi.kt must match the
-# bindings generated at this ref (CI diffs them; regenerate with
-# ../spora/build-ffi.sh and commit when it fails).
-8e1fbe301515fe5d0404f86e352e273b5744931b

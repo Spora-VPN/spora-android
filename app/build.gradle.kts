@@ -1,7 +1,37 @@
+import javax.inject.Inject
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+}
+
+// The four ABIs the Rust core is built for; scripts/build-native.sh builds
+// the same list.
+val nativeAbis = listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
+
+/**
+ * Builds libspora_ffi.so for a release APK from the core/ submodule with
+ * scripts/build-native.sh --release (pinned toolchain, reproducible flags,
+ * bindings check). It runs on every release build, since cargo tracks its own
+ * inputs, and it is the only source of native code in a release APK.
+ */
+abstract class BuildNativeLibs : DefaultTask() {
+    @get:Inject abstract val execOperations: ExecOperations
+    @get:Internal abstract val script: RegularFileProperty
+    @get:Internal abstract val ndkDirectory: DirectoryProperty
+    @get:OutputDirectory abstract val outputDir: DirectoryProperty
+
+    @TaskAction
+    fun build() {
+        execOperations.exec {
+            commandLine(
+                script.get().asFile.path, "--release",
+                "--ndk", ndkDirectory.get().asFile.path,
+                "--out", outputDir.get().asFile.path,
+            )
+        }
+    }
 }
 
 android {
@@ -18,6 +48,28 @@ android {
         versionName = "0.2.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // JNA's AAR also carries armeabi, mips and mips64 libraries, which
+        // would only bloat the APK: there is no core for them.
+        ndk { abiFilters += nativeAbis }
+    }
+
+    // Native libraries: a release APK gets only what buildNativeRelease
+    // builds from core/ (wired below). Dev builds of the core
+    // (scripts/build-native.sh, ../spora/build-ffi.sh) land in the gitignored
+    // src/main/jniLibs, which only debug builds package, so a stale dev
+    // library can never reach a release.
+    sourceSets {
+        getByName("main") { jniLibs.setSrcDirs(emptyList<String>()) }
+        getByName("debug") { jniLibs.srcDir("src/main/jniLibs") }
+    }
+
+    // AGP would otherwise put a dependency list, encrypted with a Google key,
+    // into the APK signing block: opaque to everyone else, and F-Droid asks
+    // for it to be off.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
     }
 
     // Release signing, configured entirely from ~/.gradle/gradle.properties
@@ -89,6 +141,18 @@ android {
             (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName =
                 "spora-${versionName}.apk"
         }
+    }
+}
+
+val buildNativeRelease = tasks.register<BuildNativeLibs>("buildNativeRelease") {
+    script.set(rootProject.layout.projectDirectory.file("scripts/build-native.sh"))
+    ndkDirectory.set(androidComponents.sdkComponents.ndkDirectory)
+    doNotTrackState("cargo decides what to rebuild")
+}
+
+androidComponents {
+    onVariants(selector().withBuildType("release")) { variant ->
+        variant.sources.jniLibs?.addGeneratedSourceDirectory(buildNativeRelease, BuildNativeLibs::outputDir)
     }
 }
 

@@ -14,56 +14,42 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
-
-      # --- native libs + bindings, built from the pinned core ref ---------
-      # The FFI is built from core SOURCE at .github/core-ref (any tag or
-      # sha — no core release required). This keeps the committed bindings
-      # honest (drift check below) and makes the CI APK installable.
-
-      - name: Read pinned core ref
-        id: core
-        run: echo "ref=$(grep -v '^#' .github/core-ref | head -1)" >> "$GITHUB_OUTPUT"
-
-      - uses: actions/checkout@v7
         with:
-          repository: Spora-VPN/spora
-          ref: ${{ steps.core.outputs.ref }}
-          path: core
+          submodules: true
 
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-linux-android,x86_64-linux-android
+      # --- native libs + bindings, built from the core/ submodule ----------
+      # Same script, pins and toolchain as release builds (debug profile and
+      # two ABIs here, to stay quick). Regenerating the bindings keeps the
+      # committed ones honest: they must match the recorded core commit.
+
+      - name: Rust toolchain (pinned in scripts/build-native.sh)
+        run: |
+          scripts/build-native.sh --install-toolchain
+          echo "RUSTUP_TOOLCHAIN=$(sed -n 's/^RUST_VERSION=//p' scripts/build-native.sh)" >> "$GITHUB_ENV"
 
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: core
           cache-on-failure: true
 
-      - name: Install cargo-ndk
-        run: command -v cargo-ndk >/dev/null || cargo install cargo-ndk --locked
-
-      # arm64-v8a covers real devices, x86_64 covers emulators; the 32-bit
-      # ABIs only matter for store release builds.
-      - name: Build spora-ffi from the pinned core
-        run: core/build-ffi.sh --abi arm64-v8a --abi x86_64 --out "$GITHUB_WORKSPACE/ffi-out"
+      # arm64-v8a covers real devices, x86_64 covers emulators; release
+      # builds (Gradle) always build all four.
+      - name: Build spora-ffi from core/
+        run: scripts/build-native.sh --abi arm64-v8a --abi x86_64
 
       - name: Bindings drift check
         run: |
-          if ! diff -q ffi-out/kotlin/uniffi/spora_ffi/spora_ffi.kt \
-                       app/src/main/java/uniffi/spora_ffi/spora_ffi.kt; then
-            echo "::error::committed spora_ffi.kt does not match bindings generated at the pinned core ref — run ../spora/build-ffi.sh (at that ref) and commit the result, or bump .github/core-ref"
+          if ! git diff --quiet -- app/src/main/java/uniffi; then
+            echo "::error::committed spora_ffi.kt does not match the bindings generated from core/ — run scripts/build-native.sh and commit app/src/main/java/uniffi"
             exit 1
           fi
-
-      - name: Install jniLibs
-        run: cp -r ffi-out/jniLibs app/src/main/
 
       # --- the app itself -------------------------------------------------
 
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
 
       - uses: gradle/actions/setup-gradle@v6
 
