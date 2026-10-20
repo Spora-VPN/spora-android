@@ -2,7 +2,6 @@ package to.spora.android
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -32,7 +31,9 @@ object UseConnectionStore {
             }
         }
     } catch (e: Exception) {
-        Log.e(TAG, "Corrupted connections entry; resetting store", e)
+        // The class only: org.json's messages quote the stored JSON, which
+        // holds the saved share links
+        SporaLog.e(TAG, "Corrupted connections entry (${e.javaClass.simpleName}); resetting store")
         try { prefs.edit().remove(KEY_CONNECTIONS).apply() } catch (_: Exception) {}
         emptyList()
     }

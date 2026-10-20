@@ -8,6 +8,8 @@
     <string name="action_cancel">CANCEL</string>
     <string name="action_delete">DELETE</string>
     <string name="action_save">SAVE</string>
+    <string name="action_done">DONE</string>
+    <string name="support_email" translatable="false">support@spora.to</string>
     <string name="saved_connections_header">SAVED CONNECTIONS</string>
     <string name="delete_connection_content_desc">Delete connection</string>
     <string name="empty_list_title">Nothing here yet</string>
@@ -24,6 +26,7 @@
     <string name="header_status_starting">STARTING…</string>
     <string name="header_status_offline">OFFLINE</string>
     <string name="header_logo_content_desc">Spora logo</string>
+    <string name="diagnostics_button_content_desc">Diagnostics</string>
 
     <!-- Tabs -->
     <string name="tab_share">SHARE</string>
@@ -71,14 +74,41 @@
     <string name="feedback_modal_header">SEND FEEDBACK</string>
     <string name="feedback_modal_title">Help us improve</string>
     <string name="feedback_modal_hint">Tell us what went wrong or what could be better.</string>
+    <string name="feedback_modal_report_note">A diagnostic report goes with it: connection records, the app log and crash reports from the last few days. You send it yourself, from an app of your choice.</string>
     <string name="feedback_subject_label">SUBJECT</string>
     <string name="feedback_subject_placeholder">Connection keeps dropping</string>
     <string name="feedback_message_label">MESSAGE</string>
     <string name="feedback_message_placeholder">What happened?</string>
     <string name="feedback_send">SEND</string>
-    <string name="feedback_done">DONE</string>
-    <string name="feedback_thanks_title">Thank you!</string>
-    <string name="feedback_thanks_message">Your feedback has been sent to the developers.</string>
+    <string name="feedback_preparing">PREPARING…</string>
+    <string name="feedback_chooser_title">Send feedback with</string>
+    <string name="feedback_handoff_title">Almost done</string>
+    <string name="feedback_handoff_message">Finish sending in the app you picked: nothing reaches us until you do. If that app asks for an address, use the one below.</string>
+    <string name="feedback_no_report">The diagnostic report couldn\'t be attached, so your message goes without it.</string>
+    <string name="feedback_support_address_label">SUPPORT ADDRESS</string>
+    <string name="feedback_send_again">CHOOSE AN APP AGAIN</string>
+
+    <!-- Diagnostics modal (the upload switch; collection is always on) -->
+    <string name="diagnostics_modal_header">DIAGNOSTICS</string>
+    <string name="diagnostics_modal_title">Help Spora get through</string>
+    <string name="diagnostics_modal_what">Spora keeps a record of each connection, an app log and crash reports on this device. With telemetry on, they are sent to us automatically, over whatever network you are on, mobile data included. They contain network addresses: yours as the internet sees it, and those of the devices and servers Spora connects with. We also see the address each upload comes from.</string>
+    <string name="diagnostics_modal_why">They show us where and how networks block Spora, and help us fix problems.</string>
+    <string name="diagnostics_modal_off">With telemetry off, nothing is uploaded. Once it has been on, Spora still checks with us about once a day whether your account requires it, and if it does, turns it back on and tells you. Feedback comes with a report, and it goes out only when you send it.</string>
+    <string name="diagnostics_toggle_label">Send telemetry automatically</string>
+    <string name="diagnostics_upload_failed">The last upload didn\'t go through. Spora will try again.</string>
+    <string name="diagnostics_switch_failed">Couldn\'t change the setting. Try again.</string>
+    <string name="diagnostics_unavailable">Telemetry isn\'t available right now. Spora will try again when you next open it; feedback with a report still works.</string>
+    <string name="diagnostics_device_id_label">DEVICE ID</string>
+    <string name="diagnostics_device_id_hint">Mention it when you contact support.</string>
+    <string name="diagnostics_last_upload_label">LAST UPLOAD</string>
+    <string name="diagnostics_last_upload_never">Not yet</string>
+
+    <!-- Force notice: the account requires telemetry (message is the agreed wording) -->
+    <string name="telemetry_required_header">TELEMETRY REQUIRED</string>
+    <string name="telemetry_required_title">Telemetry stays on</string>
+    <string name="telemetry_required_message">Your account requires that telemetry is enabled (most likely because you\'ve signed up to a promotion). You can keep it enabled, sign in to a different account, or contact support.</string>
+    <string name="telemetry_required_keep">KEEP ENABLED</string>
+    <string name="telemetry_required_contact">CONTACT SUPPORT</string>
 
     <!-- Errors (user-facing categories, see UserError.kt) -->
     <string name="error_invalid_url">This doesn\'t look like a Spora link.</string>

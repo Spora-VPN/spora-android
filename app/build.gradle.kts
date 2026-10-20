@@ -43,7 +43,25 @@ android {
         }
     }
 
+    // The diagnostics service's API (Diagnostics.kt). Debug builds can be
+    // pointed at a test server (-PsporaApi=<urls> or SPORA_API, comma-
+    // separated as for the CLI) and report "<version>-debug", so a dev device
+    // is never mistaken for an install. Absent (null) is the built-in
+    // production API; set but blank is passed on as it is, for the service
+    // to refuse — a dev setup gone wrong must not quietly mean production.
+    // Not a build failure: this block is configured for release tasks too.
+    // Release builds always use the built-in API.
+    val sporaApi: String? = providers.gradleProperty("sporaApi").orNull ?: System.getenv("SPORA_API")
+
     buildTypes {
+        debug {
+            versionNameSuffix = "-debug"
+            buildConfigField(
+                "String",
+                "SPORA_API",
+                sporaApi?.let { "\"" + it.replace("\\", "\\\\").replace("\"", "\\\"") + "\"" } ?: "null",
+            )
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -51,6 +69,7 @@ android {
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.findByName("release")
+            buildConfigField("String", "SPORA_API", "null")
         }
     }
     compileOptions {
@@ -90,7 +109,6 @@ dependencies {
             type = "aar"
         }
     }
-    implementation("com.bugfender.sdk:android:3.+")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

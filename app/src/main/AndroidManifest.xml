@@ -2,7 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Reading the default network's resolvers for the share's DNS forwarder -->
+    <!-- The default network's resolvers for the share's DNS forwarder, and the
+         non-VPN network underneath that UnderlyingNetworkReporter reports -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
@@ -45,6 +46,17 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="P2P internet sharing relay that must run indefinitely while the user is sharing their connection" />
         </service>
+
+        <!-- Bug reports handed to the share sheet: cacheDir/reports only -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.reports"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/report_paths" />
+        </provider>
 
         <service
             android:name=".ConnectVpnService"

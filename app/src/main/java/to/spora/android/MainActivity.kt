@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import kotlin.math.max
 import kotlinx.coroutines.launch
+import to.spora.android.ui.DiagnosticsModalContent
 import to.spora.android.ui.DotState
 import to.spora.android.ui.FeedbackModalContent
 import to.spora.android.ui.ModalOverlay
@@ -62,6 +63,7 @@ import to.spora.android.ui.ShareScreen
 import to.spora.android.ui.SmallIconButton
 import to.spora.android.ui.SporaIcons
 import to.spora.android.ui.StatusDot
+import to.spora.android.ui.TelemetryRequiredContent
 import to.spora.android.ui.UseScreen
 import to.spora.android.ui.theme.SporaTheme
 import to.spora.android.ui.theme.SurfaceNav
@@ -69,7 +71,6 @@ import to.spora.android.ui.theme.TextMuted
 import to.spora.android.ui.theme.TextOnDark
 import to.spora.android.ui.theme.TextOnDarkMuted
 import to.spora.android.ui.theme.TextPrimary
-import uniffi.spora_ffi.initAndroidLogging
 
 class MainActivity : ComponentActivity() {
     private var deepLinkUrl = mutableStateOf<String?>(null)
@@ -83,7 +84,6 @@ class MainActivity : ComponentActivity() {
         UseConnectionStore.init(this)
         ShareState.loadConnections(SharedConnectionStore.getAll())
         ConnectState.loadConnections(UseConnectionStore.getAll())
-        initAndroidLogging()
         requestNotificationPermission()
         // Only on a fresh launch: re-running the deep link on every recreation
         // (rotation, theme change) would re-trigger a disconnect/reconnect or
@@ -113,6 +113,11 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        Diagnostics.onForeground(this)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -157,6 +162,20 @@ fun MainScreen(
     val pagerState = rememberPagerState(initialPage = initialTab, pageCount = { 2 })
     val coroutineScope = rememberCoroutineScope()
     var showFeedbackModal by rememberSaveable { mutableStateOf(false) }
+    var showDiagnosticsModal by rememberSaveable { mutableStateOf(false) }
+    var showRequiredNotice by rememberSaveable { mutableStateOf(false) }
+    val telemetry by Diagnostics.status.collectAsState()
+
+    // The force notice has this one owner: the flag arrived (at registration,
+    // or a later check) and the user is owed it once, or switching off was
+    // refused in the diagnostics modal (shown over it)
+    LaunchedEffect(telemetry?.requiredNoticePending) {
+        if (telemetry?.requiredNoticePending == true) showRequiredNotice = true
+    }
+    val dismissRequiredNotice = {
+        showRequiredNotice = false
+        Diagnostics.acknowledgeNotice()
+    }
 
     // settledPage, not currentPage: no writes mid-swipe or mid-animation
     LaunchedEffect(pagerState) {
@@ -174,7 +193,10 @@ fun MainScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        AppHeader(onFeedbackClick = { showFeedbackModal = true })
+        AppHeader(
+            onDiagnosticsClick = { showDiagnosticsModal = true },
+            onFeedbackClick = { showFeedbackModal = true },
+        )
 
         HorizontalPager(
             state = pagerState,
@@ -203,6 +225,30 @@ fun MainScreen(
     ) {
         FeedbackModalContent(onDismiss = { showFeedbackModal = false })
     }
+
+    ModalOverlay(
+        visible = showDiagnosticsModal,
+        onDismiss = { showDiagnosticsModal = false },
+    ) {
+        DiagnosticsModalContent(
+            onDismiss = { showDiagnosticsModal = false },
+            onRequired = { showRequiredNotice = true },
+        )
+    }
+
+    ModalOverlay(
+        visible = showRequiredNotice,
+        onDismiss = dismissRequiredNotice,
+    ) {
+        TelemetryRequiredContent(
+            onKeep = dismissRequiredNotice,
+            onContactSupport = {
+                dismissRequiredNotice()
+                showDiagnosticsModal = false
+                showFeedbackModal = true
+            },
+        )
+    }
 }
 
 private data class HeaderStatusRow(
@@ -212,7 +258,10 @@ private data class HeaderStatusRow(
 )
 
 @Composable
-private fun AppHeader(onFeedbackClick: () -> Unit) {
+private fun AppHeader(
+    onDiagnosticsClick: () -> Unit,
+    onFeedbackClick: () -> Unit,
+) {
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val shareState by ShareState.uiState.collectAsState()
     val connectState by ConnectState.uiState.collectAsState()
@@ -309,13 +358,22 @@ private fun AppHeader(onFeedbackClick: () -> Unit) {
             }
         }
 
-        SmallIconButton(
-            icon = SporaIcons.Feedback,
-            contentDescription = stringResource(R.string.feedback_button_content_desc),
-            onClick = onFeedbackClick,
-            tint = TextPrimary,
-            iconSize = 19.dp,
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            SmallIconButton(
+                icon = SporaIcons.Diagnostics,
+                contentDescription = stringResource(R.string.diagnostics_button_content_desc),
+                onClick = onDiagnosticsClick,
+                tint = TextPrimary,
+                iconSize = 19.dp,
+            )
+            SmallIconButton(
+                icon = SporaIcons.Feedback,
+                contentDescription = stringResource(R.string.feedback_button_content_desc),
+                onClick = onFeedbackClick,
+                tint = TextPrimary,
+                iconSize = 19.dp,
+            )
+        }
     }
 }
 

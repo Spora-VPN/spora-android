@@ -699,6 +699,8 @@ internal object IntegrityCheckingUniffiLib {
         uniffiCheckContractApiVersion(this)
         uniffiCheckApiChecksums(this)
     }
+    external fun uniffi_spora_ffi_checksum_func_acknowledge_telemetry_notice(
+    ): Short
     external fun uniffi_spora_ffi_checksum_func_connect(
     ): Short
     external fun uniffi_spora_ffi_checksum_func_connect_utun(
@@ -707,17 +709,35 @@ internal object IntegrityCheckingUniffiLib {
     ): Short
     external fun uniffi_spora_ffi_checksum_func_dns_forwarder_address(
     ): Short
+    external fun uniffi_spora_ffi_checksum_func_export_bug_report(
+    ): Short
     external fun uniffi_spora_ffi_checksum_func_init_android_logging(
+    ): Short
+    external fun uniffi_spora_ffi_checksum_func_init_logging(
+    ): Short
+    external fun uniffi_spora_ffi_checksum_func_init_service(
+    ): Short
+    external fun uniffi_spora_ffi_checksum_func_log_line(
     ): Short
     external fun uniffi_spora_ffi_checksum_func_make_identity(
     ): Short
     external fun uniffi_spora_ffi_checksum_func_set_keepalive(
     ): Short
+    external fun uniffi_spora_ffi_checksum_func_set_network_state(
+    ): Short
     external fun uniffi_spora_ffi_checksum_func_set_share_dns_servers(
+    ): Short
+    external fun uniffi_spora_ffi_checksum_func_set_telemetry_enabled(
     ): Short
     external fun uniffi_spora_ffi_checksum_func_share(
     ): Short
     external fun uniffi_spora_ffi_checksum_func_stop_share(
+    ): Short
+    external fun uniffi_spora_ffi_checksum_func_telemetry_nudge(
+    ): Short
+    external fun uniffi_spora_ffi_checksum_func_telemetry_status(
+    ): Short
+    external fun uniffi_spora_ffi_checksum_func_write_crash(
     ): Short
     external fun uniffi_spora_ffi_checksum_method_eventcallback_on_event(
     ): Short
@@ -747,25 +767,45 @@ internal object UniffiLib {
     ): Unit
     external fun uniffi_spora_ffi_fn_init_callback_vtable_socketprotectorcallback(`vtable`: UniffiVTableCallbackInterfaceSocketProtectorCallback,
     ): Unit
-    external fun uniffi_spora_ffi_fn_func_connect(`url`: RustBuffer.ByValue,`tunFd`: Int,`protector`: Long,`mtuCallback`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_spora_ffi_fn_func_acknowledge_telemetry_notice(uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    external fun uniffi_spora_ffi_fn_func_connect(`url`: RustBuffer.ByValue,`tunFd`: Int,`protector`: Long,`mtuCallback`: RustBuffer.ByValue,`recordDir`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Int
-    external fun uniffi_spora_ffi_fn_func_connect_utun(`url`: RustBuffer.ByValue,`tunFd`: Int,`protector`: RustBuffer.ByValue,`mtuCallback`: RustBuffer.ByValue,`eventCallback`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_spora_ffi_fn_func_connect_utun(`url`: RustBuffer.ByValue,`tunFd`: Int,`protector`: RustBuffer.ByValue,`mtuCallback`: RustBuffer.ByValue,`eventCallback`: RustBuffer.ByValue,`recordDir`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Int
     external fun uniffi_spora_ffi_fn_func_disconnect(`handle`: Int,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     external fun uniffi_spora_ffi_fn_func_dns_forwarder_address(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    external fun uniffi_spora_ffi_fn_func_export_bug_report(`outPath`: RustBuffer.ByValue,`note`: RustBuffer.ByValue,`platformInfo`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     external fun uniffi_spora_ffi_fn_func_init_android_logging(uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    external fun uniffi_spora_ffi_fn_func_init_logging(`logDir`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    external fun uniffi_spora_ffi_fn_func_init_service(`config`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    external fun uniffi_spora_ffi_fn_func_log_line(`level`: RustBuffer.ByValue,`tag`: RustBuffer.ByValue,`message`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     external fun uniffi_spora_ffi_fn_func_make_identity(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_spora_ffi_fn_func_set_keepalive(`handle`: Int,`intervalSecs`: Int,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
+    external fun uniffi_spora_ffi_fn_func_set_network_state(`kind`: RustBuffer.ByValue,`validated`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
     external fun uniffi_spora_ffi_fn_func_set_share_dns_servers(`handle`: Int,`servers`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    external fun uniffi_spora_ffi_fn_func_share(`identityBytes`: RustBuffer.ByValue,`protector`: RustBuffer.ByValue,`connLogDir`: RustBuffer.ByValue,`connLogRetentionDays`: RustBuffer.ByValue,`connLogSessionsOnly`: Byte,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_spora_ffi_fn_func_set_telemetry_enabled(`enabled`: Byte,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    external fun uniffi_spora_ffi_fn_func_share(`identityBytes`: RustBuffer.ByValue,`protector`: RustBuffer.ByValue,`connLogDir`: RustBuffer.ByValue,`connLogRetentionDays`: RustBuffer.ByValue,`connLogSessionsOnly`: Byte,`recordDir`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_spora_ffi_fn_func_stop_share(`handle`: Int,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    external fun uniffi_spora_ffi_fn_func_telemetry_nudge(uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    external fun uniffi_spora_ffi_fn_func_telemetry_status(uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_spora_ffi_fn_func_write_crash(`source`: RustBuffer.ByValue,`text`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     external fun ffi_spora_ffi_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -886,10 +926,13 @@ private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
 }
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
-    if (lib.uniffi_spora_ffi_checksum_func_connect() != 21855.toShort()) {
+    if (lib.uniffi_spora_ffi_checksum_func_acknowledge_telemetry_notice() != 40316.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_spora_ffi_checksum_func_connect_utun() != 64033.toShort()) {
+    if (lib.uniffi_spora_ffi_checksum_func_connect() != 23655.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_spora_ffi_checksum_func_connect_utun() != 34037.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_spora_ffi_checksum_func_disconnect() != 23751.toShort()) {
@@ -898,22 +941,49 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_spora_ffi_checksum_func_dns_forwarder_address() != 10238.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_spora_ffi_checksum_func_init_android_logging() != 27785.toShort()) {
+    if (lib.uniffi_spora_ffi_checksum_func_export_bug_report() != 1648.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_spora_ffi_checksum_func_init_android_logging() != 37877.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_spora_ffi_checksum_func_init_logging() != 34061.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_spora_ffi_checksum_func_init_service() != 38448.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_spora_ffi_checksum_func_log_line() != 56243.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_spora_ffi_checksum_func_make_identity() != 196.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_spora_ffi_checksum_func_set_keepalive() != 5568.toShort()) {
+    if (lib.uniffi_spora_ffi_checksum_func_set_keepalive() != 14637.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_spora_ffi_checksum_func_set_network_state() != 43222.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_spora_ffi_checksum_func_set_share_dns_servers() != 50734.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_spora_ffi_checksum_func_share() != 33536.toShort()) {
+    if (lib.uniffi_spora_ffi_checksum_func_set_telemetry_enabled() != 49433.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_spora_ffi_checksum_func_share() != 18421.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_spora_ffi_checksum_func_stop_share() != 57557.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_spora_ffi_checksum_func_telemetry_nudge() != 29109.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_spora_ffi_checksum_func_telemetry_status() != 30488.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_spora_ffi_checksum_func_write_crash() != 5714.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_spora_ffi_checksum_method_eventcallback_on_event() != 43028.toShort()) {
@@ -1098,6 +1168,29 @@ public object FfiConverterInt: FfiConverter<Int, Int> {
 /**
  * @suppress
  */
+public object FfiConverterULong: FfiConverter<ULong, Long> {
+    override fun lift(value: Long): ULong {
+        return value.toULong()
+    }
+
+    override fun read(buf: ByteBuffer): ULong {
+        return lift(buf.getLong())
+    }
+
+    override fun lower(value: ULong): Long {
+        return value.toLong()
+    }
+
+    override fun allocationSize(value: ULong) = 8UL
+
+    override fun write(value: ULong, buf: ByteBuffer) {
+        buf.putLong(value.toLong())
+    }
+}
+
+/**
+ * @suppress
+ */
 public object FfiConverterBoolean: FfiConverter<Boolean, Byte> {
     override fun lift(value: Byte): Boolean {
         return value.toInt() != 0
@@ -1196,6 +1289,146 @@ public object FfiConverterByteArray: FfiConverterRustBuffer<ByteArray> {
 
 
 
+/**
+ * What [`export_bug_report`] wrote.
+ */
+data class BugReportSummary (
+    var `path`: kotlin.String
+    , 
+    /**
+     * Files bundled (the manifest not counted).
+     */
+    var `includedFiles`: kotlin.UInt
+    , 
+    /**
+     * Files the manifest lists as left out (too old, over the size budget,
+     * unreadable).
+     */
+    var `omittedFiles`: kotlin.UInt
+    , 
+    /**
+     * Size of the zip.
+     */
+    var `bytes`: kotlin.ULong
+    
+){
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeBugReportSummary: FfiConverterRustBuffer<BugReportSummary> {
+    override fun read(buf: ByteBuffer): BugReportSummary {
+        return BugReportSummary(
+            FfiConverterString.read(buf),
+            FfiConverterUInt.read(buf),
+            FfiConverterUInt.read(buf),
+            FfiConverterULong.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: BugReportSummary) = (
+            FfiConverterString.allocationSize(value.`path`) +
+            FfiConverterUInt.allocationSize(value.`includedFiles`) +
+            FfiConverterUInt.allocationSize(value.`omittedFiles`) +
+            FfiConverterULong.allocationSize(value.`bytes`)
+    )
+
+    override fun write(value: BugReportSummary, buf: ByteBuffer) {
+            FfiConverterString.write(value.`path`, buf)
+            FfiConverterUInt.write(value.`includedFiles`, buf)
+            FfiConverterUInt.write(value.`omittedFiles`, buf)
+            FfiConverterULong.write(value.`bytes`, buf)
+    }
+}
+
+
+
+/**
+ * Where the service keeps its state and finds what it uploads.
+ */
+data class ServiceConfig (
+    /**
+     * `service.json` (the switch, the device token, upload cursors). Must
+     * not be backed up: a restored token would clone a device (Android:
+     * `noBackupFilesDir/service`).
+     */
+    var `stateDir`: kotlin.String
+    , 
+    /**
+     * The connection-record directory the app passes to `connect`/`share`.
+     */
+    var `recordDir`: kotlin.String? = null 
+    , 
+    /**
+     * The directory given to [`init_logging`] (log and crash files); `None`
+     * finds it there, if `init_logging` ran first.
+     */
+    var `logDir`: kotlin.String? = null 
+    , 
+    /**
+     * `android`, `ios`, `macos`, `windows` or `linux`.
+     */
+    var `platform`: kotlin.String
+    , 
+    var `appVersion`: kotlin.String
+    , 
+    /**
+     * API base URLs in preference order. Empty means Spora's built-in API:
+     * its registration keeps working at whatever addresses later releases
+     * give it. A list is another API, even one naming the built-in
+     * addresses: the device registers anew there, and that token goes only
+     * to the listed addresses that issued it.
+     */
+    var `apiBases`: List<kotlin.String> = listOf() 
+    
+){
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeServiceConfig: FfiConverterRustBuffer<ServiceConfig> {
+    override fun read(buf: ByteBuffer): ServiceConfig {
+        return ServiceConfig(
+            FfiConverterString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterSequenceString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: ServiceConfig) = (
+            FfiConverterString.allocationSize(value.`stateDir`) +
+            FfiConverterOptionalString.allocationSize(value.`recordDir`) +
+            FfiConverterOptionalString.allocationSize(value.`logDir`) +
+            FfiConverterString.allocationSize(value.`platform`) +
+            FfiConverterString.allocationSize(value.`appVersion`) +
+            FfiConverterSequenceString.allocationSize(value.`apiBases`)
+    )
+
+    override fun write(value: ServiceConfig, buf: ByteBuffer) {
+            FfiConverterString.write(value.`stateDir`, buf)
+            FfiConverterOptionalString.write(value.`recordDir`, buf)
+            FfiConverterOptionalString.write(value.`logDir`, buf)
+            FfiConverterString.write(value.`platform`, buf)
+            FfiConverterString.write(value.`appVersion`, buf)
+            FfiConverterSequenceString.write(value.`apiBases`, buf)
+    }
+}
+
+
+
 data class ShareResult (
     var `handle`: kotlin.Int
     , 
@@ -1227,6 +1460,75 @@ public object FfiConverterTypeShareResult: FfiConverterRustBuffer<ShareResult> {
     override fun write(value: ShareResult, buf: ByteBuffer) {
             FfiConverterInt.write(value.`handle`, buf)
             FfiConverterString.write(value.`url`, buf)
+    }
+}
+
+
+
+/**
+ * The upload switch as the UI shows it.
+ */
+data class TelemetryStatus (
+    var `uploadEnabled`: kotlin.Boolean
+    , 
+    /**
+     * The account requires telemetry (last known).
+     */
+    var `required`: kotlin.Boolean
+    , 
+    /**
+     * The UI owes the user the force notice: show it once, then call
+     * [`acknowledge_telemetry_notice`].
+     */
+    var `requiredNoticePending`: kotlin.Boolean
+    , 
+    /**
+     * The registered device, for support.
+     */
+    var `deviceId`: kotlin.String?
+    , 
+    var `lastUploadUnixMs`: kotlin.ULong?
+    , 
+    var `lastError`: kotlin.String?
+    
+){
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTelemetryStatus: FfiConverterRustBuffer<TelemetryStatus> {
+    override fun read(buf: ByteBuffer): TelemetryStatus {
+        return TelemetryStatus(
+            FfiConverterBoolean.read(buf),
+            FfiConverterBoolean.read(buf),
+            FfiConverterBoolean.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalULong.read(buf),
+            FfiConverterOptionalString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TelemetryStatus) = (
+            FfiConverterBoolean.allocationSize(value.`uploadEnabled`) +
+            FfiConverterBoolean.allocationSize(value.`required`) +
+            FfiConverterBoolean.allocationSize(value.`requiredNoticePending`) +
+            FfiConverterOptionalString.allocationSize(value.`deviceId`) +
+            FfiConverterOptionalULong.allocationSize(value.`lastUploadUnixMs`) +
+            FfiConverterOptionalString.allocationSize(value.`lastError`)
+    )
+
+    override fun write(value: TelemetryStatus, buf: ByteBuffer) {
+            FfiConverterBoolean.write(value.`uploadEnabled`, buf)
+            FfiConverterBoolean.write(value.`required`, buf)
+            FfiConverterBoolean.write(value.`requiredNoticePending`, buf)
+            FfiConverterOptionalString.write(value.`deviceId`, buf)
+            FfiConverterOptionalULong.write(value.`lastUploadUnixMs`, buf)
+            FfiConverterOptionalString.write(value.`lastError`, buf)
     }
 }
 
@@ -1295,6 +1597,171 @@ public object FfiConverterTypeConnectError : FfiConverterRustBuffer<ConnectExcep
                 Unit
             }
             is ConnectException.Generic -> {
+                buf.putInt(2)
+                FfiConverterString.write(value.v1, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+
+}
+
+
+
+/**
+ * Severity of a platform log line, in Android's terms.
+ */
+
+enum class LogLevel {
+    
+    ERROR,
+    WARN,
+    INFO,
+    DEBUG,
+    /**
+     * Not kept in the file.
+     */
+    VERBOSE;
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeLogLevel: FfiConverterRustBuffer<LogLevel> {
+    override fun read(buf: ByteBuffer) = try {
+        LogLevel.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: LogLevel) = 4UL
+
+    override fun write(value: LogLevel, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+/**
+ * The kind of network underneath the tunnel, as the platform reports it
+ * (spora-core's `record::NetworkKind`).
+ */
+
+enum class NetworkKind {
+    
+    /**
+     * No usable network at all.
+     */
+    NONE,
+    WIFI,
+    CELLULAR,
+    ETHERNET,
+    OTHER;
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeNetworkKind: FfiConverterRustBuffer<NetworkKind> {
+    override fun read(buf: ByteBuffer) = try {
+        NetworkKind.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: NetworkKind) = 4UL
+
+    override fun write(value: NetworkKind, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+
+
+sealed class ServiceException: kotlin.Exception() {
+    
+    /**
+     * A configuration that cannot work (e.g. an API base that is not a URL).
+     */
+    class Config(
+        
+        val v1: kotlin.String
+        ) : ServiceException() {
+        override val message
+            get() = "v1=${ v1 }"
+    }
+    
+    /**
+     * The directories involved.
+     */
+    class Io(
+        
+        val v1: kotlin.String
+        ) : ServiceException() {
+        override val message
+            get() = "v1=${ v1 }"
+    }
+    
+
+    companion object ErrorHandler : UniffiRustCallStatusErrorHandler<ServiceException> {
+        override fun lift(error_buf: RustBuffer.ByValue): ServiceException = FfiConverterTypeServiceError.lift(error_buf)
+    }
+
+    
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeServiceError : FfiConverterRustBuffer<ServiceException> {
+    override fun read(buf: ByteBuffer): ServiceException {
+        
+
+        return when(buf.getInt()) {
+            1 -> ServiceException.Config(
+                FfiConverterString.read(buf),
+                )
+            2 -> ServiceException.Io(
+                FfiConverterString.read(buf),
+                )
+            else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: ServiceException): ULong {
+        return when(value) {
+            is ServiceException.Config -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+                + FfiConverterString.allocationSize(value.v1)
+            )
+            is ServiceException.Io -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+                + FfiConverterString.allocationSize(value.v1)
+            )
+        }
+    }
+
+    override fun write(value: ServiceException, buf: ByteBuffer) {
+        when(value) {
+            is ServiceException.Config -> {
+                buf.putInt(1)
+                FfiConverterString.write(value.v1, buf)
+                Unit
+            }
+            is ServiceException.Io -> {
                 buf.putInt(2)
                 FfiConverterString.write(value.v1, buf)
                 Unit
@@ -1625,6 +2092,102 @@ public object FfiConverterTypeSporaEvent : FfiConverterRustBuffer<SporaEvent>{
 
 
 
+sealed class TelemetryException: kotlin.Exception() {
+    
+    /**
+     * The account requires telemetry, so uploads stay on. The UI shows the
+     * force notice.
+     */
+    class Required(
+        ) : TelemetryException() {
+        override val message
+            get() = ""
+    }
+    
+    /**
+     * [`init_service`] has not run.
+     */
+    class NotInitialized(
+        ) : TelemetryException() {
+        override val message
+            get() = ""
+    }
+    
+    class Io(
+        
+        val v1: kotlin.String
+        ) : TelemetryException() {
+        override val message
+            get() = "v1=${ v1 }"
+    }
+    
+
+    companion object ErrorHandler : UniffiRustCallStatusErrorHandler<TelemetryException> {
+        override fun lift(error_buf: RustBuffer.ByValue): TelemetryException = FfiConverterTypeTelemetryError.lift(error_buf)
+    }
+
+    
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTelemetryError : FfiConverterRustBuffer<TelemetryException> {
+    override fun read(buf: ByteBuffer): TelemetryException {
+        
+
+        return when(buf.getInt()) {
+            1 -> TelemetryException.Required()
+            2 -> TelemetryException.NotInitialized()
+            3 -> TelemetryException.Io(
+                FfiConverterString.read(buf),
+                )
+            else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: TelemetryException): ULong {
+        return when(value) {
+            is TelemetryException.Required -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+            )
+            is TelemetryException.NotInitialized -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+            )
+            is TelemetryException.Io -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+                + FfiConverterString.allocationSize(value.v1)
+            )
+        }
+    }
+
+    override fun write(value: TelemetryException, buf: ByteBuffer) {
+        when(value) {
+            is TelemetryException.Required -> {
+                buf.putInt(1)
+                Unit
+            }
+            is TelemetryException.NotInitialized -> {
+                buf.putInt(2)
+                Unit
+            }
+            is TelemetryException.Io -> {
+                buf.putInt(3)
+                FfiConverterString.write(value.v1, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+
+}
+
+
+
+
+
 sealed class TunnelException: kotlin.Exception() {
     
     class InvalidHandle(
@@ -1907,6 +2470,70 @@ public object FfiConverterOptionalUInt: FfiConverterRustBuffer<kotlin.UInt?> {
 /**
  * @suppress
  */
+public object FfiConverterOptionalULong: FfiConverterRustBuffer<kotlin.ULong?> {
+    override fun read(buf: ByteBuffer): kotlin.ULong? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterULong.read(buf)
+    }
+
+    override fun allocationSize(value: kotlin.ULong?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterULong.allocationSize(value)
+        }
+    }
+
+    override fun write(value: kotlin.ULong?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterULong.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalBoolean: FfiConverterRustBuffer<kotlin.Boolean?> {
+    override fun read(buf: ByteBuffer): kotlin.Boolean? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterBoolean.read(buf)
+    }
+
+    override fun allocationSize(value: kotlin.Boolean?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterBoolean.allocationSize(value)
+        }
+    }
+
+    override fun write(value: kotlin.Boolean?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterBoolean.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?> {
     override fun read(buf: ByteBuffer): kotlin.String? {
         if (buf.get().toInt() == 0) {
@@ -2056,6 +2683,57 @@ public object FfiConverterSequenceString: FfiConverterRustBuffer<List<kotlin.Str
         }
     }
 }
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterMapStringString: FfiConverterRustBuffer<Map<kotlin.String, kotlin.String>> {
+    override fun read(buf: ByteBuffer): Map<kotlin.String, kotlin.String> {
+        val len = buf.getInt()
+        return buildMap<kotlin.String, kotlin.String>(len) {
+            repeat(len) {
+                val k = FfiConverterString.read(buf)
+                val v = FfiConverterString.read(buf)
+                this[k] = v
+            }
+        }
+    }
+
+    override fun allocationSize(value: Map<kotlin.String, kotlin.String>): ULong {
+        val spaceForMapSize = 4UL
+        val spaceForChildren = value.map { (k, v) ->
+            FfiConverterString.allocationSize(k) +
+            FfiConverterString.allocationSize(v)
+        }.sum()
+        return spaceForMapSize + spaceForChildren
+    }
+
+    override fun write(value: Map<kotlin.String, kotlin.String>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        // The parens on `(k, v)` here ensure we're calling the right method,
+        // which is important for compatibility with older android devices.
+        // Ref https://blog.danlew.net/2017/03/16/kotlin-puzzler-whose-line-is-it-anyways/
+        value.forEach { (k, v) ->
+            FfiConverterString.write(k, buf)
+            FfiConverterString.write(v, buf)
+        }
+    }
+}
+        /**
+         * The UI has shown the force notice.
+         */ fun `acknowledgeTelemetryNotice`()
+        = 
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_acknowledge_telemetry_notice(
+    
+        _status)
+}
+    
+    
+
         /**
          * Establishes a tunnel connection and returns a handle for managing it.
          *
@@ -2064,13 +2742,16 @@ public object FfiConverterSequenceString: FfiConverterRustBuffer<List<kotlin.Str
          * The `protector` callback is invoked on every new socket fd so that
          * Android can call `VpnService.protect()` to bypass VPN routing.
          * Use `disconnect` to tear down the tunnel.
+         *
+         * `record_dir` turns on the connection record for this run, as for
+         * [`share`].
          */
-    @Throws(ConnectException::class) fun `connect`(`url`: kotlin.String, `tunFd`: kotlin.Int, `protector`: SocketProtectorCallback, `mtuCallback`: MtuCallback?): kotlin.Int {
+    @Throws(ConnectException::class) fun `connect`(`url`: kotlin.String, `tunFd`: kotlin.Int, `protector`: SocketProtectorCallback, `mtuCallback`: MtuCallback?, `recordDir`: kotlin.String? = null): kotlin.Int {
             return FfiConverterInt.lift(
     uniffiRustCallWithError(ConnectException) { _status ->
     UniffiLib.uniffi_spora_ffi_fn_func_connect(
     
-        FfiConverterString.lower(`url`),FfiConverterInt.lower(`tunFd`),FfiConverterTypeSocketProtectorCallback.lower(`protector`),FfiConverterOptionalTypeMtuCallback.lower(`mtuCallback`),_status)
+        FfiConverterString.lower(`url`),FfiConverterInt.lower(`tunFd`),FfiConverterTypeSocketProtectorCallback.lower(`protector`),FfiConverterOptionalTypeMtuCallback.lower(`mtuCallback`),FfiConverterOptionalString.lower(`recordDir`),_status)
 }
     )
     }
@@ -2089,13 +2770,16 @@ public object FfiConverterSequenceString: FfiConverterRustBuffer<List<kotlin.Str
          * and returns a handle. The `tun_fd` ownership is transferred to Rust, which
          * closes it when the tunnel ends (the caller must hand over a `dup()` of the
          * provider's utun fd and not use it afterward).
+         *
+         * `record_dir` turns on the connection record for this run, as for
+         * [`share`].
          */
-    @Throws(ConnectException::class) fun `connectUtun`(`url`: kotlin.String, `tunFd`: kotlin.Int, `protector`: SocketProtectorCallback?, `mtuCallback`: MtuCallback?, `eventCallback`: EventCallback?): kotlin.Int {
+    @Throws(ConnectException::class) fun `connectUtun`(`url`: kotlin.String, `tunFd`: kotlin.Int, `protector`: SocketProtectorCallback?, `mtuCallback`: MtuCallback?, `eventCallback`: EventCallback?, `recordDir`: kotlin.String? = null): kotlin.Int {
             return FfiConverterInt.lift(
     uniffiRustCallWithError(ConnectException) { _status ->
     UniffiLib.uniffi_spora_ffi_fn_func_connect_utun(
     
-        FfiConverterString.lower(`url`),FfiConverterInt.lower(`tunFd`),FfiConverterOptionalTypeSocketProtectorCallback.lower(`protector`),FfiConverterOptionalTypeMtuCallback.lower(`mtuCallback`),FfiConverterOptionalTypeEventCallback.lower(`eventCallback`),_status)
+        FfiConverterString.lower(`url`),FfiConverterInt.lower(`tunFd`),FfiConverterOptionalTypeSocketProtectorCallback.lower(`protector`),FfiConverterOptionalTypeMtuCallback.lower(`mtuCallback`),FfiConverterOptionalTypeEventCallback.lower(`eventCallback`),FfiConverterOptionalString.lower(`recordDir`),_status)
 }
     )
     }
@@ -2130,12 +2814,89 @@ public object FfiConverterSequenceString: FfiConverterRustBuffer<List<kotlin.Str
     )
     }
     
- fun `initAndroidLogging`()
+
+        /**
+         * Bundle the recent connection records, diagnostic log and crash files into
+         * a zip at `out_path` for the user to send by their own means (share sheet,
+         * mail). Works without the server and whatever the upload switch says;
+         * without a running service (before [`init_service`], or after it failed)
+         * it bundles the directories [`init_service`] was given, the log directory
+         * and the record directories this process has used. `platform_info`
+         * (device model, OS version, …) goes into the manifest, with `platform`
+         * and `app_version` added where the caller left them out and they are
+         * known. Synchronous file work, possibly a few seconds: call it off the UI
+         * thread.
+         */
+    @Throws(ServiceException::class) fun `exportBugReport`(`outPath`: kotlin.String, `note`: kotlin.String?, `platformInfo`: Map<kotlin.String, kotlin.String>): BugReportSummary {
+            return FfiConverterTypeBugReportSummary.lift(
+    uniffiRustCallWithError(ServiceException) { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_export_bug_report(
+    
+        FfiConverterString.lower(`outPath`),FfiConverterOptionalString.lower(`note`),FfiConverterMapStringString.lower(`platformInfo`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Logcat only, as before the diagnostic log existed: [`init_logging`]
+         * without a directory.
+         */ fun `initAndroidLogging`()
         = 
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_spora_ffi_fn_func_init_android_logging(
     
         _status)
+}
+    
+    
+
+        /**
+         * Set up logging: the `log` crate goes to the platform's own log (logcat on
+         * Android, unified logging on Apple) and, given `log_dir`, to the
+         * diagnostic log file in that directory, where crash files are kept too
+         * (a panic hook is installed for them). Idempotent: a later call can add the
+         * file to logging that was first set up without one, and is otherwise a
+         * no-op.
+         *
+         * The app passes a directory that is not backed up (Android:
+         * `noBackupFilesDir/diag`).
+         */ fun `initLogging`(`logDir`: kotlin.String? = null)
+        = 
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_init_logging(
+    
+        FfiConverterOptionalString.lower(`logDir`),_status)
+}
+    
+    
+
+        /**
+         * Open the service state and start the uploader thread. Idempotent: the
+         * first successful call's config holds for the life of the process. Reads
+         * local files only; the uploader does its network work on its own thread,
+         * and nothing at all while uploads are off.
+         */
+    @Throws(ServiceException::class) fun `initService`(`config`: ServiceConfig)
+        = 
+    uniffiRustCallWithError(ServiceException) { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_init_service(
+    
+        FfiConverterTypeServiceConfig.lower(`config`),_status)
+}
+    
+    
+
+        /**
+         * A platform log line (Kotlin, Swift) into the diagnostic log file, with
+         * `tag` as its target. Only the file: the platform has already logged it
+         * natively. A no-op until [`init_logging`] was given a directory.
+         */ fun `logLine`(`level`: LogLevel, `tag`: kotlin.String, `message`: kotlin.String)
+        = 
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_log_line(
+    
+        FfiConverterTypeLogLevel.lower(`level`),FfiConverterString.lower(`tag`),FfiConverterString.lower(`message`),_status)
 }
     
     
@@ -2163,6 +2924,9 @@ public object FfiConverterSequenceString: FfiConverterRustBuffer<List<kotlin.Str
          * - `interval_secs > 0`: always probe at that interval (e.g. 20 when screen is on).
          *
          * Transition from 0→N sends an immediate ping to detect dead connections.
+         *
+         * The telemetry uploader follows: while every client tunnel's keepalive is
+         * 0 it sends nothing, and a change back to N > 0 lets it catch up.
          */
     @Throws(TunnelException::class) fun `setKeepalive`(`handle`: kotlin.Int, `intervalSecs`: kotlin.UInt)
         = 
@@ -2170,6 +2934,25 @@ public object FfiConverterSequenceString: FfiConverterRustBuffer<List<kotlin.Str
     UniffiLib.uniffi_spora_ffi_fn_func_set_keepalive(
     
         FfiConverterInt.lower(`handle`),FfiConverterUInt.lower(`intervalSecs`),_status)
+}
+    
+    
+
+        /**
+         * Report the network underneath the tunnel: the underlying non-VPN network
+         * that has internet, or `None` when there is none. `validated` = the OS
+         * confirmed it reaches the internet (Android's `NET_CAPABILITY_VALIDATED`);
+         * `null` when the platform cannot tell. Kept for the records of runs that
+         * start later, and recorded as a step in every open run's record — runs
+         * still inside `connect`/`share` included. A change also nudges the
+         * uploader: a new network is when a failed upload is worth retrying.
+         * Repeating an unchanged state records nothing and nudges nothing.
+         */ fun `setNetworkState`(`kind`: NetworkKind, `validated`: kotlin.Boolean?)
+        = 
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_set_network_state(
+    
+        FfiConverterTypeNetworkKind.lower(`kind`),FfiConverterOptionalBoolean.lower(`validated`),_status)
 }
     
     
@@ -2199,6 +2982,21 @@ public object FfiConverterSequenceString: FfiConverterRustBuffer<List<kotlin.Str
     
 
         /**
+         * Flip the upload switch. Turning it off while the account requires
+         * telemetry fails with [`TelemetryError::Required`] and changes nothing.
+         * Turning it on starts an upload pass on the uploader's thread.
+         */
+    @Throws(TelemetryException::class) fun `setTelemetryEnabled`(`enabled`: kotlin.Boolean)
+        = 
+    uniffiRustCallWithError(TelemetryException) { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_set_telemetry_enabled(
+    
+        FfiConverterBoolean.lower(`enabled`),_status)
+}
+    
+    
+
+        /**
          * Starts sharing this device's connection.
          *
          * Connection logging (the sharer-side per-flow record, see spora-core's
@@ -2211,13 +3009,18 @@ public object FfiConverterSequenceString: FfiConverterRustBuffer<List<kotlin.Str
          *
          * Fails if `conn_log_dir` is set but not writable — a default-on liability
          * log must not silently degrade at startup.
+         *
+         * `record_dir` turns on the connection record (spora-core's `record`, the
+         * diagnostic account of this run) in that directory — one directory for
+         * every share and connect, not backed up (Android:
+         * `noBackupFilesDir/records`). `None` keeps no record.
          */
-    @Throws(ShareException::class) fun `share`(`identityBytes`: kotlin.ByteArray, `protector`: SocketProtectorCallback?, `connLogDir`: kotlin.String?, `connLogRetentionDays`: kotlin.UInt?, `connLogSessionsOnly`: kotlin.Boolean): ShareResult {
+    @Throws(ShareException::class) fun `share`(`identityBytes`: kotlin.ByteArray, `protector`: SocketProtectorCallback?, `connLogDir`: kotlin.String?, `connLogRetentionDays`: kotlin.UInt?, `connLogSessionsOnly`: kotlin.Boolean, `recordDir`: kotlin.String? = null): ShareResult {
             return FfiConverterTypeShareResult.lift(
     uniffiRustCallWithError(ShareException) { _status ->
     UniffiLib.uniffi_spora_ffi_fn_func_share(
     
-        FfiConverterByteArray.lower(`identityBytes`),FfiConverterOptionalTypeSocketProtectorCallback.lower(`protector`),FfiConverterOptionalString.lower(`connLogDir`),FfiConverterOptionalUInt.lower(`connLogRetentionDays`),FfiConverterBoolean.lower(`connLogSessionsOnly`),_status)
+        FfiConverterByteArray.lower(`identityBytes`),FfiConverterOptionalTypeSocketProtectorCallback.lower(`protector`),FfiConverterOptionalString.lower(`connLogDir`),FfiConverterOptionalUInt.lower(`connLogRetentionDays`),FfiConverterBoolean.lower(`connLogSessionsOnly`),FfiConverterOptionalString.lower(`recordDir`),_status)
 }
     )
     }
@@ -2232,6 +3035,49 @@ public object FfiConverterSequenceString: FfiConverterRustBuffer<List<kotlin.Str
     UniffiLib.uniffi_spora_ffi_fn_func_stop_share(
     
         FfiConverterInt.lower(`handle`),_status)
+}
+    
+    
+
+        /**
+         * Ask the uploader for a pass soon (e.g. the app came to the foreground).
+         * Cheap, and a no-op while uploads are off.
+         */ fun `telemetryNudge`()
+        = 
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_telemetry_nudge(
+    
+        _status)
+}
+    
+    
+
+        /**
+         * The switch, from this process's copy of the state (no I/O). Before
+         * [`init_service`]: everything off and unknown.
+         */ fun `telemetryStatus`(): TelemetryStatus {
+            return FfiConverterTypeTelemetryStatus.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_telemetry_status(
+    
+        _status)
+}
+    )
+    }
+    
+
+        /**
+         * Write a crash file for a crash the platform caught (Android: the default
+         * uncaught-exception handler, `source = "kotlin"`), synchronously and
+         * durably, so it is on disk before the process dies. Never fails toward the
+         * caller, which is a crash handler: a crash that cannot be written is
+         * logged and dropped. Needs the directory from [`init_logging`].
+         */ fun `writeCrash`(`source`: kotlin.String, `text`: kotlin.String)
+        = 
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_write_crash(
+    
+        FfiConverterString.lower(`source`),FfiConverterString.lower(`text`),_status)
 }
     
     

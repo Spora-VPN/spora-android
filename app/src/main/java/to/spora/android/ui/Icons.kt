@@ -89,6 +89,18 @@ object SporaIcons {
         }
     }
 
+    // Pulse trace — diagnostics
+    val Diagnostics: ImageVector by lazy {
+        strokeIcon("Diagnostics") {
+            moveTo(3f, 12f)
+            horizontalLineTo(7.5f)
+            lineTo(10f, 6f)
+            lineTo(14f, 18f)
+            lineTo(16.5f, 12f)
+            horizontalLineTo(21f)
+        }
+    }
+
     // ↑ — the Share tab
     val NavShare: ImageVector by lazy {
         strokeIcon("NavShare", strokeWidth = 2f) {

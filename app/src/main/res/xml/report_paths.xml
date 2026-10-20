@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- What the FileProvider may serve: bug reports (BugReport.kt), nothing else -->
+<paths>
+    <cache-path name="reports" path="reports/" />
+</paths>

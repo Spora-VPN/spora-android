@@ -2,7 +2,6 @@ package to.spora.android
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
 import org.json.JSONArray
@@ -23,7 +22,7 @@ object SharedConnectionStore {
             // Undecryptable prefs (e.g. restored from a backup without the
             // Keystore master key) or corrupted keyset: better to lose the
             // saved shares than to crash on every launch.
-            Log.e(TAG, "Encrypted prefs unreadable; resetting store", e)
+            SporaLog.e(TAG, "Encrypted prefs unreadable; resetting store", e)
             context.deleteSharedPreferences(PREFS_NAME)
             createPrefs(context)
         }
@@ -58,7 +57,9 @@ object SharedConnectionStore {
             }
         }
     } catch (e: Exception) {
-        Log.e(TAG, "Corrupted connections entry; resetting store", e)
+        // The class only: org.json's messages quote the stored JSON, which
+        // holds the share identities (keys and secrets)
+        SporaLog.e(TAG, "Corrupted connections entry (${e.javaClass.simpleName}); resetting store")
         try { prefs.edit().remove(KEY_CONNECTIONS).apply() } catch (_: Exception) {}
         emptyList()
     }

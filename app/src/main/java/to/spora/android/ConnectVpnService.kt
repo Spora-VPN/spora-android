@@ -10,8 +10,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.net.VpnService
 import android.os.Build
-import android.util.Log
 import android.os.ParcelFileDescriptor
+import android.os.PowerManager
 import android.system.Os
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * VPN service for the client/connect mode.
@@ -48,11 +49,11 @@ class ConnectVpnService : VpnService() {
             try {
                 when (intent.action) {
                     Intent.ACTION_SCREEN_ON -> {
-                        Log.d(TAG, "Screen ON — setting keepalive to 20s")
+                        SporaLog.d(TAG, "Screen ON — setting keepalive to 20s")
                         uniffi.spora_ffi.setKeepalive(handle, 20u)
                     }
                     Intent.ACTION_SCREEN_OFF -> {
-                        Log.d(TAG, "Screen OFF — disabling keepalive")
+                        SporaLog.d(TAG, "Screen OFF — disabling keepalive")
                         uniffi.spora_ffi.setKeepalive(handle, 0u)
                     }
                 }
@@ -73,7 +74,7 @@ class ConnectVpnService : VpnService() {
                 if (url != null) {
                     startConnecting(url, connectionId)
                 } else {
-                    Log.e(TAG, "Connect intent missing URL extra")
+                    SporaLog.e(TAG, "Connect intent missing URL extra")
                     ConnectState.failed(UserError.GENERIC)
                     stopSelf()
                 }
@@ -119,14 +120,20 @@ class ConnectVpnService : VpnService() {
                 }
                 val mtuCallback = object : uniffi.spora_ffi.MtuCallback {
                     override fun onMtu(mtu: Int) {
-                        Log.d(TAG, "MTU callback: mtu=$mtu")
+                        SporaLog.d(TAG, "MTU callback: mtu=$mtu")
                         currentMtu = mtu
                         if (fullRoutesEstablished) {
                             rebuildTun(mtu)
                         }
                     }
                 }
-                val handle = uniffi.spora_ffi.connect(url, tunFd, protector, mtuCallback)
+                val handle = uniffi.spora_ffi.connect(
+                    url,
+                    tunFd,
+                    protector,
+                    mtuCallback,
+                    recordDir = Diagnostics.recordDir(this@ConnectVpnService),
+                )
                 tunnelHandle = handle
 
                 if (cancelRequested) {
@@ -146,7 +153,7 @@ class ConnectVpnService : VpnService() {
                     closeTunnel()
                     return@launch
                 }
-                Log.e(TAG, "connect failed", t)
+                SporaLog.e(TAG, "connect failed", t)
                 ConnectState.failed(t.toUserError())
                 try {
                     // Separate id: the foreground notification (NOTIFICATION_ID)
@@ -165,38 +172,51 @@ class ConnectVpnService : VpnService() {
                 return@launch
             }
 
-            if (cancelRequested) return@launch
-            ConnectState.connected()
+            // The rest runs on the main thread, where disconnect() and the
+            // screen broadcasts are delivered, so it serializes with both: a
+            // disconnect that came while connect() was finishing is seen
+            // here (no receiver left registered, no "Connected" posted after
+            // the teardown), and no screen broadcast is handled between
+            // reading the screen state and applying it.
+            withContext(Dispatchers.Main) {
+                if (cancelRequested) return@withContext
+                ConnectState.connected()
 
-            // Start with keepalive enabled (user's screen is on when they connect)
-            try {
-                uniffi.spora_ffi.setKeepalive(tunnelHandle!!, 20u)
-            } catch (_: Exception) {}
-
-            // Toggle keepalive based on screen state
-            val filter = IntentFilter().apply {
-                addAction(Intent.ACTION_SCREEN_ON)
-                addAction(Intent.ACTION_SCREEN_OFF)
-            }
-            registerReceiver(screenReceiver, filter)
-
-            try {
-                // "Connected — Dana's Home" when the label is known (design 5d)
-                val label = connectionId?.let { id ->
-                    ConnectState.uiState.value.savedConnections.find { it.id == id }?.label
+                // Toggle keepalive based on screen state
+                val filter = IntentFilter().apply {
+                    addAction(Intent.ACTION_SCREEN_ON)
+                    addAction(Intent.ACTION_SCREEN_OFF)
                 }
-                notify(
-                    buildNotification(
-                        contentText = if (label != null) {
-                            getString(R.string.notif_vpn_connected_name, label)
-                        } else {
-                            getString(R.string.notif_vpn_connected)
-                        },
-                        isOngoing = true,
-                        includeDisconnectAction = true,
+                registerReceiver(screenReceiver, filter)
+
+                // Usually the screen is on when they connect, but it may have
+                // gone off while connect() was blocked (or this is a start
+                // with the screen off): then the tunnel starts dormant,
+                // exactly as the screen-off broadcast it missed would have
+                // left it.
+                try {
+                    val screenOn = getSystemService(PowerManager::class.java)?.isInteractive != false
+                    tunnelHandle?.let { uniffi.spora_ffi.setKeepalive(it, if (screenOn) 20u else 0u) }
+                } catch (_: Exception) {}
+
+                try {
+                    // "Connected — Dana's Home" when the label is known (design 5d)
+                    val label = connectionId?.let { id ->
+                        ConnectState.uiState.value.savedConnections.find { it.id == id }?.label
+                    }
+                    notify(
+                        buildNotification(
+                            contentText = if (label != null) {
+                                getString(R.string.notif_vpn_connected_name, label)
+                            } else {
+                                getString(R.string.notif_vpn_connected)
+                            },
+                            isOngoing = true,
+                            includeDisconnectAction = true,
+                        )
                     )
-                )
-            } catch (_: Exception) {}
+                } catch (_: Exception) {}
+            }
         }
     }
 
@@ -217,7 +237,7 @@ class ConnectVpnService : VpnService() {
 
         Os.dup2(newInterface.fileDescriptor, tunFd)
         newInterface.close()
-        Log.d(TAG, "TUN re-established with MTU=$mtu")
+        SporaLog.d(TAG, "TUN re-established with MTU=$mtu")
     }
 
     private fun disconnect() {
@@ -337,7 +357,7 @@ class ConnectVpnService : VpnService() {
     // Called by the system when another app becomes the active VPN or the user
     // kills the VPN from settings; without this the UI keeps saying "Connected".
     override fun onRevoke() {
-        Log.i(TAG, "VPN revoked by system")
+        SporaLog.i(TAG, "VPN revoked by system")
         disconnect()
     }
 

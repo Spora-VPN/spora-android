@@ -3,7 +3,6 @@ package to.spora.android
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 
 /**
  * Debug-build-only hook for driving UI state from adb, so any screen state
@@ -27,7 +26,7 @@ class DebugStateReceiver : BroadcastReceiver() {
         val err = intent.getStringExtra("err")
             ?.let { runCatching { UserError.valueOf(it) }.getOrNull() }
             ?: UserError.GENERIC
-        Log.d(TAG, "cmd=$cmd id=$id err=$err")
+        SporaLog.d(TAG, "cmd=$cmd id=$id err=$err")
         when (cmd) {
             "seed" -> {
                 val shares = intent.getIntExtra("shares", 0)
@@ -60,7 +59,7 @@ class DebugStateReceiver : BroadcastReceiver() {
                 ShareState.loadConnections(SharedConnectionStore.getAll())
                 ConnectState.loadConnections(UseConnectionStore.getAll())
             }
-            else -> Log.w(TAG, "Unknown cmd: $cmd")
+            else -> SporaLog.w(TAG, "Unknown cmd: $cmd")
         }
     }
 

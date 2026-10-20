@@ -6,6 +6,7 @@
     <string name="action_cancel">АДМЕНА</string>
     <string name="action_delete">ВЫДАЛІЦЬ</string>
     <string name="action_save">ЗАХАВАЦЬ</string>
+    <string name="action_done">ГАТОВА</string>
     <string name="saved_connections_header">ЗАХАВАНЫЯ ПАДКЛЮЧЭННІ</string>
     <string name="delete_connection_content_desc">Выдаліць падключэнне</string>
     <string name="empty_list_title">Пакуль нічога няма</string>
@@ -22,6 +23,7 @@
     <string name="header_status_starting">ЗАПУСК…</string>
     <string name="header_status_offline">АФЛАЙН</string>
     <string name="header_logo_content_desc">Лагатып Spora</string>
+    <string name="diagnostics_button_content_desc">Дыягностыка</string>
 
     <!-- Tabs -->
     <string name="tab_share">РАЗДАЧА</string>
@@ -69,14 +71,41 @@
     <string name="feedback_modal_header">ДАСЛАЦЬ ВОДГУК</string>
     <string name="feedback_modal_title">Дапамажыце нам стаць лепшымі</string>
     <string name="feedback_modal_hint">Раскажыце, што пайшло не так або што можна палепшыць.</string>
+    <string name="feedback_modal_report_note">Да водгуку дадаецца дыягнастычная справаздача: запісы пра падключэнні, журнал праграмы і звесткі пра збоі за апошнія дні. Адпраўляеце яе вы самі — праз праграму на ваш выбар.</string>
     <string name="feedback_subject_label">ТЭМА</string>
     <string name="feedback_subject_placeholder">Знікае падключэнне</string>
     <string name="feedback_message_label">ПАВЕДАМЛЕННЕ</string>
     <string name="feedback_message_placeholder">Што здарылася?</string>
     <string name="feedback_send">ДАСЛАЦЬ</string>
-    <string name="feedback_done">ГАТОВА</string>
-    <string name="feedback_thanks_title">Дзякуй!</string>
-    <string name="feedback_thanks_message">Ваш водгук дасланы распрацоўшчыкам.</string>
+    <string name="feedback_preparing">РЫХТУЕМ…</string>
+    <string name="feedback_chooser_title">Даслаць водгук праз</string>
+    <string name="feedback_handoff_title">Амаль гатова</string>
+    <string name="feedback_handoff_message">Завяршыце адпраўку ў выбранай праграме: пакуль вы гэтага не зробіце, да нас нічога не дойдзе. Калі праграма спытае адрас — ён ніжэй.</string>
+    <string name="feedback_no_report">Не ўдалося прыкласці дыягнастычную справаздачу — паведамленне пойдзе без яе.</string>
+    <string name="feedback_support_address_label">АДРАС ПАДТРЫМКІ</string>
+    <string name="feedback_send_again">ВЫБРАЦЬ ПРАГРАМУ ЯШЧЭ РАЗ</string>
+
+    <!-- Diagnostics modal -->
+    <string name="diagnostics_modal_header">ДЫЯГНОСТЫКА</string>
+    <string name="diagnostics_modal_title">Дапамажыце Spora прабіцца</string>
+    <string name="diagnostics_modal_what">Spora захоўвае на гэтай прыладзе запісы пра кожнае падключэнне, журнал праграмы і звесткі пра збоі. Калі ўключыць тэлеметрыю, яны будуць аўтаматычна адпраўляцца нам праз любую сетку, у тым ліку мабільную. У іх ёсць сеткавыя адрасы: ваш адрас, якім яго бачыць інтэрнэт, і адрасы прылад і сервераў, з якімі злучаецца Spora. Акрамя таго, мы бачым адрас, з якога прыходзіць кожная адпраўка.</string>
+    <string name="diagnostics_modal_why">Па іх мы бачым, дзе і як сеткі блакуюць Spora, і выпраўляем праблемы.</string>
+    <string name="diagnostics_modal_off">Калі тэлеметрыя выключана, нічога не адпраўляецца. Але калі яна хоць раз была ўключана, Spora прыкладна раз на дзень пытаецца ў нас, ці не патрабуе яе ваш акаўнт, і калі патрабуе — уключае яе зноў і паведамляе вам пра гэта. Справаздача дадаецца да водгуку і адпраўляецца, толькі калі вы самі яе адправіце.</string>
+    <string name="diagnostics_toggle_label">Адпраўляць тэлеметрыю аўтаматычна</string>
+    <string name="diagnostics_upload_failed">Апошняя адпраўка не прайшла. Spora паспрабуе яшчэ раз.</string>
+    <string name="diagnostics_switch_failed">Не ўдалося змяніць наладу. Паспрабуйце яшчэ раз.</string>
+    <string name="diagnostics_unavailable">Тэлеметрыя зараз недаступная. Spora паспрабуе зноў, калі вы наступным разам адкрыеце праграму; водгук са справаздачай можна даслаць і так.</string>
+    <string name="diagnostics_device_id_label">ID ПРЫЛАДЫ</string>
+    <string name="diagnostics_device_id_hint">Паведаміце яго, калі звяртаецеся ў падтрымку.</string>
+    <string name="diagnostics_last_upload_label">АПОШНЯЯ АДПРАЎКА</string>
+    <string name="diagnostics_last_upload_never">Яшчэ не было</string>
+
+    <!-- Force notice -->
+    <string name="telemetry_required_header">ТЭЛЕМЕТРЫЯ АБАВЯЗКОВАЯ</string>
+    <string name="telemetry_required_title">Тэлеметрыя застаецца ўключанай</string>
+    <string name="telemetry_required_message">Для вашага акаўнта тэлеметрыя абавязковая (хутчэй за ўсё, таму што вы ўдзельнічаеце ў акцыі). Вы можаце пакінуць яе ўключанай, увайсці ў іншы акаўнт або звярнуцца ў падтрымку.</string>
+    <string name="telemetry_required_keep">ПАКІНУЦЬ УКЛЮЧАНАЙ</string>
+    <string name="telemetry_required_contact">НАПІСАЦЬ У ПАДТРЫМКУ</string>
 
     <!-- Errors (user-facing categories, see UserError.kt) -->
     <string name="error_invalid_url">Гэта не падобна на спасылку Spora.</string>

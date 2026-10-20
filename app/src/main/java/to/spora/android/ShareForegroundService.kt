@@ -12,7 +12,6 @@ import android.net.LinkProperties
 import android.net.Network
 import android.os.Build
 import android.os.IBinder
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CoroutineScope
@@ -96,6 +95,7 @@ class ShareForegroundService : Service() {
                     connLogDir = connLogDir.absolutePath,
                     connLogRetentionDays = null,
                     connLogSessionsOnly = false,
+                    recordDir = Diagnostics.recordDir(this@ShareForegroundService),
                 )
                 if (!isActive) {
                     // Toggled off while share() was blocked starting up: the
@@ -112,7 +112,7 @@ class ShareForegroundService : Service() {
                 ensureNetworkCallback()
             } catch (t: Throwable) {
                 if (!isActive) return@launch
-                Log.e(TAG, "share failed for $connectionId", t)
+                SporaLog.e(TAG, "share failed for $connectionId", t)
                 ShareState.failed(connectionId, t.toUserError())
                 activeJobs.remove(connectionId)
                 if (activeJobs.isEmpty()) {
@@ -137,20 +137,20 @@ class ShareForegroundService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && lp.isPrivateDnsActive) {
             // Known defect (spora-core `dns`): the system resolves over TLS,
             // the forwarder sends plain UDP to the same servers.
-            Log.w(
+            SporaLog.w(
                 TAG,
                 "Private DNS is active (${lp.privateDnsServerName ?: "opportunistic"}): " +
                     "clients' queries are forwarded to $servers in the clear",
             )
         }
-        Log.d(TAG, "resolvers for shares $handles: $servers")
+        SporaLog.d(TAG, "resolvers for shares $handles: $servers")
         for (handle in handles) {
             try {
                 uniffi.spora_ffi.setShareDnsServers(handle, servers)
             } catch (t: Throwable) {
                 // The share may have been stopped between the snapshot and
                 // this call; the next link change will not include it.
-                Log.w(TAG, "setShareDnsServers($handle) failed", t)
+                SporaLog.w(TAG, "setShareDnsServers($handle) failed", t)
             }
         }
     }
@@ -168,7 +168,7 @@ class ShareForegroundService : Service() {
         try {
             connectivity.registerDefaultNetworkCallback(callback)
         } catch (t: Throwable) {
-            Log.w(TAG, "cannot follow the default network's resolvers", t)
+            SporaLog.w(TAG, "cannot follow the default network's resolvers", t)
             networkCallback = null
         }
     }
