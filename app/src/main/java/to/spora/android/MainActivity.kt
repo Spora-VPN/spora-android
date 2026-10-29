@@ -191,7 +191,10 @@ fun MainScreen(
         if (deepLinkUrl != null) {
             // The link opens on the Connect tab, not behind the settings page
             showSettings = false
-            pagerState.animateScrollToPage(1)
+            // Not in this effect: the Connect page takes the link as soon as
+            // it scrolls into view, which clears it and restarts this effect,
+            // and a pager scroll cancelled mid-way stays where it stopped
+            coroutineScope.launch { pagerState.animateScrollToPage(1) }
         }
     }
 
