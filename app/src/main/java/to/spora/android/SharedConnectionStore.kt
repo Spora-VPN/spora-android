@@ -2,8 +2,6 @@ package to.spora.android
 
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKeys
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -12,55 +10,41 @@ object SharedConnectionStore {
     private const val PREFS_NAME = "shared_connections"
     private const val KEY_CONNECTIONS = "connections"
 
-    private lateinit var prefs: SharedPreferences
+    @Volatile
+    private var prefs: SharedPreferences? = null
 
+    // Synchronized: the service's start reads the shares on an IO thread
+    // while the activity opens the store on the main thread
+    @Synchronized
     fun init(context: Context) {
-        if (::prefs.isInitialized) return
-        prefs = try {
-            createPrefs(context)
-        } catch (e: Exception) {
-            // Undecryptable prefs (e.g. restored from a backup without the
-            // Keystore master key) or corrupted keyset: better to lose the
-            // saved shares than to crash on every launch.
-            SporaLog.e(TAG, "Encrypted prefs unreadable; resetting store", e)
-            context.deleteSharedPreferences(PREFS_NAME)
-            createPrefs(context)
-        }
+        if (prefs == null) prefs = SecurePrefs.open(context, PREFS_NAME)
     }
 
-    private fun createPrefs(context: Context): SharedPreferences {
-        val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
-        return EncryptedSharedPreferences.create(
-            PREFS_NAME,
-            masterKeyAlias,
-            context,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
-        )
-    }
+    private fun store(): SharedPreferences =
+        checkNotNull(prefs) { "SharedConnectionStore.init has not run" }
 
     fun getAll(): List<SharedConnection> = try {
-        val json = prefs.getString(KEY_CONNECTIONS, null)
+        val json = store().getString(KEY_CONNECTIONS, null)
         if (json == null) emptyList() else {
             val array = JSONArray(json)
             (0 until array.length()).mapNotNull { i ->
                 val obj = array.getJSONObject(i)
-                // Entries from before the identity-based protocol only carry a
-                // "secretKey", which the relay no longer understands; drop them.
-                val identity = obj.optString("identity")
-                if (identity.isEmpty()) return@mapNotNull null
+                // Entries made before shares were the core's (they carry an
+                // "identity" instead) cannot be started any more; drop them.
+                val share = obj.optString("share")
+                if (share.isEmpty()) return@mapNotNull null
                 SharedConnection(
                     id = obj.getString("id"),
                     label = obj.getString("label"),
-                    identity = identity,
+                    share = share,
                 )
             }
         }
     } catch (e: Exception) {
         // The class only: org.json's messages quote the stored JSON, which
-        // holds the share identities (keys and secrets)
+        // holds the shares (their secrets and relay tokens)
         SporaLog.e(TAG, "Corrupted connections entry (${e.javaClass.simpleName}); resetting store")
-        try { prefs.edit().remove(KEY_CONNECTIONS).apply() } catch (_: Exception) {}
+        try { store().edit().remove(KEY_CONNECTIONS).apply() } catch (_: Exception) {}
         emptyList()
     }
 
@@ -86,9 +70,9 @@ object SharedConnectionStore {
             array.put(JSONObject().apply {
                 put("id", c.id)
                 put("label", c.label)
-                put("identity", c.identity)
+                put("share", c.share)
             })
         }
-        prefs.edit().putString(KEY_CONNECTIONS, array.toString()).apply()
+        store().edit().putString(KEY_CONNECTIONS, array.toString()).apply()
     }
 }

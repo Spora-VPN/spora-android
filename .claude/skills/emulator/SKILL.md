@@ -32,7 +32,9 @@ Then **Read the PNG** to see the screen, or `scripts/emu.sh dump` and Read the X
 | `connect-disconnected` | | back to idle |
 | `reset` | | reload real persisted data |
 
-Toggling a *seeded* share on in the UI calls the real `share()` FFI with a bogus identity and fails — useful for exercising the real error path.
+Toggling a *seeded* share on in the UI calls the real `startShare()` FFI with a bogus share and fails — useful for exercising the real error path. `share-failed --es err SHARE_LINK_LOST` shows a share made under a lost device identity, with its MAKE A NEW LINK action.
+
+The settings page (header's sliders icon) reads the real relay settings and the core's relay access; with no API reachable its Spora status ends in "Couldn't reach Spora". A debug build pointed at a local spora-web (`-PsporaApi=…`, see AGENTS.md) shows the reachable states.
 
 ## Conditions matrix
 
@@ -72,4 +74,4 @@ scripts/emu.sh log 200  # app-process logcat tail
 - Do **not** `pm grant` POST_NOTIFICATIONS — its absence is part of what needs testing.
 - First `install` after `boot` can take a minute (gradle daemon + dexing).
 - `state …` requires the app process to be running (launch first).
-- Real `connect()` needs a live share URL from a real peer; real `share()` needs relay reachability. For UI work, always prefer injected states.
+- Real `connect()` needs a live share URL from a real peer; real `startShare()` needs relay reachability (and Spora's relays a relay token from the API). For UI work, always prefer injected states.

@@ -22,7 +22,7 @@ class DebugStateReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val cmd = intent.getStringExtra("cmd") ?: return
         val id = intent.getStringExtra("id")
-        // e.g. --es err INVALID_URL / VPN_PERMISSION_DENIED; defaults to GENERIC
+        // e.g. --es err INVALID_URL / SHARE_LINK_LOST; defaults to GENERIC
         val err = intent.getStringExtra("err")
             ?.let { runCatching { UserError.valueOf(it) }.getOrNull() }
             ?: UserError.GENERIC
@@ -32,7 +32,7 @@ class DebugStateReceiver : BroadcastReceiver() {
                 val shares = intent.getIntExtra("shares", 0)
                 val uses = intent.getIntExtra("uses", 0)
                 ShareState.loadConnections((1..shares).map { i ->
-                    SharedConnection("debug-share-$i", LABELS[(i - 1) % LABELS.size], DEBUG_IDENTITY)
+                    SharedConnection("debug-share-$i", LABELS[(i - 1) % LABELS.size], DEBUG_SHARE)
                 })
                 ConnectState.loadConnections((1..uses).map { i ->
                     SavedUseConnection(
@@ -72,8 +72,9 @@ class DebugStateReceiver : BroadcastReceiver() {
         const val DEBUG_HANDLE = 9000
 
         // base64("debug") — toggling a seeded share on will feed this to the real
-        // share() FFI call and fail, which conveniently exercises the error path.
-        const val DEBUG_IDENTITY = "ZGVidWc="
+        // startShare() FFI call and fail (not a share), which conveniently
+        // exercises the error path.
+        const val DEBUG_SHARE = "ZGVidWc="
 
         val LABELS = listOf("Mom's Phone", "Anya", "Office", "Dacha", "Backup")
 

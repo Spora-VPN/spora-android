@@ -7,6 +7,8 @@
     <string name="action_delete">УДАЛИТЬ</string>
     <string name="action_save">СОХРАНИТЬ</string>
     <string name="action_done">ГОТОВО</string>
+    <string name="action_back_content_desc">Назад</string>
+    <string name="action_open_settings">ОТКРЫТЬ НАСТРОЙКИ</string>
     <string name="saved_connections_header">СОХРАНЁННЫЕ ПОДКЛЮЧЕНИЯ</string>
     <string name="delete_connection_content_desc">Удалить подключение</string>
     <string name="empty_list_title">Пока ничего нет</string>
@@ -42,6 +44,7 @@
     <string name="share_link_content_desc">Поделиться ссылкой</string>
     <string name="share_default_label">Подключение %1$d</string>
     <string name="share_empty_body">Подключения, которыми вы делитесь, появятся здесь.</string>
+    <string name="share_new_link">СОЗДАТЬ НОВУЮ ССЫЛКУ</string>
 
     <!-- Share rename modal -->
     <string name="share_rename_label">НАЗОВИТЕ ЭТУ РАЗДАЧУ</string>
@@ -107,10 +110,54 @@
     <string name="telemetry_required_keep">ОСТАВИТЬ ВКЛЮЧЁННОЙ</string>
     <string name="telemetry_required_contact">НАПИСАТЬ В ПОДДЕРЖКУ</string>
 
+    <!-- Settings -->
+    <string name="settings_button_content_desc">Настройки</string>
+    <string name="settings_title">НАСТРОЙКИ</string>
+    <string name="settings_relays_header">РЕТРАНСЛЯТОРЫ</string>
+    <string name="settings_relays_intro">Каждой ссылке нужен хотя бы один ретранслятор: через него те, с кем вы делитесь, впервые находят ваш телефон. После подключения Spora пробует перейти на прямое соединение.</string>
+    <string name="settings_spora_toggle_label">Использовать ретрансляторы Spora</string>
+    <string name="settings_spora_toggle_hint">Spora предоставляет их бесплатно. Всё, что через них проходит, защищено сквозным шифрованием; они видят адреса участников и объём передаваемых данных. Чтобы ими пользоваться, этот телефон регистрируется в Spora.</string>
+    <string name="settings_spora_status_ready">Готово к работе.</string>
+    <string name="settings_spora_status_checking">Проверяем…</string>
+    <string name="settings_spora_status_unreachable">Не удалось связаться со Spora. Spora будет пробовать снова.</string>
+    <string name="settings_spora_status_not_available">Ретрансляторы Spora сейчас недоступны для этого устройства.</string>
+    <string name="settings_spora_status_unavailable">Ретрансляторы Spora сейчас недоступны. Spora попробует снова, когда вы в следующий раз откроете приложение.</string>
+    <string name="settings_own_relays_header">ВАШИ РЕТРАНСЛЯТОРЫ</string>
+    <string name="settings_own_relays_intro">Ретрансляторы, которые держите вы сами или тот, кому вы доверяете. Работают вместе с ретрансляторами Spora или без них.</string>
+    <string name="settings_relay_token_set">ТОКЕН ЗАДАН</string>
+    <string name="settings_relay_no_token">БЕЗ ТОКЕНА</string>
+    <string name="settings_relay_add">ДОБАВИТЬ РЕТРАНСЛЯТОР</string>
+    <string name="settings_relay_edit_action">Изменить</string>
+    <string name="settings_relay_remove_content_desc">Удалить ретранслятор</string>
+    <string name="settings_no_relays">Без ретрансляторов новые ссылки создать нельзя.</string>
+    <string name="settings_relays_note">Ретрансляторы входят в каждую ссылку. Эти настройки действуют для ссылок, которые вы создадите дальше, а у прежних ссылок ретрансляторы не меняются.</string>
+
+    <!-- Relay editor and removal -->
+    <string name="settings_relay_add_header">НОВЫЙ РЕТРАНСЛЯТОР</string>
+    <string name="settings_relay_edit_header">ИЗМЕНЕНИЕ РЕТРАНСЛЯТОРА</string>
+    <string name="settings_relay_modal_title">Ваш ретранслятор</string>
+    <string name="settings_relay_address_label">АДРЕС РЕТРАНСЛЯТОРА</string>
+    <string name="settings_relay_address_helper">хост:порт. Для ретранслятора на другом протоколе добавьте в начало nz/ или tcptls/.</string>
+    <string name="settings_relay_token_label">ТОКЕН — НЕОБЯЗАТЕЛЬНО</string>
+    <string name="settings_relay_token_placeholder">Если ретранслятор его требует</string>
+    <string name="settings_relay_token_helper">Он отправляется ретранслятору и никогда не попадает в ваши ссылки.</string>
+    <string name="settings_relay_error_format">Введите адрес в виде хост:порт, например relay.example.org:443.</string>
+    <string name="settings_relay_error_protocol">Неизвестный протокол. Укажите nz/ или tcptls/ либо ничего — для протокола по умолчанию.</string>
+    <string name="settings_relay_error_ipv6">IPv6-адрес нужно взять в квадратные скобки: [2001:db8::1]:443.</string>
+    <string name="settings_relay_error_port">Порт должен быть числом от 1 до 65535.</string>
+    <string name="settings_relay_error_duplicate">Этот ретранслятор уже есть в списке.</string>
+    <string name="settings_relay_remove_header">УДАЛЕНИЕ РЕТРАНСЛЯТОРА</string>
+    <string name="settings_relay_remove_message">Уже созданные ссылки продолжат им пользоваться, новые — нет.</string>
+
     <!-- Errors (user-facing categories, see UserError.kt) -->
     <string name="error_invalid_url">Это не похоже на ссылку Spora.</string>
     <string name="error_connect_failed">Не удалось подключиться. Проверьте интернет-соединение и попробуйте ещё раз.</string>
     <string name="error_share_failed">Не удалось начать раздачу. Проверьте интернет-соединение и попробуйте ещё раз.</string>
+    <string name="error_share_unavailable">Раздача сейчас недоступна. Перезапустите приложение и попробуйте ещё раз.</string>
+    <string name="error_share_link_lost">Эта ссылка больше не работает: данные Spora на этом телефоне были сброшены. Создайте новую ссылку и отправьте её снова.</string>
+    <string name="error_no_relays">Нет ретрансляторов для новой ссылки. Включите ретрансляторы Spora или добавьте свои в настройках.</string>
+    <string name="error_relays_unreachable">Не удалось получить ретрансляторы от Spora. Проверьте интернет-соединение и попробуйте ещё раз.</string>
+    <string name="error_no_spora_relays">У Spora сейчас нет для вас ретрансляторов. Попробуйте позже или добавьте свои в настройках.</string>
     <string name="error_vpn_permission">Разрешите Spora доступ к VPN и попробуйте снова.</string>
     <string name="error_vpn_unavailable">Не удалось создать VPN-туннель. Перезапустите приложение и попробуйте ещё раз.</string>
     <string name="error_generic">Что-то пошло не так. Попробуйте ещё раз.</string>

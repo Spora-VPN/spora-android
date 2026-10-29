@@ -44,6 +44,47 @@ object SporaIcons {
         }
     }
 
+    // ← back out of a page
+    val ArrowLeft: ImageVector by lazy {
+        strokeIcon("ArrowLeft", strokeWidth = 2f) {
+            moveTo(19f, 12f)
+            horizontalLineTo(5f)
+            moveTo(12f, 5f)
+            lineToRelative(-7f, 7f)
+            lineToRelative(7f, 7f)
+        }
+    }
+
+    // Two sliders — settings
+    val Settings: ImageVector by lazy {
+        strokeIcon("Settings") {
+            moveTo(4f, 7.5f)
+            horizontalLineTo(6.5f)
+            moveTo(11.5f, 7.5f)
+            horizontalLineTo(20f)
+            moveTo(11.5f, 7.5f)
+            arcTo(2.5f, 2.5f, 0f, true, true, 6.5f, 7.5f)
+            arcTo(2.5f, 2.5f, 0f, true, true, 11.5f, 7.5f)
+            moveTo(4f, 16.5f)
+            horizontalLineTo(12.5f)
+            moveTo(17.5f, 16.5f)
+            horizontalLineTo(20f)
+            moveTo(17.5f, 16.5f)
+            arcTo(2.5f, 2.5f, 0f, true, true, 12.5f, 16.5f)
+            arcTo(2.5f, 2.5f, 0f, true, true, 17.5f, 16.5f)
+        }
+    }
+
+    // + — add an item
+    val Plus: ImageVector by lazy {
+        strokeIcon("Plus", strokeWidth = 2f) {
+            moveTo(12f, 5f)
+            verticalLineTo(19f)
+            moveTo(5f, 12f)
+            horizontalLineTo(19f)
+        }
+    }
+
     // ↑ out of a tray — re-share an active link
     val ShareAgain: ImageVector by lazy {
         strokeIcon("ShareAgain") {

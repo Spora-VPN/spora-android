@@ -3,7 +3,6 @@ package to.spora.android.ui
 import android.text.format.DateUtils
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -28,9 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -39,8 +36,6 @@ import kotlinx.coroutines.launch
 import to.spora.android.Diagnostics
 import to.spora.android.R
 import to.spora.android.ui.theme.BorderHairline
-import to.spora.android.ui.theme.ColorError
-import to.spora.android.ui.theme.ColorPendingText
 import to.spora.android.ui.theme.SurfaceCard
 import to.spora.android.ui.theme.TextMuted
 import to.spora.android.ui.theme.TextPrimary
@@ -187,26 +182,6 @@ fun DiagnosticsModalContent(
         PrimaryButton(
             text = stringResource(R.string.action_done),
             onClick = onDismiss,
-        )
-    }
-}
-
-// A status dot and its message under the switch; announced when it appears,
-// since it answers a tap on the switch or arrives with a poll
-@Composable
-private fun StatusLine(state: DotState, text: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(7.dp),
-        modifier = Modifier
-            .padding(top = 10.dp)
-            .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
-    ) {
-        StatusDot(state)
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (state == DotState.Error) ColorError else ColorPendingText,
         )
     }
 }

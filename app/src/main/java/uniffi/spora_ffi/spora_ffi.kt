@@ -719,7 +719,11 @@ internal object IntegrityCheckingUniffiLib {
     ): Short
     external fun uniffi_spora_ffi_checksum_func_log_line(
     ): Short
-    external fun uniffi_spora_ffi_checksum_func_make_identity(
+    external fun uniffi_spora_ffi_checksum_func_make_share(
+    ): Short
+    external fun uniffi_spora_ffi_checksum_func_refresh_relays(
+    ): Short
+    external fun uniffi_spora_ffi_checksum_func_relay_access_status(
     ): Short
     external fun uniffi_spora_ffi_checksum_func_set_keepalive(
     ): Short
@@ -729,7 +733,13 @@ internal object IntegrityCheckingUniffiLib {
     ): Short
     external fun uniffi_spora_ffi_checksum_func_set_telemetry_enabled(
     ): Short
-    external fun uniffi_spora_ffi_checksum_func_share(
+    external fun uniffi_spora_ffi_checksum_func_share_id(
+    ): Short
+    external fun uniffi_spora_ffi_checksum_func_share_relays(
+    ): Short
+    external fun uniffi_spora_ffi_checksum_func_share_url(
+    ): Short
+    external fun uniffi_spora_ffi_checksum_func_start_share(
     ): Short
     external fun uniffi_spora_ffi_checksum_func_stop_share(
     ): Short
@@ -784,10 +794,14 @@ internal object UniffiLib {
     external fun uniffi_spora_ffi_fn_func_init_logging(`logDir`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     external fun uniffi_spora_ffi_fn_func_init_service(`config`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
+    ): RustBuffer.ByValue
     external fun uniffi_spora_ffi_fn_func_log_line(`level`: RustBuffer.ByValue,`tag`: RustBuffer.ByValue,`message`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    external fun uniffi_spora_ffi_fn_func_make_identity(uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_spora_ffi_fn_func_make_share(`own`: RustBuffer.ByValue,`useSpora`: Byte,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_spora_ffi_fn_func_refresh_relays(uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_spora_ffi_fn_func_relay_access_status(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_spora_ffi_fn_func_set_keepalive(`handle`: Int,`intervalSecs`: Int,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
@@ -797,7 +811,13 @@ internal object UniffiLib {
     ): Unit
     external fun uniffi_spora_ffi_fn_func_set_telemetry_enabled(`enabled`: Byte,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    external fun uniffi_spora_ffi_fn_func_share(`identityBytes`: RustBuffer.ByValue,`protector`: RustBuffer.ByValue,`connLogDir`: RustBuffer.ByValue,`connLogRetentionDays`: RustBuffer.ByValue,`connLogSessionsOnly`: Byte,`recordDir`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_spora_ffi_fn_func_share_id(`shareBlob`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_spora_ffi_fn_func_share_relays(`shareBlob`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_spora_ffi_fn_func_share_url(`shareBlob`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_spora_ffi_fn_func_start_share(`shareBlob`: RustBuffer.ByValue,`protector`: RustBuffer.ByValue,`connLogDir`: RustBuffer.ByValue,`connLogRetentionDays`: RustBuffer.ByValue,`connLogSessionsOnly`: Byte,`recordDir`: RustBuffer.ByValue,`stunServers`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_spora_ffi_fn_func_stop_share(`handle`: Int,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
@@ -950,13 +970,19 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_spora_ffi_checksum_func_init_logging() != 34061.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_spora_ffi_checksum_func_init_service() != 38448.toShort()) {
+    if (lib.uniffi_spora_ffi_checksum_func_init_service() != 16998.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_spora_ffi_checksum_func_log_line() != 56243.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_spora_ffi_checksum_func_make_identity() != 196.toShort()) {
+    if (lib.uniffi_spora_ffi_checksum_func_make_share() != 9862.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_spora_ffi_checksum_func_refresh_relays() != 19163.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_spora_ffi_checksum_func_relay_access_status() != 26970.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_spora_ffi_checksum_func_set_keepalive() != 14637.toShort()) {
@@ -971,7 +997,16 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_spora_ffi_checksum_func_set_telemetry_enabled() != 49433.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_spora_ffi_checksum_func_share() != 18421.toShort()) {
+    if (lib.uniffi_spora_ffi_checksum_func_share_id() != 4401.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_spora_ffi_checksum_func_share_relays() != 12028.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_spora_ffi_checksum_func_share_url() != 31505.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_spora_ffi_checksum_func_start_share() != 20612.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_spora_ffi_checksum_func_stop_share() != 57557.toShort()) {
@@ -1349,13 +1384,171 @@ public object FfiConverterTypeBugReportSummary: FfiConverterRustBuffer<BugReport
 
 
 /**
+ * What [`init_service`] hands back.
+ */
+data class InitResult (
+    /**
+     * With [`StateKey::Mint`]: the key the state is now sealed with. The
+     * platform keeps it in its secure store and passes it back as
+     * [`StateKey::Provided`] from then on.
+     */
+    var `mintedStateKey`: kotlin.ByteArray?
+    
+){
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeInitResult: FfiConverterRustBuffer<InitResult> {
+    override fun read(buf: ByteBuffer): InitResult {
+        return InitResult(
+            FfiConverterOptionalByteArray.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: InitResult) = (
+            FfiConverterOptionalByteArray.allocationSize(value.`mintedStateKey`)
+    )
+
+    override fun write(value: InitResult, buf: ByteBuffer) {
+            FfiConverterOptionalByteArray.write(value.`mintedStateKey`, buf)
+    }
+}
+
+
+
+/**
+ * The device's relay access as the UI shows it.
+ */
+data class RelayAccessStatus (
+    /**
+     * The device's cert hash (hex): what relay tokens and relays name it by.
+     */
+    var `certHash`: kotlin.String
+    , 
+    /**
+     * When the cached relay token expires; `None` without one (never
+     * fetched, or the device is not entitled).
+     */
+    var `tokenExpiresUnixMs`: kotlin.ULong?
+    , 
+    /**
+     * When it is renewed.
+     */
+    var `renewAfterUnixMs`: kotlin.ULong?
+    , 
+    /**
+     * The last time the API answered.
+     */
+    var `lastSuccessUnixMs`: kotlin.ULong?
+    , 
+    /**
+     * The last failure, if it came after the last success.
+     */
+    var `lastError`: kotlin.String?
+    , 
+    /**
+     * The relays a new share on Spora's relays gets, in `?r=` form.
+     */
+    var `advisedRelays`: List<kotlin.String>
+    
+){
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeRelayAccessStatus: FfiConverterRustBuffer<RelayAccessStatus> {
+    override fun read(buf: ByteBuffer): RelayAccessStatus {
+        return RelayAccessStatus(
+            FfiConverterString.read(buf),
+            FfiConverterOptionalULong.read(buf),
+            FfiConverterOptionalULong.read(buf),
+            FfiConverterOptionalULong.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterSequenceString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: RelayAccessStatus) = (
+            FfiConverterString.allocationSize(value.`certHash`) +
+            FfiConverterOptionalULong.allocationSize(value.`tokenExpiresUnixMs`) +
+            FfiConverterOptionalULong.allocationSize(value.`renewAfterUnixMs`) +
+            FfiConverterOptionalULong.allocationSize(value.`lastSuccessUnixMs`) +
+            FfiConverterOptionalString.allocationSize(value.`lastError`) +
+            FfiConverterSequenceString.allocationSize(value.`advisedRelays`)
+    )
+
+    override fun write(value: RelayAccessStatus, buf: ByteBuffer) {
+            FfiConverterString.write(value.`certHash`, buf)
+            FfiConverterOptionalULong.write(value.`tokenExpiresUnixMs`, buf)
+            FfiConverterOptionalULong.write(value.`renewAfterUnixMs`, buf)
+            FfiConverterOptionalULong.write(value.`lastSuccessUnixMs`, buf)
+            FfiConverterOptionalString.write(value.`lastError`, buf)
+            FfiConverterSequenceString.write(value.`advisedRelays`, buf)
+    }
+}
+
+
+
+/**
+ * One relay endpoint of a share. `endpoint` is in the share URL's `?r=`
+ * form: `host:port` (QUIC), `nz/host:port`, `tcptls/host:port` or
+ * `direct/host:port`, an IPv6 literal bracketed.
+ */
+data class RelayEntry (
+    var `endpoint`: kotlin.String
+    , 
+    var `credential`: RelayCredential
+    
+){
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeRelayEntry: FfiConverterRustBuffer<RelayEntry> {
+    override fun read(buf: ByteBuffer): RelayEntry {
+        return RelayEntry(
+            FfiConverterString.read(buf),
+            FfiConverterTypeRelayCredential.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: RelayEntry) = (
+            FfiConverterString.allocationSize(value.`endpoint`) +
+            FfiConverterTypeRelayCredential.allocationSize(value.`credential`)
+    )
+
+    override fun write(value: RelayEntry, buf: ByteBuffer) {
+            FfiConverterString.write(value.`endpoint`, buf)
+            FfiConverterTypeRelayCredential.write(value.`credential`, buf)
+    }
+}
+
+
+
+/**
  * Where the service keeps its state and finds what it uploads.
  */
 data class ServiceConfig (
     /**
-     * `service.json` (the switch, the device token, upload cursors). Must
-     * not be backed up: a restored token would clone a device (Android:
-     * `noBackupFilesDir/service`).
+     * `service.json` (the device identity, the switch, the device token,
+     * upload cursors, the relay access). Must not be backed up: a restored
+     * token would clone a device (Android: `noBackupFilesDir/service`).
      */
     var `stateDir`: kotlin.String
     , 
@@ -1385,6 +1578,21 @@ data class ServiceConfig (
      * to the listed addresses that issued it.
      */
     var `apiBases`: List<kotlin.String> = listOf() 
+    , 
+    /**
+     * How the state's secrets are kept (`None`: [`StateKey::Plaintext`]). A
+     * key that does not open an existing state is state loss: a fresh
+     * device (every share made under the old one is refused with
+     * `IdentityMismatch`).
+     */
+    var `stateKey`: StateKey? = null 
+    , 
+    /**
+     * Keep the device's relay access fresh in the background (the relays
+     * for new shares and the relay token running shares present), whatever
+     * the upload switch says. A share on Spora's relays turns it on anyway.
+     */
+    var `manageRelays`: kotlin.Boolean = true 
     
 ){
     
@@ -1405,6 +1613,8 @@ public object FfiConverterTypeServiceConfig: FfiConverterRustBuffer<ServiceConfi
             FfiConverterString.read(buf),
             FfiConverterString.read(buf),
             FfiConverterSequenceString.read(buf),
+            FfiConverterOptionalTypeStateKey.read(buf),
+            FfiConverterBoolean.read(buf),
         )
     }
 
@@ -1414,7 +1624,9 @@ public object FfiConverterTypeServiceConfig: FfiConverterRustBuffer<ServiceConfi
             FfiConverterOptionalString.allocationSize(value.`logDir`) +
             FfiConverterString.allocationSize(value.`platform`) +
             FfiConverterString.allocationSize(value.`appVersion`) +
-            FfiConverterSequenceString.allocationSize(value.`apiBases`)
+            FfiConverterSequenceString.allocationSize(value.`apiBases`) +
+            FfiConverterOptionalTypeStateKey.allocationSize(value.`stateKey`) +
+            FfiConverterBoolean.allocationSize(value.`manageRelays`)
     )
 
     override fun write(value: ServiceConfig, buf: ByteBuffer) {
@@ -1424,6 +1636,8 @@ public object FfiConverterTypeServiceConfig: FfiConverterRustBuffer<ServiceConfi
             FfiConverterString.write(value.`platform`, buf)
             FfiConverterString.write(value.`appVersion`, buf)
             FfiConverterSequenceString.write(value.`apiBases`, buf)
+            FfiConverterOptionalTypeStateKey.write(value.`stateKey`, buf)
+            FfiConverterBoolean.write(value.`manageRelays`, buf)
     }
 }
 
@@ -1687,6 +1901,100 @@ public object FfiConverterTypeNetworkKind: FfiConverterRustBuffer<NetworkKind> {
 
 
 
+/**
+ * What one relay endpoint of a share is sent.
+ */
+sealed class RelayCredential {
+    
+    /**
+     * Nothing: an open relay.
+     */
+    object None : RelayCredential()
+    
+    
+    /**
+     * These bytes (a self-hosted relay's token, as the user pasted it).
+     */
+    data class Static(
+        val `token`: kotlin.ByteArray) : RelayCredential()
+        
+    {
+        
+
+        companion object
+    }
+    
+    /**
+     * The device's relay token: Spora's relays.
+     */
+    object Spora : RelayCredential()
+    
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeRelayCredential : FfiConverterRustBuffer<RelayCredential>{
+    override fun read(buf: ByteBuffer): RelayCredential {
+        return when(buf.getInt()) {
+            1 -> RelayCredential.None
+            2 -> RelayCredential.Static(
+                FfiConverterByteArray.read(buf),
+                )
+            3 -> RelayCredential.Spora
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: RelayCredential) = when(value) {
+        is RelayCredential.None -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+        is RelayCredential.Static -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterByteArray.allocationSize(value.`token`)
+            )
+        }
+        is RelayCredential.Spora -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+    }
+
+    override fun write(value: RelayCredential, buf: ByteBuffer) {
+        when(value) {
+            is RelayCredential.None -> {
+                buf.putInt(1)
+                Unit
+            }
+            is RelayCredential.Static -> {
+                buf.putInt(2)
+                FfiConverterByteArray.write(value.`token`, buf)
+                Unit
+            }
+            is RelayCredential.Spora -> {
+                buf.putInt(3)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
 
 
 sealed class ServiceException: kotlin.Exception() {
@@ -1695,6 +2003,26 @@ sealed class ServiceException: kotlin.Exception() {
      * A configuration that cannot work (e.g. an API base that is not a URL).
      */
     class Config(
+        
+        val v1: kotlin.String
+        ) : ServiceException() {
+        override val message
+            get() = "v1=${ v1 }"
+    }
+    
+    /**
+     * [`init_service`] has not run.
+     */
+    class NotInitialized(
+        ) : ServiceException() {
+        override val message
+            get() = ""
+    }
+    
+    /**
+     * The API, or the way to it.
+     */
+    class Api(
         
         val v1: kotlin.String
         ) : ServiceException() {
@@ -1732,7 +2060,11 @@ public object FfiConverterTypeServiceError : FfiConverterRustBuffer<ServiceExcep
             1 -> ServiceException.Config(
                 FfiConverterString.read(buf),
                 )
-            2 -> ServiceException.Io(
+            2 -> ServiceException.NotInitialized()
+            3 -> ServiceException.Api(
+                FfiConverterString.read(buf),
+                )
+            4 -> ServiceException.Io(
                 FfiConverterString.read(buf),
                 )
             else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
@@ -1742,6 +2074,15 @@ public object FfiConverterTypeServiceError : FfiConverterRustBuffer<ServiceExcep
     override fun allocationSize(value: ServiceException): ULong {
         return when(value) {
             is ServiceException.Config -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+                + FfiConverterString.allocationSize(value.v1)
+            )
+            is ServiceException.NotInitialized -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+            )
+            is ServiceException.Api -> (
                 // Add the size for the Int that specifies the variant plus the size needed for all fields
                 4UL
                 + FfiConverterString.allocationSize(value.v1)
@@ -1761,8 +2102,17 @@ public object FfiConverterTypeServiceError : FfiConverterRustBuffer<ServiceExcep
                 FfiConverterString.write(value.v1, buf)
                 Unit
             }
-            is ServiceException.Io -> {
+            is ServiceException.NotInitialized -> {
                 buf.putInt(2)
+                Unit
+            }
+            is ServiceException.Api -> {
+                buf.putInt(3)
+                FfiConverterString.write(value.v1, buf)
+                Unit
+            }
+            is ServiceException.Io -> {
+                buf.putInt(4)
                 FfiConverterString.write(value.v1, buf)
                 Unit
             }
@@ -1776,6 +2126,55 @@ public object FfiConverterTypeServiceError : FfiConverterRustBuffer<ServiceExcep
 
 
 sealed class ShareException: kotlin.Exception() {
+    
+    /**
+     * `init_service` has not run (shares need the device identity it keeps).
+     */
+    class NotInitialized(
+        ) : ShareException() {
+        override val message
+            get() = ""
+    }
+    
+    /**
+     * The share was made under another device identity (the service state
+     * was lost and the device minted a new one): offer to make a new share.
+     */
+    class IdentityMismatch(
+        ) : ShareException() {
+        override val message
+            get() = ""
+    }
+    
+    /**
+     * A share on Spora's relays was asked for before any relays were
+     * fetched: call `refresh_relays` first.
+     */
+    class NoRelayAdvice(
+        ) : ShareException() {
+        override val message
+            get() = ""
+    }
+    
+    /**
+     * This share is already running (one instance per share).
+     */
+    class AlreadyRunning(
+        ) : ShareException() {
+        override val message
+            get() = ""
+    }
+    
+    /**
+     * Not a share blob this build reads.
+     */
+    class InvalidShare(
+        
+        val v1: kotlin.String
+        ) : ShareException() {
+        override val message
+            get() = "v1=${ v1 }"
+    }
     
     class Generic(
         
@@ -1801,7 +2200,14 @@ public object FfiConverterTypeShareError : FfiConverterRustBuffer<ShareException
         
 
         return when(buf.getInt()) {
-            1 -> ShareException.Generic(
+            1 -> ShareException.NotInitialized()
+            2 -> ShareException.IdentityMismatch()
+            3 -> ShareException.NoRelayAdvice()
+            4 -> ShareException.AlreadyRunning()
+            5 -> ShareException.InvalidShare(
+                FfiConverterString.read(buf),
+                )
+            6 -> ShareException.Generic(
                 FfiConverterString.read(buf),
                 )
             else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
@@ -1810,6 +2216,27 @@ public object FfiConverterTypeShareError : FfiConverterRustBuffer<ShareException
 
     override fun allocationSize(value: ShareException): ULong {
         return when(value) {
+            is ShareException.NotInitialized -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+            )
+            is ShareException.IdentityMismatch -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+            )
+            is ShareException.NoRelayAdvice -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+            )
+            is ShareException.AlreadyRunning -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+            )
+            is ShareException.InvalidShare -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+                + FfiConverterString.allocationSize(value.v1)
+            )
             is ShareException.Generic -> (
                 // Add the size for the Int that specifies the variant plus the size needed for all fields
                 4UL
@@ -1820,8 +2247,29 @@ public object FfiConverterTypeShareError : FfiConverterRustBuffer<ShareException
 
     override fun write(value: ShareException, buf: ByteBuffer) {
         when(value) {
-            is ShareException.Generic -> {
+            is ShareException.NotInitialized -> {
                 buf.putInt(1)
+                Unit
+            }
+            is ShareException.IdentityMismatch -> {
+                buf.putInt(2)
+                Unit
+            }
+            is ShareException.NoRelayAdvice -> {
+                buf.putInt(3)
+                Unit
+            }
+            is ShareException.AlreadyRunning -> {
+                buf.putInt(4)
+                Unit
+            }
+            is ShareException.InvalidShare -> {
+                buf.putInt(5)
+                FfiConverterString.write(value.v1, buf)
+                Unit
+            }
+            is ShareException.Generic -> {
+                buf.putInt(6)
                 FfiConverterString.write(value.v1, buf)
                 Unit
             }
@@ -2080,6 +2528,102 @@ public object FfiConverterTypeSporaEvent : FfiConverterRustBuffer<SporaEvent>{
             is SporaEvent.ConnLogDegraded -> {
                 buf.putInt(8)
                 FfiConverterString.write(value.`detail`, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
+/**
+ * How the service keeps the secrets in its state file (the device's private
+ * key, the device token, the relay token).
+ */
+sealed class StateKey {
+    
+    /**
+     * In the clear, protected by the file's permissions only.
+     */
+    object Plaintext : StateKey()
+    
+    
+    /**
+     * Sealed with this 32-byte key, from the platform's secure store.
+     */
+    data class Provided(
+        val `key`: kotlin.ByteArray) : StateKey()
+        
+    {
+        
+
+        companion object
+    }
+    
+    /**
+     * Mint a key and seal with it: the first run, or the platform's store
+     * lost the key. [`init_service`] returns it for the platform to keep.
+     */
+    object Mint : StateKey()
+    
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeStateKey : FfiConverterRustBuffer<StateKey>{
+    override fun read(buf: ByteBuffer): StateKey {
+        return when(buf.getInt()) {
+            1 -> StateKey.Plaintext
+            2 -> StateKey.Provided(
+                FfiConverterByteArray.read(buf),
+                )
+            3 -> StateKey.Mint
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: StateKey) = when(value) {
+        is StateKey.Plaintext -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+        is StateKey.Provided -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterByteArray.allocationSize(value.`key`)
+            )
+        }
+        is StateKey.Mint -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+    }
+
+    override fun write(value: StateKey, buf: ByteBuffer) {
+        when(value) {
+            is StateKey.Plaintext -> {
+                buf.putInt(1)
+                Unit
+            }
+            is StateKey.Provided -> {
+                buf.putInt(2)
+                FfiConverterByteArray.write(value.`key`, buf)
+                Unit
+            }
+            is StateKey.Mint -> {
+                buf.putInt(3)
                 Unit
             }
         }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
@@ -2566,6 +3110,70 @@ public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?>
 /**
  * @suppress
  */
+public object FfiConverterOptionalByteArray: FfiConverterRustBuffer<kotlin.ByteArray?> {
+    override fun read(buf: ByteBuffer): kotlin.ByteArray? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterByteArray.read(buf)
+    }
+
+    override fun allocationSize(value: kotlin.ByteArray?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterByteArray.allocationSize(value)
+        }
+    }
+
+    override fun write(value: kotlin.ByteArray?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterByteArray.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalTypeStateKey: FfiConverterRustBuffer<StateKey?> {
+    override fun read(buf: ByteBuffer): StateKey? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeStateKey.read(buf)
+    }
+
+    override fun allocationSize(value: StateKey?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeStateKey.allocationSize(value)
+        }
+    }
+
+    override fun write(value: StateKey?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeStateKey.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterOptionalTypeEventCallback: FfiConverterRustBuffer<EventCallback?> {
     override fun read(buf: ByteBuffer): EventCallback? {
         if (buf.get().toInt() == 0) {
@@ -2680,6 +3288,34 @@ public object FfiConverterSequenceString: FfiConverterRustBuffer<List<kotlin.Str
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterString.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeRelayEntry: FfiConverterRustBuffer<List<RelayEntry>> {
+    override fun read(buf: ByteBuffer): List<RelayEntry> {
+        val len = buf.getInt()
+        return List<RelayEntry>(len) {
+            FfiConverterTypeRelayEntry.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<RelayEntry>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeRelayEntry.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<RelayEntry>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeRelayEntry.write(it, buf)
         }
     }
 }
@@ -2872,19 +3508,21 @@ public object FfiConverterMapStringString: FfiConverterRustBuffer<Map<kotlin.Str
     
 
         /**
-         * Open the service state and start the uploader thread. Idempotent: the
-         * first successful call's config holds for the life of the process. Reads
-         * local files only; the uploader does its network work on its own thread,
-         * and nothing at all while uploads are off.
+         * Open the service state (minting the device identity on first use) and
+         * start the service thread. Idempotent: the first successful call's config
+         * holds for the life of the process. Reads local files only; the thread
+         * does its network work on its own: uploads while they are on, and the
+         * relay access while `manage_relays` (registering the device for it).
          */
-    @Throws(ServiceException::class) fun `initService`(`config`: ServiceConfig)
-        = 
+    @Throws(ServiceException::class) fun `initService`(`config`: ServiceConfig): InitResult {
+            return FfiConverterTypeInitResult.lift(
     uniffiRustCallWithError(ServiceException) { _status ->
     UniffiLib.uniffi_spora_ffi_fn_func_init_service(
     
         FfiConverterTypeServiceConfig.lower(`config`),_status)
 }
-    
+    )
+    }
     
 
         /**
@@ -2902,14 +3540,49 @@ public object FfiConverterMapStringString: FfiConverterRustBuffer<Map<kotlin.Str
     
 
         /**
-         * Generate a fresh identity and return its serialized bytes. The platform
-         * (Android app) is expected to persist these bytes — e.g. in
-         * SharedPreferences — and pass them back to `share()` on subsequent
-         * invocations so the share URL stays stable across launches.
-         */ fun `makeIdentity`(): kotlin.ByteArray {
+         * Make a new share of this device and return its blob, offline. With
+         * `use_spora`, the relays `refresh_relays` last fetched come first (each
+         * presenting the device's relay token), then `own`; without fetched
+         * relays that is [`ShareError::NoRelayAdvice`]. The platform stores the
+         * blob (it holds the share's secret: keep it in an encrypted store) and
+         * passes it to `start_share`; its URL never changes ([`share_url`]), so
+         * other relays mean a new share.
+         */
+    @Throws(ShareException::class) fun `makeShare`(`own`: List<RelayEntry>, `useSpora`: kotlin.Boolean): kotlin.ByteArray {
             return FfiConverterByteArray.lift(
-    uniffiRustCall() { _status ->
-    UniffiLib.uniffi_spora_ffi_fn_func_make_identity(
+    uniffiRustCallWithError(ShareException) { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_make_share(
+    
+        FfiConverterSequenceTypeRelayEntry.lower(`own`),FfiConverterBoolean.lower(`useSpora`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Fetch the relays for new shares and a relay token now: network, on the
+         * caller's thread (call it off the UI thread). Registers the device if it
+         * is not yet. Every running share gets the new token. A failure keeps what
+         * was cached and is the error.
+         */
+    @Throws(ServiceException::class) fun `refreshRelays`(): RelayAccessStatus {
+            return FfiConverterTypeRelayAccessStatus.lift(
+    uniffiRustCallWithError(ServiceException) { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_refresh_relays(
+    
+        _status)
+}
+    )
+    }
+    
+
+        /**
+         * The relay access from this process's copy of the state (no I/O).
+         */
+    @Throws(ServiceException::class) fun `relayAccessStatus`(): RelayAccessStatus {
+            return FfiConverterTypeRelayAccessStatus.lift(
+    uniffiRustCallWithError(ServiceException) { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_relay_access_status(
     
         _status)
 }
@@ -2997,30 +3670,78 @@ public object FfiConverterMapStringString: FfiConverterRustBuffer<Map<kotlin.Str
     
 
         /**
-         * Starts sharing this device's connection.
+         * A share's id (hex): public, unique per share.
+         */
+    @Throws(ShareException::class) fun `shareId`(`shareBlob`: kotlin.ByteArray): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCallWithError(ShareException) { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_share_id(
+    
+        FfiConverterByteArray.lower(`shareBlob`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * A share's relays, in the order its URL lists them.
+         */
+    @Throws(ShareException::class) fun `shareRelays`(`shareBlob`: kotlin.ByteArray): List<RelayEntry> {
+            return FfiConverterSequenceTypeRelayEntry.lift(
+    uniffiRustCallWithError(ShareException) { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_share_relays(
+    
+        FfiConverterByteArray.lower(`shareBlob`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * A share's URL: the same for as long as the share exists.
+         */
+    @Throws(ShareException::class) fun `shareUrl`(`shareBlob`: kotlin.ByteArray): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCallWithError(ShareException) { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_share_url(
+    
+        FfiConverterByteArray.lower(`shareBlob`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Starts sharing this device's connection as the share `share_blob` (made
+         * by [`make_share`] under this device's identity; another device's is
+         * [`ShareError::IdentityMismatch`]). Never touches the network beyond the
+         * share's own registrations: the relay token is the one the service has
+         * cached (none: the share starts degraded and gets one when the service
+         * renews), and every renewal reaches it until [`stop_share`]. One instance
+         * per share ([`ShareError::AlreadyRunning`]).
          *
          * Connection logging (the sharer-side per-flow record, see spora-core's
          * `connlog`): pass `conn_log_dir` to enable it. The app should pass a
-         * directory under its files dir (e.g. `filesDir/connlog`) and exclude it
-         * from Android auto-backup. `conn_log_dir = None` disables logging.
-         * `conn_log_retention_days = None` uses the core default (90 days).
-         * `conn_log_sessions_only = true` records who was connected and when, but
-         * no per-flow destination records.
-         *
-         * Fails if `conn_log_dir` is set but not writable — a default-on liability
-         * log must not silently degrade at startup.
+         * directory under its files dir (e.g. `filesDir/connlog/<share id>`) and
+         * exclude it from Android auto-backup. `conn_log_dir = None` disables
+         * logging. `conn_log_retention_days = None` uses the core default (90
+         * days). `conn_log_sessions_only = true` records who was connected and
+         * when, but no per-flow destination records. Fails if `conn_log_dir` is
+         * set but not writable — a default-on liability log must not silently
+         * degrade at startup.
          *
          * `record_dir` turns on the connection record (spora-core's `record`, the
          * diagnostic account of this run) in that directory — one directory for
          * every share and connect, not backed up (Android:
-         * `noBackupFilesDir/records`). `None` keeps no record.
+         * `noBackupFilesDir/records`). `None` keeps no record. `stun_servers`
+         * empty uses the built-in list.
          */
-    @Throws(ShareException::class) fun `share`(`identityBytes`: kotlin.ByteArray, `protector`: SocketProtectorCallback?, `connLogDir`: kotlin.String?, `connLogRetentionDays`: kotlin.UInt?, `connLogSessionsOnly`: kotlin.Boolean, `recordDir`: kotlin.String? = null): ShareResult {
+    @Throws(ShareException::class) fun `startShare`(`shareBlob`: kotlin.ByteArray, `protector`: SocketProtectorCallback?, `connLogDir`: kotlin.String?, `connLogRetentionDays`: kotlin.UInt?, `connLogSessionsOnly`: kotlin.Boolean, `recordDir`: kotlin.String? = null, `stunServers`: List<kotlin.String> = listOf()): ShareResult {
             return FfiConverterTypeShareResult.lift(
     uniffiRustCallWithError(ShareException) { _status ->
-    UniffiLib.uniffi_spora_ffi_fn_func_share(
+    UniffiLib.uniffi_spora_ffi_fn_func_start_share(
     
-        FfiConverterByteArray.lower(`identityBytes`),FfiConverterOptionalTypeSocketProtectorCallback.lower(`protector`),FfiConverterOptionalString.lower(`connLogDir`),FfiConverterOptionalUInt.lower(`connLogRetentionDays`),FfiConverterBoolean.lower(`connLogSessionsOnly`),FfiConverterOptionalString.lower(`recordDir`),_status)
+        FfiConverterByteArray.lower(`shareBlob`),FfiConverterOptionalTypeSocketProtectorCallback.lower(`protector`),FfiConverterOptionalString.lower(`connLogDir`),FfiConverterOptionalUInt.lower(`connLogRetentionDays`),FfiConverterBoolean.lower(`connLogSessionsOnly`),FfiConverterOptionalString.lower(`recordDir`),FfiConverterSequenceString.lower(`stunServers`),_status)
 }
     )
     }

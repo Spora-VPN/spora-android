@@ -49,6 +49,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -58,7 +59,9 @@ import kotlinx.coroutines.launch
 import to.spora.android.ui.DiagnosticsModalContent
 import to.spora.android.ui.DotState
 import to.spora.android.ui.FeedbackModalContent
+import to.spora.android.ui.FullScreenPage
 import to.spora.android.ui.ModalOverlay
+import to.spora.android.ui.SettingsContent
 import to.spora.android.ui.ShareScreen
 import to.spora.android.ui.SmallIconButton
 import to.spora.android.ui.SporaIcons
@@ -82,6 +85,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         SharedConnectionStore.init(this)
         UseConnectionStore.init(this)
+        RelaySettings.init(this)
         ShareState.loadConnections(SharedConnectionStore.getAll())
         ConnectState.loadConnections(UseConnectionStore.getAll())
         requestNotificationPermission()
@@ -163,6 +167,7 @@ fun MainScreen(
     val coroutineScope = rememberCoroutineScope()
     var showFeedbackModal by rememberSaveable { mutableStateOf(false) }
     var showDiagnosticsModal by rememberSaveable { mutableStateOf(false) }
+    var showSettings by rememberSaveable { mutableStateOf(false) }
     var showRequiredNotice by rememberSaveable { mutableStateOf(false) }
     val telemetry by Diagnostics.status.collectAsState()
 
@@ -184,39 +189,54 @@ fun MainScreen(
 
     LaunchedEffect(deepLinkUrl) {
         if (deepLinkUrl != null) {
+            // The link opens on the Connect tab, not behind the settings page
+            showSettings = false
             pagerState.animateScrollToPage(1)
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-    ) {
-        AppHeader(
-            onDiagnosticsClick = { showDiagnosticsModal = true },
-            onFeedbackClick = { showFeedbackModal = true },
-        )
-
-        HorizontalPager(
-            state = pagerState,
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-        ) { page ->
-            when (page) {
-                0 -> ShareScreen()
-                1 -> UseScreen(
-                    initialUrl = deepLinkUrl,
-                    onInitialUrlConsumed = onDeepLinkConsumed,
-                )
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                // Covered by the settings page: out of TalkBack's reach
+                .then(if (showSettings) Modifier.clearAndSetSemantics {} else Modifier),
+        ) {
+            AppHeader(
+                onDiagnosticsClick = { showDiagnosticsModal = true },
+                onFeedbackClick = { showFeedbackModal = true },
+                onSettingsClick = { showSettings = true },
+            )
+
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+            ) { page ->
+                when (page) {
+                    0 -> ShareScreen(onOpenSettings = { showSettings = true })
+                    1 -> UseScreen(
+                        initialUrl = deepLinkUrl,
+                        onInitialUrlConsumed = onDeepLinkConsumed,
+                    )
+                }
             }
+
+            BottomNav(
+                selectedTab = pagerState.currentPage,
+                onTabSelected = { coroutineScope.launch { pagerState.animateScrollToPage(it) } },
+            )
         }
 
-        BottomNav(
-            selectedTab = pagerState.currentPage,
-            onTabSelected = { coroutineScope.launch { pagerState.animateScrollToPage(it) } },
-        )
+        FullScreenPage(
+            visible = showSettings,
+            title = stringResource(R.string.settings_title),
+            onBack = { showSettings = false },
+        ) {
+            SettingsContent()
+        }
     }
 
     ModalOverlay(
@@ -261,6 +281,7 @@ private data class HeaderStatusRow(
 private fun AppHeader(
     onDiagnosticsClick: () -> Unit,
     onFeedbackClick: () -> Unit,
+    onSettingsClick: () -> Unit,
 ) {
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val shareState by ShareState.uiState.collectAsState()
@@ -370,6 +391,13 @@ private fun AppHeader(
                 icon = SporaIcons.Feedback,
                 contentDescription = stringResource(R.string.feedback_button_content_desc),
                 onClick = onFeedbackClick,
+                tint = TextPrimary,
+                iconSize = 19.dp,
+            )
+            SmallIconButton(
+                icon = SporaIcons.Settings,
+                contentDescription = stringResource(R.string.settings_button_content_desc),
+                onClick = onSettingsClick,
                 tint = TextPrimary,
                 iconSize = 19.dp,
             )

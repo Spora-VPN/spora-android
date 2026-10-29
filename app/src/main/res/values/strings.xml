@@ -9,6 +9,8 @@
     <string name="action_delete">DELETE</string>
     <string name="action_save">SAVE</string>
     <string name="action_done">DONE</string>
+    <string name="action_back_content_desc">Back</string>
+    <string name="action_open_settings">OPEN SETTINGS</string>
     <string name="support_email" translatable="false">support@spora.to</string>
     <string name="saved_connections_header">SAVED CONNECTIONS</string>
     <string name="delete_connection_content_desc">Delete connection</string>
@@ -45,6 +47,7 @@
     <string name="share_link_content_desc">Share link</string>
     <string name="share_default_label">Connection %1$d</string>
     <string name="share_empty_body">Connections you share will appear here.</string>
+    <string name="share_new_link">MAKE A NEW LINK</string>
 
     <!-- Share rename modal -->
     <string name="share_rename_label">NAME THIS SHARE</string>
@@ -110,10 +113,55 @@
     <string name="telemetry_required_keep">KEEP ENABLED</string>
     <string name="telemetry_required_contact">CONTACT SUPPORT</string>
 
+    <!-- Settings: the relays new links are made with -->
+    <string name="settings_button_content_desc">Settings</string>
+    <string name="settings_title">SETTINGS</string>
+    <string name="settings_relays_header">RELAYS</string>
+    <string name="settings_relays_intro">Every link needs at least one relay: it is how the people you share with first reach your phone. Once they are connected, Spora tries to switch to a direct path.</string>
+    <string name="settings_spora_toggle_label">Use Spora\'s relays</string>
+    <string name="settings_spora_toggle_hint">Spora runs them for free. What passes through them stays encrypted end to end; they see the addresses involved and how much data moves. To use them, this phone registers with Spora.</string>
+    <string name="settings_spora_status_ready">Ready.</string>
+    <string name="settings_spora_status_checking">Checking…</string>
+    <string name="settings_spora_status_unreachable">Couldn\'t reach Spora. Spora will keep trying.</string>
+    <string name="settings_spora_status_not_available">Spora\'s relays aren\'t available to this device right now.</string>
+    <string name="settings_spora_status_unavailable">Spora\'s relays aren\'t available right now. Spora will try again when you next open it.</string>
+    <string name="settings_own_relays_header">YOUR OWN RELAYS</string>
+    <string name="settings_own_relays_intro">Relays you run yourself, or someone you trust runs. They work alongside Spora\'s, or on their own.</string>
+    <string name="settings_relay_token_set">TOKEN SET</string>
+    <string name="settings_relay_no_token">NO TOKEN</string>
+    <string name="settings_relay_add">ADD A RELAY</string>
+    <string name="settings_relay_edit_action">Edit</string>
+    <string name="settings_relay_remove_content_desc">Remove relay</string>
+    <string name="settings_no_relays">With no relays, new links can\'t be made.</string>
+    <string name="settings_relays_note">Relays are part of each link. These settings apply to the links you make from now on; links you already have keep their relays.</string>
+
+    <!-- Relay editor and removal -->
+    <string name="settings_relay_add_header">ADD A RELAY</string>
+    <string name="settings_relay_edit_header">EDIT RELAY</string>
+    <string name="settings_relay_modal_title">Your relay</string>
+    <string name="settings_relay_address_label">RELAY ADDRESS</string>
+    <string name="settings_relay_address_placeholder" translatable="false">relay.example.org:443</string>
+    <string name="settings_relay_address_helper">host:port. For a relay on another protocol, put nz/ or tcptls/ in front.</string>
+    <string name="settings_relay_token_label">TOKEN — OPTIONAL</string>
+    <string name="settings_relay_token_placeholder">If the relay requires one</string>
+    <string name="settings_relay_token_helper">It is sent to the relay and never goes into your links.</string>
+    <string name="settings_relay_error_format">Enter it as host:port, for example relay.example.org:443.</string>
+    <string name="settings_relay_error_protocol">Unknown protocol. Use nz/ or tcptls/, or nothing for the default.</string>
+    <string name="settings_relay_error_ipv6">Put an IPv6 address in brackets: [2001:db8::1]:443.</string>
+    <string name="settings_relay_error_port">The port must be a number from 1 to 65535.</string>
+    <string name="settings_relay_error_duplicate">This relay is already on the list.</string>
+    <string name="settings_relay_remove_header">REMOVE RELAY</string>
+    <string name="settings_relay_remove_message">Links you have already made keep using it. New links won\'t.</string>
+
     <!-- Errors (user-facing categories, see UserError.kt) -->
     <string name="error_invalid_url">This doesn\'t look like a Spora link.</string>
     <string name="error_connect_failed">Couldn\'t connect. Check your internet connection and try again.</string>
     <string name="error_share_failed">Couldn\'t start sharing. Check your internet connection and try again.</string>
+    <string name="error_share_unavailable">Sharing isn\'t available right now. Restart the app and try again.</string>
+    <string name="error_share_link_lost">This link no longer works: Spora\'s data on this phone was reset. Make a new link and send it again.</string>
+    <string name="error_no_relays">There are no relays to make a link with. Turn on Spora\'s relays or add your own in settings.</string>
+    <string name="error_relays_unreachable">Couldn\'t get relays from Spora. Check your internet connection and try again.</string>
+    <string name="error_no_spora_relays">Spora has no relays for you right now. Try again later, or add your own in settings.</string>
     <string name="error_vpn_permission">Spora needs VPN permission to connect. Try again and allow the VPN request.</string>
     <string name="error_vpn_unavailable">Couldn\'t set up the VPN tunnel. Restart the app and try again.</string>
     <string name="error_generic">Something went wrong. Please try again.</string>

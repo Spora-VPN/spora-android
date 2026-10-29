@@ -22,9 +22,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
@@ -32,22 +31,32 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import to.spora.android.R
+import to.spora.android.RelaySettings
+import to.spora.android.ShareMaker
 import to.spora.android.SharedConnection
 import to.spora.android.SharedConnectionStore
 import to.spora.android.ShareForegroundService
 import to.spora.android.ShareState
+import to.spora.android.UserError
 import to.spora.android.ui.theme.ColorPendingText
 import to.spora.android.ui.theme.ColorSuccessText
 import to.spora.android.ui.theme.TextMuted
 import to.spora.android.ui.theme.TextPrimary
 
 @Composable
-fun ShareScreen(modifier: Modifier = Modifier) {
+fun ShareScreen(
+    modifier: Modifier = Modifier,
+    onOpenSettings: () -> Unit = {},
+) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val uiState by ShareState.uiState.collectAsState()
-    var creatingIdentity by remember { mutableStateOf(false) }
+    var making by remember { mutableStateOf(false) }
+    // Why the last new link could not be made
+    var makeError by rememberSaveable { mutableStateOf<UserError?>(null) }
     var pendingShareConnectionId by rememberSaveable { mutableStateOf<String?>(null) }
+    // A new link for a connection that already has a name: no rename modal
+    var pendingRename by rememberSaveable { mutableStateOf(true) }
     var renameConnectionId by rememberSaveable { mutableStateOf<String?>(null) }
     var deleteConnectionId by rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -62,34 +71,74 @@ fun ShareScreen(modifier: Modifier = Modifier) {
         val url = uiState.activeShares[pendingId]?.url ?: return@LaunchedEffect
         pendingShareConnectionId = null
         shareUrl(context, url)
-        renameConnectionId = pendingId
+        if (pendingRename) renameConnectionId = pendingId
     }
 
-    fun createAndShare() {
-        if (creatingIdentity || pendingShareConnectionId != null) return
-        creatingIdentity = true
-        coroutineScope.launch {
-            // Key/cert generation is a blocking FFI call
-            val identity = withContext(Dispatchers.Default) {
-                java.util.Base64.getEncoder()
-                    .encodeToString(uniffi.spora_ffi.makeIdentity())
+    // Why a link could not be made no longer holds once the relays change
+    // (the current settings are dropped: a recreation keeps the error)
+    LaunchedEffect(Unit) {
+        RelaySettings.state.drop(1).collect { makeError = null }
+    }
+
+    // A new share on the relays the settings name; null when none could be
+    // made (makeError says why)
+    suspend fun newShare(): String? {
+        makeError = null
+        return when (val made = ShareMaker.make(context)) {
+            is ShareMaker.Result.Made -> made.share
+            is ShareMaker.Result.Failed -> {
+                makeError = made.error
+                null
             }
-            val existingCount = ShareState.uiState.value.connections.size
-            val label = context.getString(R.string.share_default_label, existingCount + 1)
-            val connection = SharedConnection(
-                id = java.util.UUID.randomUUID().toString(),
-                label = label,
-                identity = identity,
-            )
-            SharedConnectionStore.save(connection)
-            ShareState.addConnection(connection)
-            pendingShareConnectionId = connection.id
-            ShareForegroundService.startConnection(context, connection.id, connection.identity)
-            creatingIdentity = false
         }
     }
 
-    val busy = creatingIdentity || pendingShareConnectionId != null
+    fun createAndShare() {
+        if (making || pendingShareConnectionId != null) return
+        making = true
+        coroutineScope.launch {
+            try {
+                val share = newShare() ?: return@launch
+                val existingCount = ShareState.uiState.value.connections.size
+                val label = context.getString(R.string.share_default_label, existingCount + 1)
+                val connection = SharedConnection(
+                    id = java.util.UUID.randomUUID().toString(),
+                    label = label,
+                    share = share,
+                )
+                SharedConnectionStore.save(connection)
+                ShareState.addConnection(connection)
+                pendingRename = true
+                pendingShareConnectionId = connection.id
+                ShareForegroundService.startConnection(context, connection.id, connection.share)
+            } finally {
+                making = false
+            }
+        }
+    }
+
+    // The connection's share was made under a device identity this device
+    // no longer has: give it a new share (a new link, to send again), on the
+    // relays the settings name now. Name and place in the list stay.
+    fun replaceShare(connection: SharedConnection) {
+        if (making || pendingShareConnectionId != null) return
+        making = true
+        coroutineScope.launch {
+            try {
+                val share = newShare() ?: return@launch
+                val replaced = connection.copy(share = share)
+                SharedConnectionStore.update(replaced)
+                ShareState.replaceConnection(replaced)
+                pendingRename = false
+                pendingShareConnectionId = replaced.id
+                ShareForegroundService.startConnection(context, replaced.id, replaced.share)
+            } finally {
+                making = false
+            }
+        }
+    }
+
+    val busy = making || pendingShareConnectionId != null
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(
@@ -113,6 +162,18 @@ fun ShareScreen(modifier: Modifier = Modifier) {
                 onClick = { createAndShare() },
             )
 
+            makeError?.let { error ->
+                Column(modifier = Modifier.padding(horizontal = 4.dp)) {
+                    StatusLine(DotState.Error, stringResource(error.messageRes), topPadding = 0.dp)
+                    if (error == UserError.NO_RELAYS || error == UserError.NO_SPORA_RELAYS) {
+                        InlineAction(
+                            text = stringResource(R.string.action_open_settings),
+                            onClick = onOpenSettings,
+                        )
+                    }
+                }
+            }
+
             Column {
                 Text(
                     text = stringResource(R.string.saved_connections_header),
@@ -131,6 +192,7 @@ fun ShareScreen(modifier: Modifier = Modifier) {
                         uiState = uiState,
                         context = context,
                         onDelete = { deleteConnectionId = it },
+                        onReplaceShare = { replaceShare(it) },
                     )
                 }
             }
@@ -189,6 +251,7 @@ private fun ShareConnectionList(
     uiState: to.spora.android.ShareUiState,
     context: Context,
     onDelete: (String) -> Unit,
+    onReplaceShare: (SharedConnection) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
         uiState.connections.forEach { connection ->
@@ -226,7 +289,7 @@ private fun ShareConnectionList(
                         ShareForegroundService.startConnection(
                             context,
                             connection.id,
-                            connection.identity,
+                            connection.share,
                         )
                     } else {
                         ShareForegroundService.stopConnection(context, connection.id)
@@ -239,6 +302,9 @@ private fun ShareConnectionList(
                 } else null,
                 onDelete = if (!isActive && !isStarting) {
                     { onDelete(connection.id) }
+                } else null,
+                errorAction = if (error == UserError.SHARE_LINK_LOST) {
+                    stringResource(R.string.share_new_link) to { onReplaceShare(connection) }
                 } else null,
             )
         }

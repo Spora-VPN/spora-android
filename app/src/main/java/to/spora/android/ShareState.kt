@@ -91,6 +91,18 @@ object ShareState {
         }
     }
 
+    /** The connection now serves another share (a new link): its old error no longer applies. */
+    fun replaceConnection(connection: SharedConnection) {
+        _uiState.update { state ->
+            state.copy(
+                connections = state.connections.map {
+                    if (it.id == connection.id) connection else it
+                },
+                errors = state.errors - connection.id,
+            )
+        }
+    }
+
     fun removeConnection(id: String) {
         _uiState.update { state ->
             state.copy(

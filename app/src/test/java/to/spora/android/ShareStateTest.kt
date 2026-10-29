@@ -19,6 +19,19 @@ class ShareStateTest {
     private fun state() = ShareState.uiState.value
 
     @Test
+    fun `replacing a share keeps the connection and clears its error`() {
+        val old = SharedConnection("a", "Mom", "b2xk")
+        ShareState.loadConnections(listOf(old, SharedConnection("b", "Anya", "Yg==")))
+        ShareState.failed("a", UserError.SHARE_LINK_LOST)
+        ShareState.replaceConnection(old.copy(share = "bmV3"))
+
+        assertEquals(listOf("a", "b"), state().connections.map { it.id })
+        assertEquals("bmV3", state().connections[0].share)
+        assertEquals("Mom", state().connections[0].label)
+        assertNull(state().errors["a"])
+    }
+
+    @Test
     fun `starting marks id and clears its previous error`() {
         ShareState.failed("a", UserError.SHARE_FAILED)
         ShareState.starting("a")
@@ -69,7 +82,7 @@ class ShareStateTest {
 
     @Test
     fun `removeConnection clears every trace of the id`() {
-        ShareState.addConnection(SharedConnection("a", "label", "identity"))
+        ShareState.addConnection(SharedConnection("a", "label", "c2hhcmU="))
         ShareState.starting("a")
         ShareState.failed("a", UserError.GENERIC)
 

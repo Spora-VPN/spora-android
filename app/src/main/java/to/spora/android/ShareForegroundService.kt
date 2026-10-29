@@ -23,6 +23,11 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
+import uniffi.spora_ffi.ShareException
+import uniffi.spora_ffi.setShareDnsServers
+import uniffi.spora_ffi.shareId
+import uniffi.spora_ffi.startShare
+import uniffi.spora_ffi.stopShare
 
 class ShareForegroundService : Service() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -47,9 +52,9 @@ class ShareForegroundService : Service() {
             ACTION_START_CONNECTION -> {
                 val connectionId = intent.getStringExtra(EXTRA_CONNECTION_ID)
                     ?: return START_NOT_STICKY
-                val identity = intent.getStringExtra(EXTRA_IDENTITY)
+                val share = intent.getStringExtra(EXTRA_SHARE)
                     ?: return START_NOT_STICKY
-                startConnection(connectionId, identity)
+                startConnection(connectionId, share)
             }
             ACTION_STOP_CONNECTION -> {
                 val connectionId = intent.getStringExtra(EXTRA_CONNECTION_ID)
@@ -61,7 +66,7 @@ class ShareForegroundService : Service() {
         return START_NOT_STICKY
     }
 
-    private fun startConnection(connectionId: String, identity: String) {
+    private fun startConnection(connectionId: String, share: String) {
         if (activeJobs.containsKey(connectionId)) return
 
         ShareState.starting(connectionId)
@@ -80,17 +85,26 @@ class ShareForegroundService : Service() {
         // can fail and remove it (e.g. a synchronous Base64 decode error).
         val job = serviceScope.launch(start = CoroutineStart.LAZY) {
             try {
-                val identityBytes = java.util.Base64.getDecoder().decode(identity)
+                val shareBytes = java.util.Base64.getDecoder().decode(share)
+                // Shares are made under the device identity the core's
+                // service holds, and started through it
+                if (!Diagnostics.awaitService(this@ShareForegroundService)) {
+                    throw ShareException.NotInitialized()
+                }
                 // The connection log is a liability record for the sharer, so
-                // it is always on. One dir per connection: the core binds a
-                // database to the identity that created it and refuses to open
-                // it for any other, so a shared dir breaks every share after
-                // the first. The connlog tree is excluded from auto-backup (see
-                // res/xml backup rules); retention/destination logging use the
-                // core defaults (90 days, destinations included).
-                val connLogDir = java.io.File(filesDir, "connlog/$connectionId").apply { mkdirs() }
-                val result = uniffi.spora_ffi.share(
-                    identityBytes,
+                // it is always on. One dir per share: the core binds a
+                // database to the share (its routing hash) that created it and
+                // refuses to open it for any other, so a shared dir breaks
+                // every share after the first. The connlog tree is excluded
+                // from auto-backup (see res/xml backup rules); retention/
+                // destination logging use the core defaults (90 days,
+                // destinations included).
+                val connLogDir = java.io.File(filesDir, "connlog/${shareId(shareBytes)}")
+                    .apply { mkdirs() }
+                // Never touches the network itself: Spora's relays get the
+                // relay token the service has cached (and every renewal)
+                val result = startShare(
+                    shareBytes,
                     null,
                     connLogDir = connLogDir.absolutePath,
                     connLogRetentionDays = null,
@@ -98,9 +112,9 @@ class ShareForegroundService : Service() {
                     recordDir = Diagnostics.recordDir(this@ShareForegroundService),
                 )
                 if (!isActive) {
-                    // Toggled off while share() was blocked starting up: the
+                    // Toggled off while startShare() was blocked starting up: the
                     // session it just created must be stopped, not surfaced.
-                    try { uniffi.spora_ffi.stopShare(result.handle) } catch (_: Throwable) {}
+                    try { stopShare(result.handle) } catch (_: Throwable) {}
                     ShareState.stopped(connectionId)
                     return@launch
                 }
@@ -146,7 +160,7 @@ class ShareForegroundService : Service() {
         SporaLog.d(TAG, "resolvers for shares $handles: $servers")
         for (handle in handles) {
             try {
-                uniffi.spora_ffi.setShareDnsServers(handle, servers)
+                setShareDnsServers(handle, servers)
             } catch (t: Throwable) {
                 // The share may have been stopped between the snapshot and
                 // this call; the next link change will not include it.
@@ -183,7 +197,7 @@ class ShareForegroundService : Service() {
             // survives the stopSelf below
             teardownScope.launch {
                 try {
-                    uniffi.spora_ffi.stopShare(info.handle)
+                    stopShare(info.handle)
                 } catch (_: Throwable) {
                     // Best-effort cleanup; handle may already be invalid.
                 }
@@ -284,6 +298,14 @@ class ShareForegroundService : Service() {
             try { connectivity.unregisterNetworkCallback(cb) } catch (_: Throwable) {}
         }
         networkCallback = null
+        // The core's share sessions outlive this service in the process; one
+        // left running would refuse its share's next start as already running
+        val handles = ShareState.uiState.value.activeShares.values.map { it.handle }
+        if (handles.isNotEmpty()) {
+            teardownScope.launch {
+                handles.forEach { h -> try { stopShare(h) } catch (_: Throwable) {} }
+            }
+        }
         ShareState.serviceStopped()
         super.onDestroy()
     }
@@ -305,13 +327,13 @@ class ShareForegroundService : Service() {
             "to.spora.android.action.STOP_ALL_SHARES"
 
         private const val EXTRA_CONNECTION_ID = "connection_id"
-        private const val EXTRA_IDENTITY = "identity"
+        private const val EXTRA_SHARE = "share"
 
-        fun startConnection(context: Context, connectionId: String, identity: String) {
+        fun startConnection(context: Context, connectionId: String, share: String) {
             val intent = Intent(context, ShareForegroundService::class.java)
                 .setAction(ACTION_START_CONNECTION)
                 .putExtra(EXTRA_CONNECTION_ID, connectionId)
-                .putExtra(EXTRA_IDENTITY, identity)
+                .putExtra(EXTRA_SHARE, share)
             ContextCompat.startForegroundService(context, intent)
         }
 

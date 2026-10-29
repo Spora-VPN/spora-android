@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Spora is an Android P2P VPN app built with Kotlin and Jetpack Compose. The core networking logic is implemented in Rust and exposed to Kotlin via UniFFI bindings with JNA.
 
 Two modes of operation:
-- **Server (Share)**: Shares your internet connection with a peer. Uses `ShareForegroundService` wrapping the Rust `share()` FFI call.
+- **Server (Share)**: Shares your internet connection with a peer. Uses `ShareForegroundService` wrapping the Rust `startShare()` FFI call.
 - **Client (Connect)**: Uses someone else's connection via a VPN tunnel. Uses `ConnectVpnService` (extends `VpnService`) which creates a TUN interface and passes its fd to the Rust `connect()` FFI call.
 
 ## Build Commands
@@ -38,7 +38,17 @@ UI (MainScreen tabs) <-> ShareState / ConnectState (singleton StateFlow) <-> Ser
 
 ### Server Mode
 
-`ShareScreen` -> `ShareForegroundService` (regular foreground service) -> `uniffi.spora_ffi.share()` returns a share URL -> stored in `ShareState`
+`ShareScreen` -> `ShareMaker` (`makeShare()` on the relays the settings name: a share blob, stored in `SharedConnectionStore`) -> `ShareForegroundService` (regular foreground service) -> `startShare(blob)` returns the share's URL -> stored in `ShareState`
+
+### Relays and shares
+
+A share is the core's: one immutable blob per link (share id, secret, its relays as (endpoint, credential) pairs), made under the device identity the core's service keeps, its URL a pure function of it. Changing relays therefore means a new link; settings apply to links made from then on. Design: `../spora-kb/relay-management-decisions.md` (B3, S2–S4).
+
+- **Settings** (`ui/SettingsScreen.kt`, the header's sliders icon; `FullScreenPage` in Components.kt, drawn in the activity's window because a Compose dialog window gets no system-bar insets here): Spora's relays on/off (`RelaySettings.useSpora`, default on) and the user's own relays (`OwnRelay`: endpoint in `?r=` form, checked by `relayEndpointError` as the core parses it; an optional token, sent as `RelayCredential.Static` UTF-8 bytes, else `None`). Independent: a share takes Spora's advised relays first (credential `Spora`), then the own ones. Neither means no link can be made (`UserError.NO_RELAYS`). Stored encrypted (`relay_settings`), tokens included.
+- **Relay access** (`RelayAccess`): the service fetches advice + relay token (`refreshRelays`, registering the device) and renews it in the background while `ServiceConfig.manageRelays`, which the app sets when Spora's relays are on or a saved share uses them (there is no FFI to change it later; `startShare` of a share on Spora's relays turns it on). `ShareMaker` fetches first only when Spora's relays are wanted and none are cached. The settings page polls `relayAccessStatus()` for its status line.
+- **State key**: `initService` gets `StateKey.Provided` from the encrypted store (`service_key`), or `Mint` on a first run / after the store was lost, and the minted key is saved (`commit`). A key that does not open `service.json` is a fresh device: saved shares then fail with `ShareException.IdentityMismatch` (`UserError.SHARE_LINK_LOST`) and their card offers MAKE A NEW LINK (a new share under the same name and id, sent again).
+- **Encrypted stores** all go through `SecurePrefs.open` (one lock: concurrent first opens from the activity and the service's IO start could each create the Keystore master key).
+- The connection log is per share: `filesDir/connlog/<share id>` (the core binds its database to the share's routing hash).
 
 ### Client Mode
 
@@ -57,12 +67,13 @@ The VPN uses a two-phase TUN establishment: first without routes (so STUN works)
 - Native libraries (arm64-v8a, armeabi-v7a, x86, x86_64): debug APKs package the dev libs in the gitignored `app/src/main/jniLibs/` (despite the path, debug only: `main`'s jniLibs are switched off in `app/build.gradle.kts`). Release APKs package only what Gradle's `buildNativeRelease` task builds from `core/` with `scripts/build-native.sh --release`, so a stale dev library can never ship.
 - Logging, the diagnostics service and network reporting are set up in `App.onCreate()` (see "Diagnostics" below)
 - Key FFI functions:
-  - `share(identityBytes: ByteArray, protector: SocketProtectorCallback?, connLogDir, connLogRetentionDays, connLogSessionsOnly, recordDir: String?): ShareResult` - starts sharing, returns handle + URL, throws `ShareException`
+  - `makeShare(own: List<RelayEntry>, useSpora: Boolean): ByteArray` - a new share blob, offline: with `useSpora` the cached advice first (`ShareException.NoRelayAdvice` without one: `refreshRelays()` first), then `own`. `shareUrl` / `shareId` / `shareRelays(blob)` are pure accessors.
+  - `startShare(shareBlob, protector: SocketProtectorCallback?, connLogDir, connLogRetentionDays, connLogSessionsOnly, recordDir: String?, stunServers): ShareResult` - starts sharing, returns handle + URL, throws `ShareException` (`NotInitialized` before `initService`, `IdentityMismatch`, `AlreadyRunning`). No network of its own: Spora's relays get the cached relay token and every renewal.
+  - `refreshRelays(): RelayAccessStatus` (network, off the main thread) / `relayAccessStatus()` (cheap) - the device's access to Spora's relays.
   - `connect(url: String, tunFd: Int, protector: SocketProtectorCallback, mtuCallback: MtuCallback?, recordDir: String?): Int` - connects to a peer, returns tunnel handle, throws `ConnectException`. Rust calls `protector.protect(fd)` for each socket that needs `VpnService.protect()`.
   - `recordDir` (both) turns on the core's connection record for that run; the app always passes `Diagnostics.recordDir()` (`noBackupFilesDir/records`)
   - `disconnect(handle: Int)` - tears down the tunnel identified by handle
   - `stopShare(handle: Int)` - stops the share session identified by handle
-  - `makeIdentity(): ByteArray` - generates a fresh identity (cert + key + secret) as opaque serialized bytes. The app persists them (base64 in `SharedConnectionStore`) and passes them back to `share()` so the share URL stays stable across launches.
   - `dnsForwarderAddress(): String` - the tunnel's synthetic resolver address (`100.64.0.53`, spora-core `dns::PROXY_ADDR`). The client passes it to `Builder.addDnsServer`; the sharer's core answers queries to it from the sharer's own resolvers. A convention both ends are built to, nothing negotiated.
   - `setShareDnsServers(handle: Int, servers: List<String>)` - hands a share session this device's resolvers (`LinkProperties.getDnsServers()`), because Android has no resolv.conf for the core to read. `ShareForegroundService` calls it when a share starts and from a default-network `NetworkCallback` on every link change; an empty list means "unknown" and the core falls back to public resolvers. Known defect: with Private DNS in strict mode the system resolves over TLS while the forwarder sends plain UDP to the same servers.
 
@@ -106,15 +117,18 @@ proprietary SDK blocked F-Droid publication).
   debug block is configured for release tasks too). A dev build that will
   have its switch turned on is built with one: a local spora-web, or
   `http://127.0.0.1:9` (the device's own loopback, which answers nothing).
-  With the switch off and no device registered, the app contacts no API at
-  all.
+  Spora's relays (on by default) register the device with the API at the
+  first start and keep its relay token fresh. With them off, no saved share
+  on them, the switch off and no device registered, the app contacts no API
+  at all.
 - Everything lives under `noBackupFilesDir` (never backed up — a restored
   device token would clone a device): `diag/` (log + crash files, and an
   empty `diag-<pid>.lock` that the live process holds with `flock`; the
   next process's sweep deletes a dead pid's lock),
   `records/` (connection records, passed as `recordDir` to every
-  `connect`/`share`), `service/` (`service.json`: the switch, device token,
-  upload cursors). The sharer's connection log (`filesDir/connlog/`) is a
+  `connect`/`startShare`), `service/` (`service.json`: the device identity,
+  the switch, device token, upload cursors, relay advice and token; the
+  secrets sealed with the state key, see "Relays and shares"). The sharer's connection log (`filesDir/connlog/`) is a
   different thing and never uploads.
 - `UnderlyingNetworkReporter` tells the core which network is underneath any
   tunnel (`setNetworkState`: kind + validated, `NONE` when there is no
@@ -157,9 +171,11 @@ proprietary SDK blocked F-Droid publication).
   message goes without it and the modal says so. The hand-off screen can
   open the chooser again (same text, same report) for a user who backed out
   of it.
-- FFI calls that may touch files (`initLogging`, `initService`,
+- FFI calls that may touch files or the network (`initLogging`,
+  `initService`, `refreshRelays`, `makeShare`, `startShare`,
   `setTelemetryEnabled`, `acknowledgeTelemetryNotice`, `exportBugReport`)
-  run off the main thread. `logLine` and `telemetryStatus` are cheap.
+  run off the main thread. `logLine`, `telemetryStatus` and
+  `relayAccessStatus` are cheap.
 
 ## Reproducible Releases (F-Droid)
 
@@ -188,10 +204,14 @@ F-Droid rebuilds each release from its tag and publishes our signed APK only if 
 - `app/src/main/java/to/spora/android/ShareState.kt` / `ConnectState.kt` - State management singletons
 - `app/src/main/java/to/spora/android/App.kt` - process start: crash capture, diagnostics init, network reporting
 - `app/src/main/java/to/spora/android/SporaLog.kt` - the app's logger (logcat + the core's diagnostic log)
-- `app/src/main/java/to/spora/android/Diagnostics.kt` - log/record/service dirs, the upload switch's state
+- `app/src/main/java/to/spora/android/Diagnostics.kt` - log/record/service dirs, the service's start (state key, relay access), the upload switch's state
+- `app/src/main/java/to/spora/android/Relays.kt` - relay settings (Spora's on/off, own relays), relay access status, relay-address checks
+- `app/src/main/java/to/spora/android/ShareMaker.kt` - makes new shares on the relays the settings name
+- `app/src/main/java/to/spora/android/SharedConnectionStore.kt` / `SecurePrefs.kt` - saved shares (blobs) in encrypted prefs, and the one lock every encrypted store opens under
 - `app/src/main/java/to/spora/android/UnderlyingNetwork.kt` - reports the non-VPN network underneath to the core
 - `app/src/main/java/to/spora/android/BugReport.kt` - bug-report export and share-sheet hand-off
 - `app/src/main/java/to/spora/android/ui/FeedbackModal.kt` / `ui/DiagnosticsModal.kt` - feedback (with report) and the diagnostics switch
+- `app/src/main/java/to/spora/android/ui/SettingsScreen.kt` - settings: the relays new links are made with
 - `app/src/main/java/uniffi/spora_ffi/spora_ffi.kt` - Auto-generated FFI bindings (do not edit)
 - `gradle/libs.versions.toml` - Centralized dependency versions
 - `scripts/build-native.sh` - builds the native library from `core/` (dev and release modes, toolchain pins, reproducibility flags)

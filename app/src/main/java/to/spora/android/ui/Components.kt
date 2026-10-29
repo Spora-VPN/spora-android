@@ -1,5 +1,9 @@
 package to.spora.android.ui
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -13,8 +17,10 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,7 +29,9 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -38,6 +46,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -61,10 +70,15 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -84,6 +98,7 @@ import to.spora.android.ui.theme.ColorError
 import to.spora.android.ui.theme.ColorPendingText
 import to.spora.android.ui.theme.ColorPrimary
 import to.spora.android.ui.theme.ColorSuccessDot
+import to.spora.android.ui.theme.ColorSuccessText
 import to.spora.android.ui.theme.DurationQuick
 import to.spora.android.ui.theme.EaseStandard
 import to.spora.android.ui.theme.Ember050
@@ -242,6 +257,137 @@ fun ModalOverlay(
             }
         }
     }
+}
+
+// A secondary screen (settings) drawn over the main one, in the activity's
+// own window: a dialog window gets no system-bar insets here, so its content
+// could not keep clear of the status and gesture bars. The back gesture closes
+// it and it takes every touch; the caller hides what is behind it from
+// accessibility (MainScreen clears the main content's semantics).
+@Composable
+fun FullScreenPage(
+    visible: Boolean,
+    title: String,
+    onBack: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    if (!visible) return
+    BackHandler(onBack = onBack)
+    // The main screen keeps a light gesture bar over its dark bottom nav;
+    // over this page's light surface it needs to be dark
+    val view = LocalView.current
+    DisposableEffect(view) {
+        val window = view.context.findActivity()?.window
+        val controller = window?.let { WindowCompat.getInsetsController(it, view) }
+        val before = controller?.isAppearanceLightNavigationBars
+        controller?.isAppearanceLightNavigationBars = true
+        onDispose {
+            if (controller != null && before != null) controller.isAppearanceLightNavigationBars = before
+        }
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(SurfaceBg)
+            // A touch target everywhere, so nothing behind the page gets one
+            .pointerInput(Unit) {}
+            .windowInsetsPadding(WindowInsets.systemBars),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 4.dp, end = 16.dp, top = 6.dp, bottom = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SmallIconButton(
+                icon = SporaIcons.ArrowLeft,
+                contentDescription = stringResource(R.string.action_back_content_desc),
+                onClick = onBack,
+                tint = TextPrimary,
+                iconSize = 20.dp,
+            )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = TextPrimary,
+                modifier = Modifier
+                    .padding(start = 4.dp)
+                    .semantics { heading() },
+            )
+        }
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
+        ) {
+            content()
+        }
+    }
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
+
+// A status dot and its message; announced when it appears or changes, since
+// it answers a tap or arrives with a poll
+@Composable
+internal fun StatusLine(
+    state: DotState,
+    text: String,
+    modifier: Modifier = Modifier,
+    topPadding: androidx.compose.ui.unit.Dp = 10.dp,
+) {
+    val style = MaterialTheme.typography.bodyMedium
+    Row(
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.spacedBy(7.dp),
+        modifier = modifier
+            .padding(top = topPadding)
+            .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
+    ) {
+        // Level with the first line when the message wraps
+        Box(
+            modifier = Modifier.height(with(LocalDensity.current) { style.lineHeight.toDp() }),
+            contentAlignment = Alignment.Center,
+        ) {
+            StatusDot(state)
+        }
+        Text(
+            text = text,
+            style = style,
+            color = when (state) {
+                DotState.Error -> ColorError
+                DotState.Pending -> ColorPendingText
+                DotState.Active -> ColorSuccessText
+                DotState.None -> TextMuted
+            },
+        )
+    }
+}
+
+// A small left-aligned text action under a status or error line (what the
+// user can do about it); the touch target still meets 48dp.
+@Composable
+internal fun InlineAction(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall,
+        color = TextPrimary,
+        modifier = modifier
+            .clip(RoundedCornerShape(6.dp))
+            .clickable(role = Role.Button, onClick = onClick)
+            .minimumInteractiveComponentSize()
+            .padding(horizontal = 2.dp),
+    )
 }
 
 // Press feedback: scale 0.98 over 150ms (design motion spec).
@@ -655,6 +801,8 @@ fun ConnectionCard(
     barcodeSeed: Int = 11,
     onShareAgain: (() -> Unit)? = null,
     onDelete: (() -> Unit)? = null,
+    // What the user can do about the error (a label and its action)
+    errorAction: Pair<String, () -> Unit>? = null,
 ) {
     val border = if (errorText != null) BorderError else BorderHairline
     Column(
@@ -695,16 +843,12 @@ fun ConnectionCard(
                     )
                 }
                 if (errorText != null) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        modifier = Modifier.padding(top = 5.dp),
-                    ) {
-                        StatusDot(DotState.Error)
-                        Text(
-                            text = errorText,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = ColorError,
+                    StatusLine(DotState.Error, errorText, topPadding = 5.dp)
+                    if (errorAction != null) {
+                        InlineAction(
+                            text = errorAction.first,
+                            onClick = errorAction.second,
+                            modifier = Modifier.padding(top = 2.dp),
                         )
                     }
                 } else if (statusText != null) {
