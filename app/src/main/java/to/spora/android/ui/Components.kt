@@ -261,17 +261,15 @@ fun ModalOverlay(
 
 // A secondary screen (settings) drawn over the main one, in the activity's
 // own window: a dialog window gets no system-bar insets here, so its content
-// could not keep clear of the status and gesture bars. The back gesture closes
+// could not keep clear of the status and gesture bars. The back gesture leaves
 // it and it takes every touch; the caller hides what is behind it from
 // accessibility (MainScreen clears the main content's semantics).
 @Composable
 fun FullScreenPage(
-    visible: Boolean,
     title: String,
     onBack: () -> Unit,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    if (!visible) return
     BackHandler(onBack = onBack)
     // The main screen keeps a light gesture bar over its dark bottom nav;
     // over this page's light surface it needs to be dark

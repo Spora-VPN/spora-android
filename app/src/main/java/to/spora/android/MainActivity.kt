@@ -56,12 +56,12 @@ import androidx.compose.ui.unit.sp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import kotlin.math.max
 import kotlinx.coroutines.launch
-import to.spora.android.ui.DiagnosticsModalContent
 import to.spora.android.ui.DotState
 import to.spora.android.ui.FeedbackModalContent
-import to.spora.android.ui.FullScreenPage
 import to.spora.android.ui.ModalOverlay
-import to.spora.android.ui.SettingsContent
+import to.spora.android.ui.SettingsPage
+import to.spora.android.ui.SettingsPages
+import to.spora.android.ui.SettingsStackSaver
 import to.spora.android.ui.ShareScreen
 import to.spora.android.ui.SmallIconButton
 import to.spora.android.ui.SporaIcons
@@ -166,14 +166,16 @@ fun MainScreen(
     val pagerState = rememberPagerState(initialPage = initialTab, pageCount = { 2 })
     val coroutineScope = rememberCoroutineScope()
     var showFeedbackModal by rememberSaveable { mutableStateOf(false) }
-    var showDiagnosticsModal by rememberSaveable { mutableStateOf(false) }
-    var showSettings by rememberSaveable { mutableStateOf(false) }
+    // The open settings pages (empty: closed), the shown one last
+    var settings by rememberSaveable(stateSaver = SettingsStackSaver) {
+        mutableStateOf(emptyList<SettingsPage>())
+    }
     var showRequiredNotice by rememberSaveable { mutableStateOf(false) }
     val telemetry by Diagnostics.status.collectAsState()
 
     // The force notice has this one owner: the flag arrived (at registration,
     // or a later check) and the user is owed it once, or switching off was
-    // refused in the diagnostics modal (shown over it)
+    // refused on the telemetry settings page (shown over it)
     LaunchedEffect(telemetry?.requiredNoticePending) {
         if (telemetry?.requiredNoticePending == true) showRequiredNotice = true
     }
@@ -189,8 +191,8 @@ fun MainScreen(
 
     LaunchedEffect(deepLinkUrl) {
         if (deepLinkUrl != null) {
-            // The link opens on the Connect tab, not behind the settings page
-            showSettings = false
+            // The link opens on the Connect tab, not behind the settings
+            settings = emptyList()
             // Not in this effect: the Connect page takes the link as soon as
             // it scrolls into view, which clears it and restarts this effect,
             // and a pager scroll cancelled mid-way stays where it stopped
@@ -203,13 +205,12 @@ fun MainScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                // Covered by the settings page: out of TalkBack's reach
-                .then(if (showSettings) Modifier.clearAndSetSemantics {} else Modifier),
+                // Covered by the settings: out of TalkBack's reach
+                .then(if (settings.isNotEmpty()) Modifier.clearAndSetSemantics {} else Modifier),
         ) {
             AppHeader(
-                onDiagnosticsClick = { showDiagnosticsModal = true },
                 onFeedbackClick = { showFeedbackModal = true },
-                onSettingsClick = { showSettings = true },
+                onSettingsClick = { settings = listOf(SettingsPage.LIST) },
             )
 
             HorizontalPager(
@@ -219,7 +220,8 @@ fun MainScreen(
                     .fillMaxWidth(),
             ) { page ->
                 when (page) {
-                    0 -> ShareScreen(onOpenSettings = { showSettings = true })
+                    // Its errors are about relays: straight to that section
+                    0 -> ShareScreen(onOpenSettings = { settings = listOf(SettingsPage.RELAYS) })
                     1 -> UseScreen(
                         initialUrl = deepLinkUrl,
                         onInitialUrlConsumed = onDeepLinkConsumed,
@@ -233,13 +235,11 @@ fun MainScreen(
             )
         }
 
-        FullScreenPage(
-            visible = showSettings,
-            title = stringResource(R.string.settings_title),
-            onBack = { showSettings = false },
-        ) {
-            SettingsContent()
-        }
+        SettingsPages(
+            stack = settings,
+            onStackChange = { settings = it },
+            onTelemetryRequired = { showRequiredNotice = true },
+        )
     }
 
     ModalOverlay(
@@ -250,16 +250,6 @@ fun MainScreen(
     }
 
     ModalOverlay(
-        visible = showDiagnosticsModal,
-        onDismiss = { showDiagnosticsModal = false },
-    ) {
-        DiagnosticsModalContent(
-            onDismiss = { showDiagnosticsModal = false },
-            onRequired = { showRequiredNotice = true },
-        )
-    }
-
-    ModalOverlay(
         visible = showRequiredNotice,
         onDismiss = dismissRequiredNotice,
     ) {
@@ -267,7 +257,6 @@ fun MainScreen(
             onKeep = dismissRequiredNotice,
             onContactSupport = {
                 dismissRequiredNotice()
-                showDiagnosticsModal = false
                 showFeedbackModal = true
             },
         )
@@ -282,7 +271,6 @@ private data class HeaderStatusRow(
 
 @Composable
 private fun AppHeader(
-    onDiagnosticsClick: () -> Unit,
     onFeedbackClick: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
@@ -383,13 +371,6 @@ private fun AppHeader(
         }
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            SmallIconButton(
-                icon = SporaIcons.Diagnostics,
-                contentDescription = stringResource(R.string.diagnostics_button_content_desc),
-                onClick = onDiagnosticsClick,
-                tint = TextPrimary,
-                iconSize = 19.dp,
-            )
             SmallIconButton(
                 icon = SporaIcons.Feedback,
                 contentDescription = stringResource(R.string.feedback_button_content_desc),

@@ -25,7 +25,6 @@
     <string name="header_status_starting">ЗАПУСК…</string>
     <string name="header_status_offline">ОФЛАЙН</string>
     <string name="header_logo_content_desc">Логотип Spora</string>
-    <string name="diagnostics_button_content_desc">Диагностика</string>
 
     <!-- Tabs -->
     <string name="tab_share">РАЗДАЧА</string>
@@ -88,9 +87,7 @@
     <string name="feedback_support_address_label">АДРЕС ПОДДЕРЖКИ</string>
     <string name="feedback_send_again">ВЫБРАТЬ ПРИЛОЖЕНИЕ ЕЩЁ РАЗ</string>
 
-    <!-- Diagnostics modal -->
-    <string name="diagnostics_modal_header">ДИАГНОСТИКА</string>
-    <string name="diagnostics_modal_title">Помогите Spora пробиться</string>
+    <!-- Settings › Telemetry -->
     <string name="diagnostics_modal_what">Spora хранит на этом устройстве записи о каждом подключении, журнал приложения и отчёты о сбоях. Если включить телеметрию, они будут автоматически отправляться нам через любую сеть, в том числе мобильную. В них есть сетевые адреса: ваш адрес, каким его видит интернет, и адреса устройств и серверов, с которыми соединяется Spora. Кроме того, мы видим адрес, с которого приходит каждая отправка.</string>
     <string name="diagnostics_modal_why">По ним мы видим, где и как сети блокируют Spora, и исправляем проблемы.</string>
     <string name="diagnostics_modal_off">Когда телеметрия выключена, ничего не отправляется. Но если она хоть раз была включена, Spora примерно раз в день уточняет у нас, не требует ли её ваш аккаунт, и если требует — включает её снова и сообщает вам об этом. Отчёт прилагается к отзыву и уходит, только когда вы сами его отправите.</string>
@@ -113,6 +110,16 @@
     <!-- Settings -->
     <string name="settings_button_content_desc">Настройки</string>
     <string name="settings_title">НАСТРОЙКИ</string>
+    <string name="settings_relays_label">Ретрансляторы</string>
+    <string name="settings_relays_summary_spora">Ретрансляторы Spora</string>
+    <string name="settings_relays_summary_spora_own">Spora и ваши (%1$d)</string>
+    <string name="settings_relays_summary_own">Только ваши (%1$d)</string>
+    <string name="settings_relays_summary_none">Нет: новые ссылки создать нельзя</string>
+    <string name="settings_telemetry_label">Телеметрия</string>
+    <string name="settings_telemetry_on">Включена</string>
+    <string name="settings_telemetry_off">Выключена</string>
+    <string name="settings_telemetry_unavailable">Сейчас недоступна</string>
+    <string name="settings_telemetry_header">ТЕЛЕМЕТРИЯ</string>
     <string name="settings_relays_header">РЕТРАНСЛЯТОРЫ</string>
     <string name="settings_relays_intro">Каждой ссылке нужен хотя бы один ретранслятор: через него те, с кем вы делитесь, впервые находят ваш телефон. После подключения Spora пробует перейти на прямое соединение.</string>
     <string name="settings_spora_toggle_label">Использовать ретрансляторы Spora</string>

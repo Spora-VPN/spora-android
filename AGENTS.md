@@ -44,8 +44,9 @@ UI (MainScreen tabs) <-> ShareState / ConnectState (singleton StateFlow) <-> Ser
 
 A share is the core's: one immutable blob per link (share id, secret, its relays as (endpoint, credential) pairs), made under the device identity the core's service keeps, its URL a pure function of it. Changing relays therefore means a new link; settings apply to links made from then on. Design: `../spora-kb/relay-management-decisions.md` (B3, S2–S4).
 
-- **Settings** (`ui/SettingsScreen.kt`, the header's sliders icon; `FullScreenPage` in Components.kt, drawn in the activity's window because a Compose dialog window gets no system-bar insets here): Spora's relays on/off (`RelaySettings.useSpora`, default on) and the user's own relays (`OwnRelay`: endpoint in `?r=` form, checked by `relayEndpointError` as the core parses it; an optional token, sent as `RelayCredential.Static` UTF-8 bytes, else `None`). Independent: a share takes Spora's advised relays first (credential `Spora`), then the own ones. Neither means no link can be made (`UserError.NO_RELAYS`). Stored encrypted (`relay_settings`), tokens included.
-- **Relay access** (`RelayAccess`): the service fetches advice + relay token (`refreshRelays`, registering the device) and renews it in the background while `ServiceConfig.manageRelays`, which the app sets when Spora's relays are on or a saved share uses them (there is no FFI to change it later; `startShare` of a share on Spora's relays turns it on). `ShareMaker` fetches first only when Spora's relays are wanted and none are cached. The settings page polls `relayAccessStatus()` for its status line.
+- **Settings** (the header's sliders icon) is a list of sections, each its own page: Relays (`ui/RelaySettingsScreen.kt`) and Telemetry (`ui/TelemetrySettingsScreen.kt`, the upload switch, see Diagnostics). `SettingsPages` (`ui/SettingsScreen.kt`) keeps them as a stack, so OPEN SETTINGS under a share error opens Relays alone and back returns to the share. Each page is a `FullScreenPage` (Components.kt), drawn in the activity's window because a Compose dialog window gets no system-bar insets here.
+- **Relays**: Spora's relays on/off (`RelaySettings.useSpora`, default on) and the user's own relays (`OwnRelay`: endpoint in `?r=` form, checked by `relayEndpointError` as the core parses it; an optional token, sent as `RelayCredential.Static` UTF-8 bytes, else `None`). Independent: a share takes Spora's advised relays first (credential `Spora`), then the own ones. Neither means no link can be made (`UserError.NO_RELAYS`). Stored encrypted (`relay_settings`), tokens included.
+- **Relay access** (`RelayAccess`): the service fetches advice + relay token (`refreshRelays`, registering the device) and renews it in the background while `ServiceConfig.manageRelays`, which the app sets when Spora's relays are on or a saved share uses them (there is no FFI to change it later; `startShare` of a share on Spora's relays turns it on). `ShareMaker` fetches first only when Spora's relays are wanted and none are cached. The Relays page polls `relayAccessStatus()` for its status line.
 - **State key**: `initService` gets `StateKey.Provided` from the encrypted store (`service_key`), or `Mint` on a first run / after the store was lost, and the minted key is saved (`commit`). A key that does not open `service.json` is a fresh device: saved shares then fail with `ShareException.IdentityMismatch` (`UserError.SHARE_LINK_LOST`) and their card offers MAKE A NEW LINK (a new share under the same name and id, sent again).
 - **Encrypted stores** all go through `SecurePrefs.open` (one lock: concurrent first opens from the activity and the service's IO start could each create the Keystore master key).
 - The connection log is per share: `filesDir/connlog/<share id>` (the core binds its database to the share's routing hash).
@@ -103,8 +104,8 @@ proprietary SDK blocked F-Droid publication).
   `UnderlyingNetworkReporter` alongside it (not after: a connect or share
   from a cold service start should find the network already reported). If
   `initService` fails, `Diagnostics.onForeground` (every `MainActivity.onStart`)
-  retries it; until then `Diagnostics.unavailable` is true and the modal says
-  so.
+  retries it; until then `Diagnostics.unavailable` is true and the Telemetry
+  settings page says so.
 - Debug builds report `<versionName>-debug` (`versionNameSuffix`) as their app
   version and can be pointed at a test API with `-PsporaApi=<urls>` or
   `SPORA_API` (`BuildConfig.SPORA_API`, null when neither is set; split by
@@ -113,7 +114,7 @@ proprietary SDK blocked F-Droid publication).
   the production API like release builds, which always do. Set but blank
   (`SPORA_API=`, `-PsporaApi=`, a stray comma) is NOT the default: the value
   is passed on as it is, `initService` refuses it as not a URL, and the
-  modal shows telemetry as unavailable (the build itself does not fail: the
+  Telemetry page shows it as unavailable (the build itself does not fail: the
   debug block is configured for release tasks too). A dev build that will
   have its switch turned on is built with one: a local spora-web, or
   `http://127.0.0.1:9` (the device's own loopback, which answers nothing).
@@ -140,9 +141,9 @@ proprietary SDK blocked F-Droid publication).
   Wi-Fi loss with cellular up arrives as loss-then-cellular: `NONE` is
   reported only if nothing replaced the lost network within 2 s
   (`BestMatchTracker`).
-- Upload switch: the diagnostics button in the header opens
-  `DiagnosticsModalContent` (the "send telemetry automatically" switch, what
-  is sent and why, device ID, last upload). The switch's state is
+- Upload switch: Settings › Telemetry (`TelemetrySettingsContent`: what is
+  sent and why, the "send telemetry automatically" switch, device ID, last
+  upload). The switch's state is
   `Diagnostics.status`; flipping it goes through
   `Diagnostics.setUploadEnabled` off the main thread, and a failure to
   change it is shown under the switch. When the account requires
@@ -150,7 +151,7 @@ proprietary SDK blocked F-Droid publication).
   (`TelemetryRequiredContent`, wording agreed with the core's
   `REQUIRED_NOTICE`) is shown; it is also shown once when
   `requiredNoticePending`, then `acknowledgeTelemetryNotice()`. `MainScreen`
-  is the notice's one owner (the modal asks it through `onRequired`), so
+  is the notice's one owner (the page asks it through `onRequired`), so
   the two triggers can never stack two copies.
 - Uploads use whatever network the device is on, mobile data included (a
   product decision: no metered-network deferral). With a client tunnel up
@@ -162,7 +163,7 @@ proprietary SDK blocked F-Droid publication).
   can interleave with it). With the switch off nothing is
   uploaded, but a device that was ever registered still checks its account's
   force flag about once a day (`GET /v1/devices/me`), which can turn
-  uploads back on; the modal's copy says so.
+  uploads back on; the page's copy says so.
 - Bug reports: the feedback modal exports a zip (`exportBugReport`, records +
   log + crash files of the last days) to `cacheDir/reports/` and hands it to
   the share sheet with support@spora.to prefilled, through the FileProvider
@@ -210,8 +211,9 @@ F-Droid rebuilds each release from its tag and publishes our signed APK only if 
 - `app/src/main/java/to/spora/android/SharedConnectionStore.kt` / `SecurePrefs.kt` - saved shares (blobs) in encrypted prefs, and the one lock every encrypted store opens under
 - `app/src/main/java/to/spora/android/UnderlyingNetwork.kt` - reports the non-VPN network underneath to the core
 - `app/src/main/java/to/spora/android/BugReport.kt` - bug-report export and share-sheet hand-off
-- `app/src/main/java/to/spora/android/ui/FeedbackModal.kt` / `ui/DiagnosticsModal.kt` - feedback (with report) and the diagnostics switch
-- `app/src/main/java/to/spora/android/ui/SettingsScreen.kt` - settings: the relays new links are made with
+- `app/src/main/java/to/spora/android/ui/FeedbackModal.kt` - feedback (with report)
+- `app/src/main/java/to/spora/android/ui/SettingsScreen.kt` - settings: the list of sections and their page stack
+- `app/src/main/java/to/spora/android/ui/RelaySettingsScreen.kt` / `ui/TelemetrySettingsScreen.kt` - the sections: the relays new links are made with, and the upload switch
 - `app/src/main/java/uniffi/spora_ffi/spora_ffi.kt` - Auto-generated FFI bindings (do not edit)
 - `gradle/libs.versions.toml` - Centralized dependency versions
 - `scripts/build-native.sh` - builds the native library from `core/` (dev and release modes, toolchain pins, reproducibility flags)

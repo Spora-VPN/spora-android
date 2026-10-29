@@ -40,18 +40,18 @@ import to.spora.android.ui.theme.SurfaceCard
 import to.spora.android.ui.theme.TextMuted
 import to.spora.android.ui.theme.TextPrimary
 
-// The uploader works on its own thread; while the modal is open its status
+// The uploader works on its own thread; while the page is open its status
 // (last upload, device id once registered) is re-read at this pace.
 private const val STATUS_POLL_MS = 2_000L
 
 /**
- * The upload switch. [onRequired]: the account requires uploads, so switching
- * off was refused and the user is owed the force notice, which MainScreen
- * shows (one owner, so it can never stack on a second copy).
+ * Settings › Telemetry: the upload switch, what it sends and why. [onRequired]:
+ * the account requires uploads, so switching off was refused and the user is
+ * owed the force notice, which MainScreen shows (one owner, so it can never
+ * stack on a second copy).
  */
 @Composable
-fun DiagnosticsModalContent(
-    onDismiss: () -> Unit,
+fun TelemetrySettingsContent(
     onRequired: () -> Unit,
 ) {
     val status by Diagnostics.status.collectAsState()
@@ -70,18 +70,6 @@ fun DiagnosticsModalContent(
     val current = status
     Column {
         Column {
-            Text(
-                text = stringResource(R.string.diagnostics_modal_header),
-                style = MaterialTheme.typography.labelSmall,
-                color = TextMuted,
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = stringResource(R.string.diagnostics_modal_title),
-                style = MaterialTheme.typography.headlineLarge,
-                color = TextPrimary,
-            )
-            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = stringResource(R.string.diagnostics_modal_what),
                 style = MaterialTheme.typography.bodyMedium,
@@ -176,13 +164,6 @@ fun DiagnosticsModalContent(
                 } ?: stringResource(R.string.diagnostics_last_upload_never),
             )
         }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        PrimaryButton(
-            text = stringResource(R.string.action_done),
-            onClick = onDismiss,
-        )
     }
 }
 

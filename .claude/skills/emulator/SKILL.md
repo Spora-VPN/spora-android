@@ -34,7 +34,7 @@ Then **Read the PNG** to see the screen, or `scripts/emu.sh dump` and Read the X
 
 Toggling a *seeded* share on in the UI calls the real `startShare()` FFI with a bogus share and fails — useful for exercising the real error path. `share-failed --es err SHARE_LINK_LOST` shows a share made under a lost device identity, with its MAKE A NEW LINK action.
 
-The settings page (header's sliders icon) reads the real relay settings and the core's relay access; with no API reachable its Spora status ends in "Couldn't reach Spora". A debug build pointed at a local spora-web (`-PsporaApi=…`, see AGENTS.md) shows the reachable states.
+Settings (header's sliders icon) is a list: Relays and Telemetry, each a page (back returns to the list). The Relays page reads the real relay settings and the core's relay access; with no API reachable its Spora status ends in "Couldn't reach Spora". A debug build pointed at a local spora-web (`-PsporaApi=…`, see AGENTS.md) shows the reachable states.
 
 ## Conditions matrix
 

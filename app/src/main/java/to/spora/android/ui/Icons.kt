@@ -142,6 +142,37 @@ object SporaIcons {
         }
     }
 
+    // Two ends reaching each other through a node — relays
+    val Relays: ImageVector by lazy {
+        strokeIcon("Relays") {
+            // The relay
+            moveTo(14.5f, 7.5f)
+            arcTo(2.5f, 2.5f, 0f, true, true, 9.5f, 7.5f)
+            arcTo(2.5f, 2.5f, 0f, true, true, 14.5f, 7.5f)
+            // The ends
+            moveTo(6.5f, 17f)
+            arcTo(2f, 2f, 0f, true, true, 2.5f, 17f)
+            arcTo(2f, 2f, 0f, true, true, 6.5f, 17f)
+            moveTo(21.5f, 17f)
+            arcTo(2f, 2f, 0f, true, true, 17.5f, 17f)
+            arcTo(2f, 2f, 0f, true, true, 21.5f, 17f)
+            // The paths, clear of the circles
+            moveTo(6.3f, 14.7f)
+            lineTo(9.9f, 10.2f)
+            moveTo(17.7f, 14.7f)
+            lineTo(14.1f, 10.2f)
+        }
+    }
+
+    // › — into a page
+    val ChevronRight: ImageVector by lazy {
+        strokeIcon("ChevronRight", strokeWidth = 2f) {
+            moveTo(9.5f, 6f)
+            lineTo(15.5f, 12f)
+            lineTo(9.5f, 18f)
+        }
+    }
+
     // ↑ — the Share tab
     val NavShare: ImageVector by lazy {
         strokeIcon("NavShare", strokeWidth = 2f) {
