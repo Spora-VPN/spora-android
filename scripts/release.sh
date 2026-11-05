@@ -82,6 +82,10 @@ read -rsp "Keystore password for $KEYSTORE: " SPORA_KEYSTORE_PASSWORD
 echo
 export SPORA_KEYSTORE="$KEYSTORE" SPORA_KEYSTORE_PASSWORD
 
+# From scratch, as F-Droid builds: an incremental Kotlin/Compose compile can
+# emit different bytecode than a clean one (Compose's $changed masks did in
+# v0.3.0's first APK), and the rebuild would not match.
+./gradlew clean --console=plain
 ./gradlew :app:assembleRelease --console=plain
 
 APK=$(find app/build/outputs/apk/release -maxdepth 1 -name '*.apk' | head -1)

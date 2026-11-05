@@ -184,7 +184,7 @@ F-Droid rebuilds each release from its tag and publishes our signed APK only if 
 
 - `scripts/build-native.sh` pins Rust (`RUST_VERSION`) and cargo-ndk (`CARGO_NDK_VERSION`); the NDK is `ndkVersion` and the API level is `minSdk` from `app/build.gradle.kts`. Changing any of them changes the output: change the recipe's `ndk:` line (and anything else it pins) in the same release.
 - Release native builds remap the build machine's paths (`--remap-path-prefix` for `core/`, `CARGO_HOME`, the toolchain's rust-src), set the core's build stamp from the submodule commit, use `--locked`, and ignore RUSTFLAGS/wrappers/`CARGO_PROFILE_*` from the environment. They refuse a dirty `core/`, or one not at the commit HEAD records.
-- Releases are built from a clean tree at the tagged commit, with JDK 21 (F-Droid's build server runs Debian trixie's OpenJDK 21), and signed by Gradle's signingConfig. Do not re-sign with `apksigner` from build-tools 35+: its padding breaks F-Droid's signature copy.
+- Releases are built from a clean tree at the tagged commit, as a clean Gradle build (`release.sh` runs `clean` first: an incremental Kotlin/Compose compile emitted different dex than F-Droid's from-scratch one), with JDK 21 (F-Droid's build server runs Debian trixie's OpenJDK 21), and signed by Gradle's signingConfig. Do not re-sign with `apksigner` from build-tools 35+: its padding breaks F-Droid's signature copy.
 - `dependenciesInfo` is off (no Google-encrypted block in the signing block); `abiFilters` keeps JNA's dead ABIs out.
 - Store listing text, icon, screenshots and per-versionCode changelogs live in `fastlane/metadata/android/{en-US,ru,be}/`.
 
