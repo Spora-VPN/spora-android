@@ -20,12 +20,14 @@
 # spora-web's assetlinks.json and in the F-Droid recipe
 # (AllowedAPKSigningKeys).
 #
-# F-Droid rebuilds every release from its tag and publishes this APK only if
-# its rebuild is identical, so a release must come from a clean tree at the
-# tagged commit, built with JDK 21 (as F-Droid's build server). At the end the
-# script offers to push the tag and attach the APK to a draft GitHub release:
-# F-Droid downloads it from
-#   https://github.com/Spora-VPN/spora-android/releases/download/v<version>/spora-<version>.apk
+# A release is five APKs: spora-<version>.apk (universal, for GitHub and the
+# website) and spora-<version>-<abi>.apk for each of the four ABIs, each with
+# its own versionCode (app/build.gradle.kts). F-Droid rebuilds every ABI's
+# APK from the tag and publishes ours only if its rebuild is identical, so a
+# release must come from a clean tree at the tagged commit, built with JDK 21
+# (as F-Droid's build server). At the end the script offers to push the tag
+# and attach the APKs to a draft GitHub release: F-Droid downloads them from
+#   https://github.com/Spora-VPN/spora-android/releases/download/v<version>/spora-<version>-<abi>.apk
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -66,8 +68,25 @@ echo
 echo "Reminder: bump versionCode (strictly increasing) and versionName BEFORE"
 echo "releasing; devices only update over a lower versionCode."
 VCODE=$(grep -oE 'versionCode = [0-9]+' app/build.gradle.kts | grep -oE '[0-9]+')
+VERSION=$(grep -oE 'versionName = "[^"]+"' app/build.gradle.kts | cut -d'"' -f2)
+# Release notes are written once per locale, as changelogs/<versionCode>.txt
+# (also the GitHub release's notes). F-Droid looks them up by each APK's own
+# code, <versionCode>1 to <versionCode>4, so each needs a copy under those.
 CHANGELOG="fastlane/metadata/android/en-US/changelogs/$VCODE.txt"
-[ -f "$CHANGELOG" ] || echo "note: no $CHANGELOG — F-Droid shows it as this version's release notes (also ru/, be/)"
+for loc in fastlane/metadata/android/*/; do
+  notes="${loc%/}/changelogs/$VCODE.txt"
+  if [ ! -f "$notes" ]; then
+    echo "note: no $notes — this version's release notes"
+    continue
+  fi
+  for n in 1 2 3 4; do
+    if ! cmp -s "$notes" "${notes%.txt}$n.txt"; then
+      echo "note: ${notes%.txt}$n.txt is missing or differs from $VCODE.txt (F-Droid's notes for that ABI's APK);"
+      echo "      for n in 1 2 3 4; do cp $notes ${notes%.txt}\$n.txt; done"
+      break
+    fi
+  done
+done
 read -rp "Build the release with the version shown above? [y/N] " answer
 case "$answer" in
   y|Y|yes|YES) ;;
@@ -88,33 +107,39 @@ export SPORA_KEYSTORE="$KEYSTORE" SPORA_KEYSTORE_PASSWORD
 ./gradlew clean --console=plain
 ./gradlew :app:assembleRelease --console=plain
 
-APK=$(find app/build/outputs/apk/release -maxdepth 1 -name '*.apk' | head -1)
-[ -n "$APK" ] || { echo "error: no APK produced" >&2; exit 1; }
+OUTDIR=app/build/outputs/apk/release
+APKS=("$OUTDIR/spora-$VERSION.apk")
+for abi in arm64-v8a armeabi-v7a x86 x86_64; do APKS+=("$OUTDIR/spora-$VERSION-$abi.apk"); done
+for apk in "${APKS[@]}"; do
+  [ -f "$apk" ] || { echo "error: $apk was not produced" >&2; exit 1; }
+done
 
-# Verify the APK really carries the release certificate (a mis-wired signing
-# config would otherwise slip an unsigned or debug-signed build through).
+# Verify every APK really carries the release certificate (a mis-wired
+# signing config would otherwise slip an unsigned or debug-signed build
+# through).
 SDK="${ANDROID_HOME:-$HOME/Android/Sdk}"
 APKSIGNER=$(ls "$SDK"/build-tools/*/apksigner 2>/dev/null | sort -V | tail -1 || true)
 if [ -n "$APKSIGNER" ]; then
-  got=$("$APKSIGNER" verify --print-certs "$APK" 2>/dev/null \
-        | grep -im1 'certificate SHA-256 digest' | grep -oE '[0-9a-f]{64}' || true)
-  if [ "$got" = "$RELEASE_SHA256" ]; then
-    echo "signature verified: release cert"
-  else
-    echo "error: APK signed with unexpected cert: ${got:-<unsigned>}" >&2
-    exit 1
-  fi
+  for apk in "${APKS[@]}"; do
+    got=$("$APKSIGNER" verify --print-certs "$apk" 2>/dev/null \
+          | grep -im1 'certificate SHA-256 digest' | grep -oE '[0-9a-f]{64}' || true)
+    if [ "$got" != "$RELEASE_SHA256" ]; then
+      echo "error: $apk signed with unexpected cert: ${got:-<unsigned>}" >&2
+      exit 1
+    fi
+  done
+  echo "signatures verified: release cert on all ${#APKS[@]} APKs"
 else
-  echo "warning: apksigner not found under $SDK/build-tools — signature NOT verified"
+  echo "warning: apksigner not found under $SDK/build-tools — signatures NOT verified"
 fi
 
 echo
-echo "built: $APK"
+echo "built:"
+printf '  %s\n' "${APKS[@]}"
 
 # Offer an annotated tag for the exact source state of this build — only on
 # a clean tree (a tag on a dirty build would name a commit that is not what
 # shipped), and never moving an existing tag (rebuild-after-fix case).
-VERSION=$(grep -oE 'versionName = "[^"]+"' app/build.gradle.kts | cut -d'"' -f2)
 TAG="v$VERSION"
 if [ -n "$(git status --porcelain)" ]; then
   echo "note: working tree dirty — not offering tag $TAG (it would not describe this build)"
@@ -135,26 +160,28 @@ native libs built from core at: $CORE_PROVENANCE"
   esac
 fi
 
-# The F-Droid binary: the tag on GitHub, and the APK on its release. Draft,
-# so publishing stays a deliberate step (after the device check below);
-# F-Droid can only download it once it is published.
+# The F-Droid binaries: the tag on GitHub, and the APKs on its release.
+# Draft, so publishing stays a deliberate step (after the device check and
+# the F-Droid rebuild check below); F-Droid can only download them once it is
+# published.
 if [ -z "$(git status --porcelain)" ] \
    && [ "$(git rev-parse -q --verify "refs/tags/$TAG^{commit}" || true)" = "$(git rev-parse HEAD)" ]; then
-  read -rp "Push $TAG and attach the APK to a draft GitHub release (needs gh)? [y/N] " gh_up
+  read -rp "Push $TAG and attach the APKs to a draft GitHub release (needs gh)? [y/N] " gh_up
   case "$gh_up" in
     y|Y|yes|YES)
       notes=(--notes "")
       [ -f "$CHANGELOG" ] && notes=(--notes-file "$CHANGELOG")
       git push origin "$TAG"
-      gh release create "$TAG" "$APK" --verify-tag --draft --title "Spora $VERSION" "${notes[@]}"
+      gh release create "$TAG" "${APKS[@]}" --verify-tag --draft --title "Spora $VERSION" "${notes[@]}"
       echo "draft release created — publish it after the device check"
       ;;
     *)
-      echo "skipped — later: git push origin $TAG && gh release create $TAG $APK --verify-tag --draft"
+      echo "skipped — later: git push origin $TAG && gh release create $TAG ${APKS[*]} --verify-tag --draft"
       ;;
   esac
 fi
 
 echo
 echo "next:  install + sanity-check on a device (share, connect, tap an /s/ link),"
-echo "       publish the GitHub release, then upload via the website admin."
+echo "       check that F-Droid's rebuild of each ABI's APK matches the draft's,"
+echo "       publish the GitHub release, then upload spora-$VERSION.apk via the website admin."

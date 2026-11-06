@@ -10,8 +10,9 @@
 #       generated Kotlin bindings into app/src/main/java/uniffi. --core (or
 #       SPORA_CORE) builds another core checkout, e.g. ../spora.
 #
-#   scripts/build-native.sh --release --out DIR [--ndk DIR]
-#       Release build of all four ABIs into DIR/<abi>/libspora_ffi.so. Gradle
+#   scripts/build-native.sh --release --out DIR [--ndk DIR] [--abi ABI]...
+#       Release build into DIR/<abi>/libspora_ffi.so: all four ABIs, or the
+#       ones --abi names (F-Droid builds one ABI's APK at a time). Gradle
 #       runs this for every release APK (task buildNativeRelease); nothing
 #       else puts native code into a release. Refuses a core/ that is dirty or
 #       not at the commit this checkout records, and committed bindings that
@@ -206,7 +207,7 @@ TARGETS=()
 
 if [ "$MODE" = release ]; then
   [ -n "$OUT" ] || die "--release needs --out DIR"
-  [ ${#ABIS[@]} -eq 0 ] || die "release builds always build all four ABIs"
+  [ ${#ABIS[@]} -gt 0 ] || ABIS=("${ALL_ABIS[@]}")
   check_release_core
 
   # Only what is set here reaches the compiler.
@@ -230,22 +231,24 @@ if [ "$MODE" = release ]; then
   # 0x1f-separated: paths with spaces survive
   export CARGO_ENCODED_RUSTFLAGS="$(IFS=$'\x1f'; echo "${flags[*]}")"
 
-  for abi in "${ALL_ABIS[@]}"; do TARGETS+=(-t "$abi"); done
+  for abi in "${ABIS[@]}"; do TARGETS+=(-t "$abi"); done
   mkdir -p "$OUT"
+  # every ABI's, not only the ones built now: none may survive from an
+  # earlier build into this one's output
   for abi in "${ALL_ABIS[@]}"; do rm -f "$OUT/$abi/libspora_ffi.so"; done
   (cd "$CORE" && cargo ndk "${TARGETS[@]}" --platform "$MIN_SDK" -o "$OUT" \
     build -p spora-ffi --release --locked)
-  for abi in "${ALL_ABIS[@]}"; do
+  for abi in "${ABIS[@]}"; do
     [ -f "$OUT/$abi/libspora_ffi.so" ] || die "missing $OUT/$abi/libspora_ffi.so"
   done
 
   # A library whose bindings differ crashes at first use (UniFFI's checksum
   # handshake), so a mismatch fails the release here.
-  generate_bindings release "${ALL_ABIS[0]}" "$TMP"
+  generate_bindings release "${ABIS[0]}" "$TMP"
   diff -q "$TMP/uniffi/spora_ffi/spora_ffi.kt" "$BINDINGS" >/dev/null || die \
     "the committed bindings do not match core/ at ${SPORA_BUILD_COMMIT}; regenerate them
   with scripts/build-native.sh and commit app/src/main/java/uniffi"
-  echo "release native libs built: core $SPORA_BUILD_COMMIT, Rust $RUST_VERSION, NDK $NDK_VERSION, API $MIN_SDK"
+  echo "release native libs built (${ABIS[*]}): core $SPORA_BUILD_COMMIT, Rust $RUST_VERSION, NDK $NDK_VERSION, API $MIN_SDK"
   exit 0
 fi
 

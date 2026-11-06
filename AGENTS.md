@@ -17,7 +17,7 @@ git submodule update --init           # the Rust core, at core/
 scripts/build-native.sh --install-toolchain  # pinned Rust, Android targets, cargo-ndk, NDK
 scripts/build-native.sh               # dev native libs (debug) + regenerated bindings
 ./gradlew :app:assembleDebug          # Build debug APK
-./gradlew :app:assembleRelease        # Build release APK (builds the native libs from core/ itself)
+./gradlew :app:assembleRelease        # Build release APKs: universal + one per ABI (builds the native libs from core/ itself)
 ./gradlew :app:test                   # Run unit tests
 ./gradlew :app:connectedAndroidTest   # Run instrumented tests (requires device/emulator)
 ./gradlew lint                        # Run lint checks
@@ -180,13 +180,17 @@ proprietary SDK blocked F-Droid publication).
 
 ## Reproducible Releases (F-Droid)
 
-F-Droid rebuilds each release from its tag and publishes our signed APK only if its rebuild is byte-identical (recipe: `AllowedAPKSigningKeys` = the release cert, `binary` = the APK on the tag's GitHub release, which `scripts/release.sh` offers to create). What keeps a release reproducible:
+F-Droid rebuilds each release from its tag and publishes our signed APKs only if each rebuild is byte-identical (recipe: `AllowedAPKSigningKeys` = the release cert; one build entry per ABI, built with `-PsporaAbi=<abi>`, whose `binary:` is that ABI's APK on the tag's GitHub release, which `scripts/release.sh` offers to create).
+
+A release is five APKs (`app/build.gradle.kts`): `spora-<version>-<abi>.apk` for each ABI, with versionCode × 10 + 1 (armeabi-v7a), 2 (arm64-v8a), 3 (x86) or 4 (x86_64), and the universal `spora-<version>.apk` (× 10 + 0, like an app bundle) for GitHub and the website. `versionCode` in `defaultConfig` stays the release's number and goes up by one; the recipe derives the same codes (`VercodeOperation`). The scheme keeps every APK of a release above every APK of the one before, so devices move between releases and sources (Play, F-Droid, the website: one signing key) by installing over the app. `-PsporaAbi=<abi>` builds and packages that ABI only, without a universal APK. Debug builds split too; `installDebug` installs the device's APK.
+
+What keeps a release reproducible:
 
 - `scripts/build-native.sh` pins Rust (`RUST_VERSION`) and cargo-ndk (`CARGO_NDK_VERSION`); the NDK is `ndkVersion` and the API level is `minSdk` from `app/build.gradle.kts`. Changing any of them changes the output: change the recipe's `ndk:` line (and anything else it pins) in the same release.
 - Release native builds remap the build machine's paths (`--remap-path-prefix` for `core/`, `CARGO_HOME`, the toolchain's rust-src), set the core's build stamp from the submodule commit, use `--locked`, and ignore RUSTFLAGS/wrappers/`CARGO_PROFILE_*` from the environment. They refuse a dirty `core/`, or one not at the commit HEAD records.
 - Releases are built from a clean tree at the tagged commit, as a clean Gradle build (`release.sh` runs `clean` first: an incremental Kotlin/Compose compile emitted different dex than F-Droid's from-scratch one), with JDK 21 (F-Droid's build server runs Debian trixie's OpenJDK 21), and signed by Gradle's signingConfig. Do not re-sign with `apksigner` from build-tools 35+: its padding breaks F-Droid's signature copy.
-- `dependenciesInfo` is off (no Google-encrypted block in the signing block); `abiFilters` keeps JNA's dead ABIs out.
-- Store listing text, icon, screenshots and per-versionCode changelogs live in `fastlane/metadata/android/{en-US,ru,be}/`.
+- `dependenciesInfo` is off (no Google-encrypted block in the signing block); `abiFilters` keeps JNA's dead ABIs out of the universal APK.
+- Store listing text, icon, screenshots and release notes live in `fastlane/metadata/android/{en-US,ru,be}/`. Release notes are `changelogs/<versionCode>.txt` (also the GitHub release's notes) plus identical copies `<versionCode>1.txt` … `<versionCode>4.txt`: F-Droid looks them up by each APK's own code. `release.sh` checks the copies.
 
 ## Tech Stack
 

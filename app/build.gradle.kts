@@ -1,3 +1,4 @@
+import com.android.build.api.variant.FilterConfiguration
 import javax.inject.Inject
 
 plugins {
@@ -10,25 +11,46 @@ plugins {
 // the same list.
 val nativeAbis = listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
 
+// A build makes one APK per ABI (most of an APK is the core, and a device
+// runs one ABI's) plus a universal APK. F-Droid builds each ABI's APK on its
+// own, with -PsporaAbi=<abi>: only that ABI's core is built and packaged,
+// and there is no universal APK.
+val sporaAbi: String? = providers.gradleProperty("sporaAbi").orNull
+require(sporaAbi == null || sporaAbi in nativeAbis) { "sporaAbi must be one of $nativeAbis, not $sporaAbi" }
+val apkAbis = sporaAbi?.let { listOf(it) } ?: nativeAbis
+
+// An APK's versionCode is defaultConfig's × 10 + its ABI's code below (0
+// for the universal APK): every APK of a release has its own code, as
+// F-Droid's repo needs, and all of them are above the previous release's,
+// so devices can move between the APKs of different releases and sources.
+// A 64-bit ABI is above its 32-bit sibling, so a device that runs both
+// moves to 64-bit. F-Droid's recipe computes the same codes
+// (VercodeOperation).
+val abiVersionCodes = mapOf("armeabi-v7a" to 1, "arm64-v8a" to 2, "x86" to 3, "x86_64" to 4)
+
 /**
  * Builds libspora_ffi.so for a release APK from the core/ submodule with
  * scripts/build-native.sh --release (pinned toolchain, reproducible flags,
- * bindings check). It runs on every release build, since cargo tracks its own
- * inputs, and it is the only source of native code in a release APK.
+ * bindings check), for the ABIs being packaged. It runs on every release
+ * build, since cargo tracks its own inputs, and it is the only source of
+ * native code in a release APK.
  */
 abstract class BuildNativeLibs : DefaultTask() {
     @get:Inject abstract val execOperations: ExecOperations
     @get:Internal abstract val script: RegularFileProperty
     @get:Internal abstract val ndkDirectory: DirectoryProperty
+    @get:Internal abstract val abis: ListProperty<String>
     @get:OutputDirectory abstract val outputDir: DirectoryProperty
 
     @TaskAction
     fun build() {
         execOperations.exec {
             commandLine(
-                script.get().asFile.path, "--release",
-                "--ndk", ndkDirectory.get().asFile.path,
-                "--out", outputDir.get().asFile.path,
+                listOf(
+                    script.get().asFile.path, "--release",
+                    "--ndk", ndkDirectory.get().asFile.path,
+                    "--out", outputDir.get().asFile.path,
+                ) + abis.get().flatMap { listOf("--abi", it) }
             )
         }
     }
@@ -50,8 +72,20 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // JNA's AAR also carries armeabi, mips and mips64 libraries, which
-        // would only bloat the APK: there is no core for them.
-        ndk { abiFilters += nativeAbis }
+        // would only bloat the universal APK: there is no core for them.
+        // (Without a universal APK the split filters already keep them out,
+        // and AGP refuses both kinds of filter for a one-ABI split.)
+        if (sporaAbi == null) ndk { abiFilters += nativeAbis }
+    }
+
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include(*apkAbis.toTypedArray())
+            // for GitHub releases and the website: one file for every device
+            isUniversalApk = sporaAbi == null
+        }
     }
 
     // Native libraries: a release APK gets only what buildNativeRelease
@@ -136,10 +170,13 @@ android {
         buildConfig = true
     }
     ndkVersion = "29.0.14206865"
+    // spora-<version>.apk (universal), spora-<version>-<abi>.apk: the names
+    // the F-Droid recipe downloads from the GitHub release
     applicationVariants.all {
         outputs.all {
-            (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName =
-                "spora-${versionName}.apk"
+            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            val abi = output.getFilter("ABI")
+            output.outputFileName = "spora-${versionName}${abi?.let { "-$it" } ?: ""}.apk"
         }
     }
 }
@@ -147,10 +184,19 @@ android {
 val buildNativeRelease = tasks.register<BuildNativeLibs>("buildNativeRelease") {
     script.set(rootProject.layout.projectDirectory.file("scripts/build-native.sh"))
     ndkDirectory.set(androidComponents.sdkComponents.ndkDirectory)
+    abis.set(apkAbis)
     doNotTrackState("cargo decides what to rebuild")
 }
 
 androidComponents {
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            val abi = output.filters
+                .find { it.filterType == FilterConfiguration.FilterType.ABI }?.identifier
+            val base = output.versionCode.orNull ?: return@forEach
+            output.versionCode.set(base * 10 + (abi?.let(abiVersionCodes::getValue) ?: 0))
+        }
+    }
     onVariants(selector().withBuildType("release")) { variant ->
         variant.sources.jniLibs?.addGeneratedSourceDirectory(buildNativeRelease, BuildNativeLibs::outputDir)
     }
