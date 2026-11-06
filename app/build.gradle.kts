@@ -13,8 +13,8 @@ val nativeAbis = listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
 
 // A build makes one APK per ABI (most of an APK is the core, and a device
 // runs one ABI's) plus a universal APK. F-Droid builds each ABI's APK on its
-// own, with -PsporaAbi=<abi>: only that ABI's core is built and packaged,
-// and there is no universal APK.
+// own, with -PsporaAbi=<abi>: only that ABI's core is built and packaged
+// (that build's universal APK holds that ABI alone, and goes unused).
 val sporaAbi: String? = providers.gradleProperty("sporaAbi").orNull
 require(sporaAbi == null || sporaAbi in nativeAbis) { "sporaAbi must be one of $nativeAbis, not $sporaAbi" }
 val apkAbis = sporaAbi?.let { listOf(it) } ?: nativeAbis
@@ -25,7 +25,9 @@ val apkAbis = sporaAbi?.let { listOf(it) } ?: nativeAbis
 // so devices can move between the APKs of different releases and sources.
 // A 64-bit ABI is above its 32-bit sibling, so a device that runs both
 // moves to 64-bit. F-Droid's recipe computes the same codes
-// (VercodeOperation).
+// (VercodeOperation). BuildConfig.VERSION_CODE is compiled into the dex that
+// all of a build's APKs share, so it is the universal APK's (× 10 + 0) in
+// every one of them; see isUniversalApk below.
 val abiVersionCodes = mapOf("armeabi-v7a" to 1, "arm64-v8a" to 2, "x86" to 3, "x86_64" to 4)
 
 /**
@@ -71,11 +73,10 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // JNA's AAR also carries armeabi, mips and mips64 libraries, which
-        // would only bloat the universal APK: there is no core for them.
-        // (Without a universal APK the split filters already keep them out,
-        // and AGP refuses both kinds of filter for a one-ABI split.)
-        if (sporaAbi == null) ndk { abiFilters += nativeAbis }
+        // JNA's AAR also carries armeabi, mips and mips64 libraries (and
+        // the other ABIs' in a -PsporaAbi build), which would only bloat the
+        // universal APK: there is no core for them.
+        ndk { abiFilters += apkAbis }
     }
 
     splits {
@@ -83,8 +84,12 @@ android {
             isEnable = true
             reset()
             include(*apkAbis.toTypedArray())
-            // for GitHub releases and the website: one file for every device
-            isUniversalApk = sporaAbi == null
+            // For GitHub releases and the website: one file for every device.
+            // A -PsporaAbi build makes one too: AGP takes BuildConfig's
+            // VERSION_CODE from the universal APK when there is one, else
+            // from the ABI's, and F-Droid's rebuild of an ABI's APK would then
+            // carry × 10 + <ABI> in its dex where ours carries × 10 + 0.
+            isUniversalApk = true
         }
     }
 
