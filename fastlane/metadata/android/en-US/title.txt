@@ -1,1 +1,1 @@
-Spora
+Spora: Peer-to-Peer VPN
