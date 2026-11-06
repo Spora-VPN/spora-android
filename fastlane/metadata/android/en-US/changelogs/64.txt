@@ -1,0 +1,1 @@
+• Smaller downloads: each release now also comes as one APK per processor type, about 15–20 MB instead of 48 MB. F-Droid gives your phone the one it needs.
