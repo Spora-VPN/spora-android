@@ -1,0 +1,5 @@
+• Settings: choose the relays new links use (Spora's, your own, or both) and turn telemetry on or off.
+• Diagnostics no longer use a third-party service: records, the app log and crash reports stay on your phone; telemetry is off by default.
+• Share-tab links made with an earlier version are removed: create new ones and send them again.
+• Connecting is about 8 seconds faster on networks without IPv6.
+• A link opened on the Share tab takes you to Connect.
