@@ -12,8 +12,13 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         installCrashCapture()
-        // Loads the native library and opens files: not on the main thread
-        appScope.launch { Diagnostics.init(this@App) }
+        // Loads the native library and opens files: not on the main thread.
+        // Then the connection logs of shares no longer running are swept
+        // (after init, so that its lines reach the log file).
+        appScope.launch {
+            Diagnostics.init(this@App)
+            ShareForegroundService.sweepConnectionLogs(this@App)
+        }
         // Not after init: a connect or share from a cold service start should
         // find the network already reported when its record opens. Its lines
         // wait in SporaLog until the log file is open.

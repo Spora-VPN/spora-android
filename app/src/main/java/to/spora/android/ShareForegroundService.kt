@@ -28,6 +28,7 @@ import uniffi.spora_ffi.setShareDnsServers
 import uniffi.spora_ffi.shareId
 import uniffi.spora_ffi.startShare
 import uniffi.spora_ffi.stopShare
+import uniffi.spora_ffi.sweepConnLogs
 
 class ShareForegroundService : Service() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -98,8 +99,10 @@ class ShareForegroundService : Service() {
                 // every share after the first. The connlog tree is excluded
                 // from auto-backup (see res/xml backup rules); retention/
                 // destination logging use the core defaults (90 days,
-                // destinations included).
-                val connLogDir = java.io.File(filesDir, "connlog/${shareId(shareBytes)}")
+                // destinations included). A deleted share keeps its log (the
+                // sharer's record of what it was used for), and every running
+                // share sweeps those of the others by retention.
+                val connLogDir = java.io.File(connLogRoot(this@ShareForegroundService), shareId(shareBytes))
                     .apply { mkdirs() }
                 // Never touches the network itself: Spora's relays get the
                 // relay token the service has cached (and every renewal)
@@ -110,6 +113,7 @@ class ShareForegroundService : Service() {
                     connLogRetentionDays = null,
                     connLogSessionsOnly = false,
                     recordDir = Diagnostics.recordDir(this@ShareForegroundService),
+                    connLogSweepSiblings = true,
                 )
                 if (!isActive) {
                     // Toggled off while startShare() was blocked starting up: the
@@ -328,6 +332,26 @@ class ShareForegroundService : Service() {
 
         private const val EXTRA_CONNECTION_ID = "connection_id"
         private const val EXTRA_SHARE = "share"
+
+        /** One connection-log directory per share, and nothing else. */
+        private fun connLogRoot(context: Context) = java.io.File(context.filesDir, "connlog")
+
+        /**
+         * Deletes what is past its retention from every share's connection
+         * log, deleted shares' too, as a running share does for the others:
+         * at process start nothing may be running to do it. Blocking (SQLite):
+         * off the main thread.
+         */
+        fun sweepConnectionLogs(context: Context) {
+            val root = connLogRoot(context)
+            if (!root.isDirectory) return
+            try {
+                val deleted = sweepConnLogs(root.path)
+                if (deleted > 0uL) SporaLog.i(TAG, "connection logs: deleted $deleted records past retention")
+            } catch (t: Throwable) {
+                SporaLog.w(TAG, "connection logs could not be swept", t)
+            }
+        }
 
         fun startConnection(context: Context, connectionId: String, share: String) {
             val intent = Intent(context, ShareForegroundService::class.java)

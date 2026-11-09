@@ -743,6 +743,8 @@ internal object IntegrityCheckingUniffiLib {
     ): Short
     external fun uniffi_spora_ffi_checksum_func_stop_share(
     ): Short
+    external fun uniffi_spora_ffi_checksum_func_sweep_conn_logs(
+    ): Short
     external fun uniffi_spora_ffi_checksum_func_telemetry_nudge(
     ): Short
     external fun uniffi_spora_ffi_checksum_func_telemetry_status(
@@ -817,10 +819,12 @@ internal object UniffiLib {
     ): RustBuffer.ByValue
     external fun uniffi_spora_ffi_fn_func_share_url(`shareBlob`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    external fun uniffi_spora_ffi_fn_func_start_share(`shareBlob`: RustBuffer.ByValue,`protector`: RustBuffer.ByValue,`connLogDir`: RustBuffer.ByValue,`connLogRetentionDays`: RustBuffer.ByValue,`connLogSessionsOnly`: Byte,`recordDir`: RustBuffer.ByValue,`stunServers`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_spora_ffi_fn_func_start_share(`shareBlob`: RustBuffer.ByValue,`protector`: RustBuffer.ByValue,`connLogDir`: RustBuffer.ByValue,`connLogRetentionDays`: RustBuffer.ByValue,`connLogSessionsOnly`: Byte,`recordDir`: RustBuffer.ByValue,`stunServers`: RustBuffer.ByValue,`connLogSweepSiblings`: Byte,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_spora_ffi_fn_func_stop_share(`handle`: Int,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
+    external fun uniffi_spora_ffi_fn_func_sweep_conn_logs(`connLogRoot`: RustBuffer.ByValue,`connLogRetentionDays`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Long
     external fun uniffi_spora_ffi_fn_func_telemetry_nudge(uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     external fun uniffi_spora_ffi_fn_func_telemetry_status(uniffi_out_err: UniffiRustCallStatus, 
@@ -1006,10 +1010,13 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_spora_ffi_checksum_func_share_url() != 31505.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_spora_ffi_checksum_func_start_share() != 20612.toShort()) {
+    if (lib.uniffi_spora_ffi_checksum_func_start_share() != 830.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_spora_ffi_checksum_func_stop_share() != 57557.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_spora_ffi_checksum_func_sweep_conn_logs() != 61539.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_spora_ffi_checksum_func_telemetry_nudge() != 29109.toShort()) {
@@ -3728,7 +3735,11 @@ public object FfiConverterMapStringString: FfiConverterRustBuffer<Map<kotlin.Str
          * days). `conn_log_sessions_only = true` records who was connected and
          * when, but no per-flow destination records. Fails if `conn_log_dir` is
          * set but not writable — a default-on liability log must not silently
-         * degrade at startup.
+         * degrade at startup. `conn_log_sweep_siblings = true` also sweeps the
+         * other shares' logs under `conn_log_dir`'s parent by retention, at the
+         * start and every few hours while this share runs (see
+         * [`sweep_conn_logs`]); pass it only when that parent holds nothing but
+         * one directory per share (`filesDir/connlog`).
          *
          * `record_dir` turns on the connection record (spora-core's `record`, the
          * diagnostic account of this run) in that directory — one directory for
@@ -3736,12 +3747,12 @@ public object FfiConverterMapStringString: FfiConverterRustBuffer<Map<kotlin.Str
          * `noBackupFilesDir/records`). `None` keeps no record. `stun_servers`
          * empty uses the built-in list.
          */
-    @Throws(ShareException::class) fun `startShare`(`shareBlob`: kotlin.ByteArray, `protector`: SocketProtectorCallback?, `connLogDir`: kotlin.String?, `connLogRetentionDays`: kotlin.UInt?, `connLogSessionsOnly`: kotlin.Boolean, `recordDir`: kotlin.String? = null, `stunServers`: List<kotlin.String> = listOf()): ShareResult {
+    @Throws(ShareException::class) fun `startShare`(`shareBlob`: kotlin.ByteArray, `protector`: SocketProtectorCallback?, `connLogDir`: kotlin.String?, `connLogRetentionDays`: kotlin.UInt?, `connLogSessionsOnly`: kotlin.Boolean, `recordDir`: kotlin.String? = null, `stunServers`: List<kotlin.String> = listOf(), `connLogSweepSiblings`: kotlin.Boolean = false): ShareResult {
             return FfiConverterTypeShareResult.lift(
     uniffiRustCallWithError(ShareException) { _status ->
     UniffiLib.uniffi_spora_ffi_fn_func_start_share(
     
-        FfiConverterByteArray.lower(`shareBlob`),FfiConverterOptionalTypeSocketProtectorCallback.lower(`protector`),FfiConverterOptionalString.lower(`connLogDir`),FfiConverterOptionalUInt.lower(`connLogRetentionDays`),FfiConverterBoolean.lower(`connLogSessionsOnly`),FfiConverterOptionalString.lower(`recordDir`),FfiConverterSequenceString.lower(`stunServers`),_status)
+        FfiConverterByteArray.lower(`shareBlob`),FfiConverterOptionalTypeSocketProtectorCallback.lower(`protector`),FfiConverterOptionalString.lower(`connLogDir`),FfiConverterOptionalUInt.lower(`connLogRetentionDays`),FfiConverterBoolean.lower(`connLogSessionsOnly`),FfiConverterOptionalString.lower(`recordDir`),FfiConverterSequenceString.lower(`stunServers`),FfiConverterBoolean.lower(`connLogSweepSiblings`),_status)
 }
     )
     }
@@ -3758,6 +3769,30 @@ public object FfiConverterMapStringString: FfiConverterRustBuffer<Map<kotlin.Str
         FfiConverterInt.lower(`handle`),_status)
 }
     
+    
+
+        /**
+         * Sweeps the connection logs under `conn_log_root` (the directory the app
+         * keeps one log directory per share in, `filesDir/connlog`) by retention:
+         * what each share's own writer would delete if it were running, so the log
+         * of a share that was replaced or deleted does not outlive its retention.
+         * Each log keeps the retention its share last ran with;
+         * `conn_log_retention_days` is for a log that does not say (one written
+         * before this version), `None` = the core default (90 days). Held ranges
+         * stay. Never deletes a log's file or directory, never creates one, and is
+         * safe beside running shares. Blocking (SQLite I/O): call it off the main
+         * thread, for instance at app start, so logs are swept while no share
+         * runs. Returns how many records it deleted; a log that cannot be swept is
+         * logged and passed over.
+         */ fun `sweepConnLogs`(`connLogRoot`: kotlin.String, `connLogRetentionDays`: kotlin.UInt? = null): kotlin.ULong {
+            return FfiConverterULong.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_spora_ffi_fn_func_sweep_conn_logs(
+    
+        FfiConverterString.lower(`connLogRoot`),FfiConverterOptionalUInt.lower(`connLogRetentionDays`),_status)
+}
+    )
+    }
     
 
         /**
