@@ -18,6 +18,7 @@ scripts/build-native.sh --install-toolchain  # pinned Rust, Android targets, car
 scripts/build-native.sh               # dev native libs (debug) + regenerated bindings
 ./gradlew :app:assembleDebug          # Build debug APK
 ./gradlew :app:assembleRelease        # Build release APKs: universal + one per ABI (builds the native libs from core/ itself)
+./gradlew :app:bundleRelease          # Build the release app bundle (AAB) for Google Play
 ./gradlew :app:test                   # Run unit tests
 ./gradlew :app:connectedAndroidTest   # Run instrumented tests (requires device/emulator)
 ./gradlew lint                        # Run lint checks
@@ -184,6 +185,8 @@ F-Droid rebuilds each release from its tag and publishes our signed APKs only if
 
 A release is five APKs (`app/build.gradle.kts`): `spora-<version>-<abi>.apk` for each ABI, with versionCode × 10 + 1 (armeabi-v7a), 2 (arm64-v8a), 3 (x86) or 4 (x86_64), and the universal `spora-<version>.apk` (× 10 + 0, like an app bundle) for GitHub and the website. `versionCode` in `defaultConfig` stays the release's number and goes up by one; the recipe derives the same codes (`VercodeOperation`). The scheme keeps every APK of a release above every APK of the one before, so devices move between releases and sources (Play, F-Droid, the website: one signing key) by installing over the app. `-PsporaAbi=<abi>` builds and packages that ABI only (its universal APK, which only F-Droid's builds make and nobody ships, holds that ABI alone). Debug builds split too; `installDebug` installs the device's APK.
 
+Google Play takes the app bundle instead, `spora-<version>.aab` (`bundleRelease`; `release.sh` builds it in a Gradle run after the APKs and checks its signature too), whose versionCode is the universal APK's (× 10 + 0). Play builds the APKs it delivers from the bundle and signs them with the key Play App Signing holds. That must be the release key itself (uploaded with Google's PEPK tool before the first bundle goes up: the choice cannot be undone), never a Google-generated one: Play installs would otherwise carry another certificate, so users could not move between Play and the other sources, and App Links would not verify for them. F-Droid neither builds nor compares the bundle.
+
 What keeps a release reproducible:
 
 - `scripts/build-native.sh` pins Rust (`RUST_VERSION`) and cargo-ndk (`CARGO_NDK_VERSION`); the NDK is `ndkVersion` and the API level is `minSdk` from `app/build.gradle.kts`. Changing any of them changes the output: change the recipe's `ndk:` line (and anything else it pins) in the same release.
@@ -222,7 +225,7 @@ What keeps a release reproducible:
 - `app/src/main/java/uniffi/spora_ffi/spora_ffi.kt` - Auto-generated FFI bindings (do not edit)
 - `gradle/libs.versions.toml` - Centralized dependency versions
 - `scripts/build-native.sh` - builds the native library from `core/` (dev and release modes, toolchain pins, reproducibility flags)
-- `scripts/release.sh` - the signed-release ceremony (checks, build, cert check, tag, draft GitHub release)
+- `scripts/release.sh` - the signed-release ceremony (checks, build of the APKs and the Play bundle, cert check, tag, draft GitHub release)
 
 ## Internationalization (i18n)
 

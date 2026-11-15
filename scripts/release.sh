@@ -1,5 +1,6 @@
 #!/bin/bash
-# Build a signed release APK — the interactive release ceremony.
+# Build a signed release (APKs and the Play bundle) — the interactive release
+# ceremony.
 #
 #   ./scripts/release.sh
 #
@@ -15,14 +16,18 @@
 #
 # Keystore path: $SPORA_KEYSTORE, default ~/secure/spora-release.jks (wired
 # to the signingConfigs block in app/build.gradle.kts). After the build the
-# APK's signing certificate is verified against the pinned release
-# fingerprint below — the app's permanent identity, also listed in
-# spora-web's assetlinks.json and in the F-Droid recipe
+# signing certificate of every APK and of the bundle is verified against the
+# pinned release fingerprint below — the app's permanent identity, also
+# listed in spora-web's assetlinks.json and in the F-Droid recipe
 # (AllowedAPKSigningKeys).
 #
 # A release is five APKs: spora-<version>.apk (universal, for GitHub and the
 # website) and spora-<version>-<abi>.apk for each of the four ABIs, each with
-# its own versionCode (app/build.gradle.kts). F-Droid rebuilds every ABI's
+# its own versionCode (app/build.gradle.kts); and spora-<version>.aab, the
+# app bundle for Google Play (the universal APK's versionCode). Play signs
+# the APKs it makes from the bundle with the key Play App Signing holds,
+# which must be this same release key, so that Play installs carry the same
+# certificate as the others. F-Droid rebuilds every ABI's
 # APK from the tag and publishes ours only if its rebuild is identical, so a
 # release must come from a clean tree at the tagged commit, built with JDK 21
 # (as F-Droid's build server). At the end the script offers to push the tag
@@ -106,6 +111,9 @@ export SPORA_KEYSTORE="$KEYSTORE" SPORA_KEYSTORE_PASSWORD
 # v0.3.0's first APK), and the rebuild would not match.
 ./gradlew clean --console=plain
 ./gradlew :app:assembleRelease --console=plain
+# The bundle in a Gradle run of its own, after the APKs are written: it
+# cannot change them, and F-Droid compares them, not the bundle.
+./gradlew :app:bundleRelease --console=plain
 
 OUTDIR=app/build/outputs/apk/release
 APKS=("$OUTDIR/spora-$VERSION.apk")
@@ -113,6 +121,10 @@ for abi in arm64-v8a armeabi-v7a x86 x86_64; do APKS+=("$OUTDIR/spora-$VERSION-$
 for apk in "${APKS[@]}"; do
   [ -f "$apk" ] || { echo "error: $apk was not produced" >&2; exit 1; }
 done
+BUNDLEDIR=app/build/outputs/bundle/release
+AAB="$BUNDLEDIR/spora-$VERSION.aab"
+[ -f "$BUNDLEDIR/app-release.aab" ] || { echo "error: $BUNDLEDIR/app-release.aab was not produced" >&2; exit 1; }
+mv "$BUNDLEDIR/app-release.aab" "$AAB"
 
 # Verify every APK really carries the release certificate (a mis-wired
 # signing config would otherwise slip an unsigned or debug-signed build
@@ -133,9 +145,24 @@ else
   echo "warning: apksigner not found under $SDK/build-tools — signatures NOT verified"
 fi
 
+# The bundle is signed as a jar (apksigner does not read bundles); this is
+# the upload signature Play checks. JDK 21's jarsigner and keytool.
+verify=$("$JAVA_HOME/bin/jarsigner" -verify "$AAB" 2>&1 || true)
+if ! grep -q '^jar verified\.' <<<"$verify"; then
+  echo "error: $AAB is unsigned or its signature does not verify" >&2
+  exit 1
+fi
+certs=$("$JAVA_HOME/bin/keytool" -printcert -jarfile "$AAB" 2>/dev/null || true)
+got=$(grep -m1 'SHA256:' <<<"$certs" | grep -oE '([0-9A-F]{2}:){31}[0-9A-F]{2}' | tr -d ':' | tr 'A-F' 'a-f' || true)
+if [ "$got" != "$RELEASE_SHA256" ]; then
+  echo "error: $AAB signed with unexpected cert: ${got:-<none>}" >&2
+  exit 1
+fi
+echo "signature verified: release cert on the bundle"
+
 echo
 echo "built:"
-printf '  %s\n' "${APKS[@]}"
+printf '  %s\n' "${APKS[@]}" "$AAB"
 
 # Offer an annotated tag for the exact source state of this build — only on
 # a clean tree (a tag on a dirty build would name a commit that is not what
@@ -184,4 +211,7 @@ fi
 echo
 echo "next:  install + sanity-check on a device (share, connect, tap an /s/ link),"
 echo "       check that F-Droid's rebuild of each ABI's APK matches the draft's,"
-echo "       publish the GitHub release, then upload spora-$VERSION.apk via the website admin."
+echo "       publish the GitHub release, then upload spora-$VERSION.apk via the website admin;"
+echo "       upload $AAB"
+echo "       to Google Play (internal testing, then production), with each locale's"
+echo "       changelogs/$VCODE.txt as its release notes."
