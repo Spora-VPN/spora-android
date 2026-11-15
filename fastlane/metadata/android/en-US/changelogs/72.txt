@@ -1,0 +1,3 @@
+• When you share: the log of which addresses connections through your links reach is now deleted after 90 days for every link, including deleted ones. Before, a deleted link's log stayed on the phone.
+• The addresses your connections reach no longer appear in Android's system log.
+• A security fix in SQLite, which stores that log.
